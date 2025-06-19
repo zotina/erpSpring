@@ -64,4 +64,9 @@ change ref_company = "ITU", line 48 into your company name
 /* ========================================================================= */
 
 
-DocTypes
+DocTypes dans ERP_Next:
+
+- Employee
+    -> fields : add row 'ref'
+- Salary Structure
+    -> fields: add row 'salary_structure'
