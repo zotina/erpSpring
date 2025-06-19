@@ -1,0 +1,1673 @@
+https://docs.frappe.io/erpnext/user/manual/en/introduction
+
+https://docs.frappe.io/hr/introduction
+baser votre reponse a ces documentation  
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          📊 STATISTIQUES DES SALAIRES                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ FILTRE ───────────────────────────────────────────────────────────────────────┐
+│ Année: [2024 ▼]    [🔄 Actualiser]                                            │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     TABLEAU MENSUEL DES SALAIRES - 2024                      ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  MOIS     │  TOTAL SALAIRES    │  NOMBRE EMPLOYÉS  │  ACTION                 ║
+╠═══════════╪════════════════════╪═══════════════════╪═════════════════════════╣
+║ Janvier   │     175,500.00 €   │        120        │      voir element       ║
+║ Février   │     178,740.00 €   │        122        │      voir element       ║
+║ Mars      │     183,375.00 €   │        125        │      voir element       ║
+║ Avril     │     183,375.00 €   │        125        │      voir element       ║
+║ Mai       │     180,387.00 €   │        123        │      voir element       ║
+║ Juin      │     183,375.00 €   │        125        │      voir element       ║
+║ Juillet   │     183,375.00 €   │        125        │      voir element       ║
+║ Août      │     181,908.00 €   │        124        │      voir element       ║
+║ Septembre │     183,375.00 €   │        125        │      voir element       ║
+║ Octobre   │     183,375.00 €   │        125        │      voir element       ║
+║ Novembre  │     183,375.00 €   │        125        │      voir element       ║
+║ Décembre  │     183,375.00 €   │        125        │      voir element       ║
+╚═══════════╧════════════════════╧═══════════════════╧═════════════════════════╝
+
+lors de l appuye sur voir element  il redirigera sur cette  DÉTAILS PAR ÉLÉMENTS DE SALAIRE
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      DÉTAILS PAR ÉLÉMENTS DE SALAIRE                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ JANVIER ──────────────────────────────────────────────────────────────────────┐
+│ Salaire de Base       : 150,000.00 €                                          │
+│ Prime Ancienneté      :  15,000.00 €                                          │
+│ Prime Performance     :  10,000.00 €                                          │
+│ Heures Supplémentaires:   5,000.00 €                                          │
+│ Indemnité Transport   :   2,500.00 €                                          │
+│ ─────────────────────────────────────                                         │
+│ TOTAL BRUT           : 182,500.00 €                                          │
+│ Sécurité Sociale     :  -4,500.00 €                                          │
+│ Retraite             :  -1,500.00 €                                          │
+│ Impôts               :  -1,000.00 €                                          │
+│ ─────────────────────────────────────                                         │
+│ TOTAL NET            : 175,500.00 €                                          │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+et lorsqu’on clique sur le total des salaires, on arrive sur le tableau de détail par employé
+
+et j ai deja cette détail par employé
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                    📊 DETAILS PAR EMPLOYE                             ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║ 📅 Période: [Mai ▼] [2025 ▼]                                          ║
+║                                                                       ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ID   │Nom Employé    │Dept.│Sal.Base │Primes │H.Sup│Total Brut│Net Payé║
+╠═══════════════════════════════════════════════════════════════════════╣
+║E001 │RAKOTO Jean    │ IT  │2,500,000│200,000│150k │3,066,000 │2,333,460║
+║E002 │RANDRIA Marie  │ RH  │3,000,000│300,000│ 0   │3,300,000 │2,508,000║
+║E003 │RABE Paul      │FIN  │2,200,000│150,000│100k │2,450,000 │1,863,000║
+║E004 │ANDRY Sophie   │ IT  │3,500,000│400,000│200k │4,100,000 │3,116,000║
+║E005 │RAZAFY Michel  │COM  │1,800,000│500,000│ 50k │2,350,000 │1,786,500║
+║E006 │RAHEFA Anna    │MKT  │2,100,000│180,000│ 80k │2,360,000 │1,794,000║
+║E007 │RAVELO David   │ IT  │2,800,000│250,000│120k │3,170,000 │2,409,200║
+║E008 │RASOA Christ.  │FIN  │2,400,000│200,000│ 90k │2,690,000 │2,043,600║
+║E009 │RABARY Thomas  │COM  │2,600,000│350,000│110k │3,060,000 │2,325,600║
+║E010 │RANDRIAMANANA L│ RH  │1,900,000│100,000│ 40k │2,040,000 │1,550,400║
+╠═══════════════════════════════════════════════════════════════════════╣
+║TOTAUX (10 employés actifs)                                           ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║     │TOTAL GÉNÉRAL  │     │24,800,000│2,630k│940k│28,586,000│21,729,760║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+
+je veux que vous met en place ce fonctionnaliter avec mes code existant
+je vais vous donnes le service , model , affichage , controller 📊 DETAILS PAR EMPLOYE  qui est citez  dans cette procedure de fonctionalite mais que j ai dej cree auparavant , je l avais nomer recap mensuel 
+et a partir de ces code vous voyer comment doit etre les model de code pour service , model , view , controller et comment l afficher ces fonctionnalite 
+
+et j ai cree ces api pour le  TABLEAU MENSUEL DES SALAIRES - 2024    et le DÉTAILS PAR ÉLÉMENTS DE SALAIRE  voir element 
+
+
+voici les etapes a faire 
+
+
+donc tous ce que vous allez faire c est  cree un model pour mapper le donnne de mes 3 api , puis cree un service pour appeller ces 2 api et mapper les donnes json sur la model que vous avez cree 
+puis cree le view pour TABLEAU MENSUEL DES SALAIRES  et le DÉTAILS PAR ÉLÉMENTS DE SALAIRE  
+puis cree le controller pour loader le donnees de ces 2 views c est le  voir element du TABLEAU MENSUEL DES SALAIRES  qui redirigera sur DÉTAILS PAR ÉLÉMENTS DE SALAIRE
+sur le TABLEAU MENSUEL DES SALAIRES  mettez en href le montant total puis lors de l apui sur cette TOTAL SALAIRES vous allez appeler cette controller getMonthlySummary
+avec le monthyear du model et il redirigera sur le summaryview deja cree 
+
+import frappe
+from frappe import _
+
+@frappe.whitelist(allow_guest=False)
+def get_monthly_payroll_summary(year):
+    """
+    Endpoint: /api/method/hrms.controllers.payroll_controller.get_monthly_payroll_summary?year=2024
+    Method: GET
+    Retourne les totaux brut, net et déductions pour chaque mois de l'année ayant des Salary Slips
+    """
+    try:
+        start_date = f"{year}-01-01"
+        end_date = f"{year}-12-31"
+        
+        # Fetch Salary Slips within the year
+        slips = frappe.get_all("Salary Slip",
+            fields=["posting_date", "net_pay", "total_deduction", "employee", "currency", "gross_pay"],
+            filters={"posting_date": ["between", [start_date, end_date]]},
+            order_by="posting_date"
+        )
+        
+        # Check if any Salary Slips exist
+        if not slips:
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = f"Aucun bulletin de paie trouvé pour l'année {year}."
+            frappe.local.response["validation_errors"] = ["No salary slips found"]
+            return
+        
+        # Initialize monthly data only for months with data
+        monthly_data = {}
+        months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
+                  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+        
+        # Group and calculate totals by month
+        for slip in slips:
+            month_key = slip.posting_date.strftime("%Y-%m")
+            month_number = int(slip.posting_date.strftime("%m"))
+            
+            if month_key not in monthly_data:
+                monthly_data[month_key] = {
+                    "month": months[month_number - 1],
+                    "year": int(year),
+                    "month_number": month_number,
+                    "total_gross_pay": 0.0,
+                    "monthyear": f"{year}-{month_number:02d}",
+                    "total_net_pay": 0.0,
+                    "total_deductions": 0.0,
+                    "employee_count": 0,
+                    "currency": slip.currency or "EUR"
+                }
+            
+            monthly_data[month_key]["total_gross_pay"] += slip.gross_pay or 0.0
+            monthly_data[month_key]["total_net_pay"] += slip.net_pay or 0.0
+            monthly_data[month_key]["total_deductions"] += slip.total_deduction or 0.0
+            monthly_data[month_key]["employee_count"] += 1
+        
+        # Convert to list and sort by month_number
+        result = sorted(monthly_data.values(), key=lambda x: x["month_number"])
+        
+        # Return success response
+        frappe.local.response["status"] = "success"
+        frappe.local.response["message"] = f"Récapitulatif mensuel des salaires pour l'année {year} récupéré avec succès."
+        frappe.local.response["data"] = result
+
+    except Exception as e:
+        # Handle any unexpected errors
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = "Une erreur s'est produite lors de la récupération du récapitulatif mensuel des salaires."
+        frappe.local.response["validation_errors"] = [str(e)]
+
+@frappe.whitelist(allow_guest=False)
+def get_payroll_components(year_month):
+    """
+    Endpoint: /api/method/hrms.controllers.payroll_controller.get_payroll_components?year_month=2024-01
+    Method: GET
+    Retourne le détail des composants de salaire pour un mois donné avec formatage visuel
+    """
+    start_date = f"{year_month}-01"
+    end_date = frappe.utils.get_last_day(year_month).strftime("%Y-%m-%d")
+        
+    slips = frappe.get_all("Salary Slip",
+        fields=["name", "gross_pay", "total_deduction", "net_pay", "currency"],
+        filters={"posting_date": ["between", [start_date, end_date]]}
+    )
+    print(slips)
+    
+    earnings_map = {}
+    deductions_map = {}
+    total_gross = 0.0
+    total_deduction = 0.0
+    total_net = 0.0
+    currency = "EUR"
+    
+    for slip in slips:
+        total_gross += slip.gross_pay or 0.0
+        total_deduction += slip.total_deduction or 0.0
+        total_net += slip.net_pay or 0.0
+        currency = slip.currency or "EUR"
+        
+        # Récupérer les gains
+        earnings = frappe.get_all("Salary Detail",
+            fields=["salary_component", "amount"],
+            filters={"parent": slip.name, "parentfield": "earnings"}
+        )
+        
+        # Récupérer les déductions
+        deductions = frappe.get_all("Salary Detail",
+            fields=["salary_component", "amount"],
+            filters={"parent": slip.name, "parentfield": "deductions"}
+        )
+        
+        for earning in earnings:
+            component = earning.salary_component
+            earnings_map[component] = earnings_map.get(component, 0.0) + (earning.amount or 0.0)
+        
+        for deduction in deductions:
+            component = deduction.salary_component
+            deductions_map[component] = deductions_map.get(component, 0.0) + (deduction.amount or 0.0)
+    
+    # Formatage du mois en français
+    months_fr = {
+        "01": "JANVIER", "02": "FÉVRIER", "03": "MARS", "04": "AVRIL",
+        "05": "MAI", "06": "JUIN", "07": "JUILLET", "08": "AOÛT",
+        "09": "SEPTEMBRE", "10": "OCTOBRE", "11": "NOVEMBRE", "12": "DÉCEMBRE"
+    }
+    
+    month_num = year_month.split('-')[1]
+    month_name = months_fr.get(month_num, "MOIS")
+    
+    return {
+        "month": year_month,
+        "month_name": month_name,
+        "earnings": [{"salary_component": k, "amount": v} for k, v in earnings_map.items()],
+        "deductions": [{"salary_component": k, "amount": v} for k, v in deductions_map.items()],
+        "total_gross": total_gross,
+        "total_deduction": total_deduction,
+        "total_net": total_net,
+        "currency": currency,
+        "employee_count": len(slips)
+    }
+
+
+model :
+
+package mg.itu.model;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ApiResponse<T> {
+    private String status;
+    private String message; 
+    private List<T> data;
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public List<T> getData() {
+        return data;
+    }
+
+    public void setData(List<T> data) {
+        this.data = data;
+    }
+}
+
+
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SummaryDTO {
+    @JsonProperty("employee")
+    private String employeeId;
+
+    @JsonProperty("employee_name")
+    private String employeeName;
+
+    @JsonProperty("department") 
+    private String department; 
+
+
+    @JsonProperty("gross_pay")
+    private double totalGross;
+
+    @JsonProperty("currency")
+    private String currency;
+
+    @JsonProperty("net_pay")
+    private double netPay;
+
+    private double total_deduction;
+
+    @JsonProperty("posting_date")
+    private String  postingDate;
+
+    public String getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public String getEmployeeName() {
+        return employeeName;
+    }
+
+    public void setEmployeeName(String employeeName) {
+        this.employeeName = employeeName;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public double getTotalGross() {
+        return totalGross;
+    }
+
+    public void setTotalGross(double totalGross) {
+        this.totalGross = totalGross;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public double getNetPay() {
+        return netPay;
+    }
+
+    public void setNetPay(double netPay) {
+        this.netPay = netPay;
+    }
+
+    public String getPostingDate() {
+        return postingDate;
+    }
+
+    public void setPostingDate(String postingDate) {
+        this.postingDate = postingDate;
+    }
+
+    public double getTotal_deduction() {
+        return total_deduction;
+    }
+
+    public void setTotal_deduction(double total_deduction) {
+        this.total_deduction = total_deduction;
+    }
+    
+}
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Date;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SalaryDetailDTO {
+    
+    @JsonProperty("employee")
+    private String employeeId;
+    
+    @JsonProperty("employee_name")
+    private String employeeName;
+    
+    @JsonProperty("department")
+    private String department;
+    
+    @JsonProperty("designation")
+    private String designation;
+    
+    @JsonProperty("start_date")
+    private Date startDate;
+    
+    @JsonProperty("end_date")
+    private Date endDate;
+    
+    @JsonProperty("posting_date")
+    private Date postingDate;
+    
+    @JsonProperty("total_working_days")
+    private double totalWorkingDays;
+    
+    @JsonProperty("payment_days")
+    private double paymentDays;
+    
+    @JsonProperty("absent_days")
+    private double absentDays;
+    
+    @JsonProperty("leave_without_pay")
+    private double leaveWithoutPay;
+    
+    @JsonProperty("gross_pay")
+    private double grossPay;
+    
+    @JsonProperty("total_deduction")
+    private double totalDeduction;
+    
+    @JsonProperty("net_pay")
+    private double netPay;
+    
+    @JsonProperty("currency")
+    private String currency;
+    
+    @JsonProperty("status")
+    private String status;
+    
+    @JsonProperty("salary_structure")
+    private String salaryStructure;
+    
+    @JsonProperty("company")
+    private String company;
+
+    
+    public String getEmployeeId() { 
+        return employeeId; 
+    }
+    
+    public void setEmployeeId(String employeeId) { 
+        this.employeeId = employeeId; 
+    }
+    
+    public String getEmployeeName() { 
+        return employeeName; 
+    }
+    
+    public void setEmployeeName(String employeeName) { 
+        this.employeeName = employeeName; 
+    }
+    
+    public String getDepartment() { 
+        return department; 
+    }
+    
+    public void setDepartment(String department) { 
+        this.department = department; 
+    }
+    
+    public String getDesignation() { 
+        return designation; 
+    }
+    
+    public void setDesignation(String designation) { 
+        this.designation = designation; 
+    }
+    
+    public Date getStartDate() { 
+        return startDate; 
+    }
+    
+    public void setStartDate(Date startDate) { 
+        this.startDate = startDate; 
+    }
+    
+    public Date getEndDate() { 
+        return endDate; 
+    }
+    
+    public void setEndDate(Date endDate) { 
+        this.endDate = endDate; 
+    }
+    
+    public Date getPostingDate() { 
+        return postingDate; 
+    }
+    
+    public void setPostingDate(Date postingDate) { 
+        this.postingDate = postingDate; 
+    }
+    
+    public double getTotalWorkingDays() { 
+        return totalWorkingDays; 
+    }
+    
+    public void setTotalWorkingDays(double totalWorkingDays) { 
+        this.totalWorkingDays = totalWorkingDays; 
+    }
+    
+    public double getPaymentDays() { 
+        return paymentDays; 
+    }
+    
+    public void setPaymentDays(double paymentDays) { 
+        this.paymentDays = paymentDays; 
+    }
+    
+    public double getAbsentDays() { 
+        return absentDays; 
+    }
+    
+    public void setAbsentDays(double absentDays) { 
+        this.absentDays = absentDays; 
+    }
+    
+    public double getLeaveWithoutPay() { 
+        return leaveWithoutPay; 
+    }
+    
+    public void setLeaveWithoutPay(double leaveWithoutPay) { 
+        this.leaveWithoutPay = leaveWithoutPay; 
+    }
+    
+    public double getGrossPay() { 
+        return grossPay; 
+    }
+    
+    public void setGrossPay(double grossPay) { 
+        this.grossPay = grossPay; 
+    }
+    
+    public double getTotalDeduction() { 
+        return totalDeduction; 
+    }
+    
+    public void setTotalDeduction(double totalDeduction) { 
+        this.totalDeduction = totalDeduction; 
+    }
+    
+    public double getNetPay() { 
+        return netPay; 
+    }
+    
+    public void setNetPay(double netPay) { 
+        this.netPay = netPay; 
+    }
+    
+    public String getCurrency() { 
+        return currency; 
+    }
+    
+    public void setCurrency(String currency) { 
+        this.currency = currency; 
+    }
+    
+    public String getStatus() { 
+        return status; 
+    }
+    
+    public void setStatus(String status) { 
+        this.status = status; 
+    }
+    
+    public String getSalaryStructure() { 
+        return salaryStructure; 
+    }
+    
+    public void setSalaryStructure(String salaryStructure) { 
+        this.salaryStructure = salaryStructure; 
+    }
+    
+    public String getCompany() { 
+        return company; 
+    }
+    
+    public void setCompany(String company) { 
+        this.company = company; 
+    }
+}
+
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Date;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class EmployeeDTO {
+    @JsonProperty("name") 
+    private String employeeId;
+    @JsonProperty("employee_name")
+    private String fullName;
+    @JsonProperty("company_email")
+    private String email;
+    @JsonProperty("cell_number")
+    private String phone;
+    @JsonProperty("current_address")
+    private String address;
+    @JsonProperty("date_of_birth")
+    private Date dateOfBirth;
+    private String department;
+    private String designation;
+    @JsonProperty("date_of_joining")
+    private Date dateOfJoining;
+    @JsonProperty("employment_type")
+    private String contractType;
+    @JsonProperty("reports_to") 
+    private String managerId; 
+    private String status;
+
+    // Getters and Setters
+    public String getEmployeeId() { return employeeId; }
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; } 
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public Date getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(Date dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+    public String getDesignation() { return designation; }
+    public void setDesignation(String designation) { this.designation = designation; }
+    public Date getDateOfJoining() { return dateOfJoining; }
+    public void setDateOfJoining(Date dateOfJoining) { this.dateOfJoining = dateOfJoining; }
+    public String getContractType() { return contractType; }
+    public void setContractType(String contractType) { this.contractType = contractType; }
+    public String getManagerId() { return managerId; }
+    public void setManagerId(String managerId) { this.managerId = managerId; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+}
+
+
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.Date;
+import java.util.List;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class PayrollSlipDTO {
+    private String name;
+    private String employee;
+    private String employeeName;
+    private String department;
+    private String designation;
+    private Date startDate;
+    private Date endDate;
+    private Date postingDate;
+    private String payrollFrequency;
+    private String company;
+    private String currency;
+    private double totalWorkingDays;
+    private double paymentDays;
+    private double hourRate;
+    private double totalWorkingHours;
+    
+    
+    private List<SalaryDetail> earnings;
+    private List<SalaryDetail> deductions;
+    
+    
+    private double grossPay;
+    private double totalDeduction;
+    private double netPay;
+    private double roundedTotal;
+    
+    
+    private List<LoanRepaymentDetail> loanRepayment;
+    
+    
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SalaryDetail {
+        private String salaryComponent;
+        private String abbr;
+        private double amount;
+        private String formula;
+        private boolean dependsOnPaymentDays;
+        private boolean exemptFromPayrollTax;
+        private boolean doNotIncludeInTotal;
+        private boolean statisticalComponent;
+        private String condition;
+        
+        
+        public String getSalaryComponent() { return salaryComponent; }
+        public void setSalaryComponent(String salaryComponent) { this.salaryComponent = salaryComponent; }
+        
+        public String getAbbr() { return abbr; }
+        public void setAbbr(String abbr) { this.abbr = abbr; }
+        
+        public double getAmount() { return amount; }
+        public void setAmount(double amount) { this.amount = amount; }
+        
+        public String getFormula() { return formula; }
+        public void setFormula(String formula) { this.formula = formula; }
+        
+        public boolean isDependsOnPaymentDays() { return dependsOnPaymentDays; }
+        public void setDependsOnPaymentDays(boolean dependsOnPaymentDays) { this.dependsOnPaymentDays = dependsOnPaymentDays; }
+        
+        public boolean isExemptFromPayrollTax() { return exemptFromPayrollTax; }
+        public void setExemptFromPayrollTax(boolean exemptFromPayrollTax) { this.exemptFromPayrollTax = exemptFromPayrollTax; }
+        
+        public boolean isDoNotIncludeInTotal() { return doNotIncludeInTotal; }
+        public void setDoNotIncludeInTotal(boolean doNotIncludeInTotal) { this.doNotIncludeInTotal = doNotIncludeInTotal; }
+        
+        public boolean isStatisticalComponent() { return statisticalComponent; }
+        public void setStatisticalComponent(boolean statisticalComponent) { this.statisticalComponent = statisticalComponent; }
+        
+        public String getCondition() { return condition; }
+        public void setCondition(String condition) { this.condition = condition; }
+    }
+    
+    
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class LoanRepaymentDetail {
+        private String loan;
+        private String loanType;
+        private double principalAmount;
+        private double interestAmount;
+        private double totalPayment;
+        
+        
+        public String getLoan() { return loan; }
+        public void setLoan(String loan) { this.loan = loan; }
+        
+        public String getLoanType() { return loanType; }
+        public void setLoanType(String loanType) { this.loanType = loanType; }
+        
+        public double getPrincipalAmount() { return principalAmount; }
+        public void setPrincipalAmount(double principalAmount) { this.principalAmount = principalAmount; }
+        
+        public double getInterestAmount() { return interestAmount; }
+        public void setInterestAmount(double interestAmount) { this.interestAmount = interestAmount; }
+        
+        public double getTotalPayment() { return totalPayment; }
+        public void setTotalPayment(double totalPayment) { this.totalPayment = totalPayment; }
+    }
+    
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public String getEmployee() { return employee; }
+    public void setEmployee(String employee) { this.employee = employee; }
+    
+    public String getEmployeeName() { return employeeName; }
+    public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
+    
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+    
+    public String getDesignation() { return designation; }
+    public void setDesignation(String designation) { this.designation = designation; }
+    
+    public Date getStartDate() { return startDate; }
+    public void setStartDate(Date startDate) { this.startDate = startDate; }
+    
+    public Date getEndDate() { return endDate; }
+    public void setEndDate(Date endDate) { this.endDate = endDate; }
+    
+    public Date getPostingDate() { return postingDate; }
+    public void setPostingDate(Date postingDate) { this.postingDate = postingDate; }
+    
+    public String getPayrollFrequency() { return payrollFrequency; }
+    public void setPayrollFrequency(String payrollFrequency) { this.payrollFrequency = payrollFrequency; }
+    
+    public String getCompany() { return company; }
+    public void setCompany(String company) { this.company = company; }
+    
+    public String getCurrency() { return currency; }
+    public void setCurrency(String currency) { this.currency = currency; }
+    
+    public double getTotalWorkingDays() { return totalWorkingDays; }
+    public void setTotalWorkingDays(double totalWorkingDays) { this.totalWorkingDays = totalWorkingDays; }
+    
+    public double getPaymentDays() { return paymentDays; }
+    public void setPaymentDays(double paymentDays) { this.paymentDays = paymentDays; }
+    
+    public double getHourRate() { return hourRate; }
+    public void setHourRate(double hourRate) { this.hourRate = hourRate; }
+    
+    public double getTotalWorkingHours() { return totalWorkingHours; }
+    public void setTotalWorkingHours(double totalWorkingHours) { this.totalWorkingHours = totalWorkingHours; }
+    
+    public List<SalaryDetail> getEarnings() { return earnings; }
+    public void setEarnings(List<SalaryDetail> earnings) { this.earnings = earnings; }
+    
+    public List<SalaryDetail> getDeductions() { return deductions; }
+    public void setDeductions(List<SalaryDetail> deductions) { this.deductions = deductions; }
+    
+    public double getGrossPay() { return grossPay; }
+    public void setGrossPay(double grossPay) { this.grossPay = grossPay; }
+    
+    public double getTotalDeduction() { return totalDeduction; }
+    public void setTotalDeduction(double totalDeduction) { this.totalDeduction = totalDeduction; }
+    
+    public double getNetPay() { return netPay; }
+    public void setNetPay(double netPay) { this.netPay = netPay; }
+    
+    public double getRoundedTotal() { return roundedTotal; }
+    public void setRoundedTotal(double roundedTotal) { this.roundedTotal = roundedTotal; }
+    
+    public List<LoanRepaymentDetail> getLoanRepayment() { return loanRepayment; }
+    public void setLoanRepayment(List<LoanRepaymentDetail> loanRepayment) { this.loanRepayment = loanRepayment; }
+}
+
+
+
+package mg.itu.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.EmployeeDTO;
+import mg.itu.model.PayrollSlipDTO;
+import mg.itu.model.SalaryDetailDTO;
+import mg.itu.model.SummaryDTO;
+import mg.itu.util.DateUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class HrmsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsService.class);
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Value("${api.base-url-hr}")
+    private String baseApiUrl;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public ApiResponse<EmployeeDTO> getEmployeeList(String search, String department, String designation,
+                                                   String status, String startDate, String endDate, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+ 
+        StringBuilder filters = new StringBuilder("[");
+        List<String> conditions = new ArrayList<>(); 
+        if (search != null && !search.isEmpty()) {
+            conditions.add("[\"full_name\",\"like\",\"%" + search + "%\"]");
+        }
+        if (department != null && !department.equals("Tous")) {
+            conditions.add("[\"department\",\"=\",\"" + department + "\"]");
+        }
+        if (designation != null && !designation.equals("Tous")) {
+            conditions.add("[\"designation\",\"=\",\"" + designation + "\"]");
+        }
+        if (status != null && !status.equals("Tous")) {
+            conditions.add("[\"status\",\"=\",\"" + status + "\"]");
+        }
+        if (startDate != null && !startDate.isEmpty()) {
+            conditions.add("[\"date_of_joining\",\">=\",\"" + startDate + "\"]");
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            conditions.add("[\"date_of_joining\",\"<=\",\"" + endDate + "\"]");
+        }
+        filters.append(String.join(",", conditions)).append("]");
+
+        String url = baseApiUrl + "/Employee?fields=[\"*\"]&filters=" + filters.toString() + "&limit_page_length=500";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+   
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<EmployeeDTO> employees = new ArrayList<>();
+                for (Map<String, Object> item : data) {
+                    EmployeeDTO employee = objectMapper.convertValue(item, EmployeeDTO.class);
+                    employees.add(employee);
+                }
+                ApiResponse<EmployeeDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Employees fetched successfully");
+                apiResponse.setData(employees);
+                return apiResponse;
+            }
+
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch employees");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching employees", e);
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching employees: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<EmployeeDTO> getEmployeeDetails(String id, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "/Employee/" + id + "?fields=[\"*\"]"+ "&limit_page_length=500";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+        System.out.println("url employe "+ url);
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+   
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                Map<String, Object> data = (Map<String, Object>) responseMap.get("data");
+                EmployeeDTO employee = objectMapper.convertValue(data, EmployeeDTO.class);
+                ApiResponse<EmployeeDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Employee details fetched successfully");
+                apiResponse.setData(List.of(employee));
+                return apiResponse;
+            }
+
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch employee details");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching employee details", e);
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching employee details: " + e.getMessage());
+            return errorResponse;
+        }
+    } 
+
+    public ApiResponse<SalaryDetailDTO> getSalaryHistory(String id, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]&filters=[[\"employee\",\"=\",\"" + id + "\"]]"+ "&limit_page_length=500";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        System.out.println("url salary "+ url );
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SalaryDetailDTO> salaries = new ArrayList<>();
+                for (Map<String, Object> item : data) {
+                    SalaryDetailDTO salary = objectMapper.convertValue(item, SalaryDetailDTO.class);
+                    salaries.add(salary);
+                }
+                ApiResponse<SalaryDetailDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Salary history fetched successfully");
+                apiResponse.setData(salaries);
+                return apiResponse;
+            }
+
+            ApiResponse<SalaryDetailDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch salary history");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching salary history", e);
+            ApiResponse<SalaryDetailDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching salary history: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<PayrollSlipDTO> generatePayrollSlip(String employeeId, String startDate,String endDate, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+         
+        
+        String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]&filters=[[\"employee\",\"=\",\"" + employeeId + "\"],[\"posting_date\",\">=\",\"" + startDate + "\"],[\"posting_date\",\"<=\",\"" + endDate + "\"]]" + "&limit_page_length=500";
+        
+        System.out.println("URL Salary Slip: " + url);
+        
+        WebClient client = webClientBuilder.baseUrl(url).build();
+        
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                ApiResponse<PayrollSlipDTO> apiResponse = new ApiResponse<>();
+                
+                if (!data.isEmpty()) {
+                    Map<String, Object> salarySlipData = data.get(0);
+                    String salarySlipName = (String) salarySlipData.get("name");
+                    
+                    
+                    PayrollSlipDTO slip = getDetailedSalarySlip(salarySlipName, accessToken, sid);
+                    
+                    apiResponse.setStatus("success");
+                    
+                    if (slip != null) {
+                        apiResponse.setMessage("Payroll slip generated successfully");
+                        apiResponse.setData(List.of(slip));
+                        return apiResponse;
+                    }
+                    
+                    apiResponse.setMessage("no Payroll slip found");
+                    apiResponse.setData(null);
+                    return apiResponse;
+                }
+            }
+            
+            ApiResponse<PayrollSlipDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("No payroll slip found for the selected period");
+            errorResponse.setData(null);
+            return errorResponse;
+            
+        } catch (Exception e) {
+            logger.error("Error generating payroll slip", e);
+            ApiResponse<PayrollSlipDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error generating payroll slip: " + e.getMessage());
+            errorResponse.setData(null); 
+            return errorResponse;
+        }
+    }
+    
+
+    public ApiResponse<SummaryDTO> getMonthlySummary(String start, String end, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+        String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]"; 
+
+        if(start != null && start != "" && end != null && end != ""){
+            url+="&filters=[[\"posting_date\",\">=\",\"" + start + "\"],[\"posting_date\",\"<=\",\"" + end + "\"]]";
+        }
+        url+= "&limit_page_length=500";
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+        System.out.println("summary url "+ url);
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SummaryDTO> summary = new ArrayList<>();
+                for (Map<String, Object> item : data) {
+                    SummaryDTO itemSummary = objectMapper.convertValue(item, SummaryDTO.class);
+                    summary.add(itemSummary);
+                }
+                ApiResponse<SummaryDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Monthly summary fetched successfully");
+                apiResponse.setData(summary);
+                return apiResponse;
+            }
+
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch monthly summary");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching monthly summary: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    private PayrollSlipDTO getDetailedSalarySlip(String salarySlipName, String accessToken, String sid) {
+        try {
+            
+            String detailUrl = baseApiUrl + "/Salary Slip/" + salarySlipName + "?limit_page_length=500";
+            
+            WebClient client = webClientBuilder.baseUrl(detailUrl).build();
+            
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                Map<String, Object> data = (Map<String, Object>) responseMap.get("data");
+                
+                
+                PayrollSlipDTO slip = new PayrollSlipDTO();
+                
+                
+                slip.setName((String) data.get("name"));
+                slip.setEmployee((String) data.get("employee"));
+                slip.setEmployeeName((String) data.get("employee_name"));
+                slip.setDepartment((String) data.get("department"));
+                slip.setDesignation((String) data.get("designation"));
+                slip.setCompany((String) data.get("company"));
+                slip.setCurrency((String) data.get("currency"));
+                slip.setPayrollFrequency((String) data.get("payroll_frequency"));
+                
+                
+                if (data.get("start_date") != null) {
+                    slip.setStartDate(DateUtil.parseDate((String) data.get("start_date")));
+                }
+                if (data.get("end_date") != null) {
+                    slip.setEndDate(DateUtil.parseDate((String) data.get("end_date")));
+                }
+                if (data.get("posting_date") != null) {
+                    slip.setPostingDate(DateUtil.parseDate((String) data.get("posting_date")));
+                }
+                
+                
+                slip.setTotalWorkingDays(DateUtil.getDoubleValue(data.get("total_working_days")));
+                slip.setPaymentDays(DateUtil.getDoubleValue(data.get("payment_days")));
+                slip.setHourRate(DateUtil.getDoubleValue(data.get("hour_rate")));
+                slip.setTotalWorkingHours(DateUtil.getDoubleValue(data.get("total_working_hours")));
+                slip.setGrossPay(DateUtil.getDoubleValue(data.get("gross_pay")));
+                slip.setTotalDeduction(DateUtil.getDoubleValue(data.get("total_deduction")));
+                slip.setNetPay(DateUtil.getDoubleValue(data.get("net_pay")));
+                slip.setRoundedTotal(DateUtil.getDoubleValue(data.get("rounded_total")));
+                
+                
+                List<Map<String, Object>> earningsData = (List<Map<String, Object>>) data.get("earnings");
+                if (earningsData != null) {
+                    List<PayrollSlipDTO.SalaryDetail> earnings = new ArrayList<>();
+                    for (Map<String, Object> earning : earningsData) {
+                        PayrollSlipDTO.SalaryDetail detail = new PayrollSlipDTO.SalaryDetail();
+                        detail.setSalaryComponent((String) earning.get("salary_component"));
+                        detail.setAbbr((String) earning.get("abbr"));
+                        detail.setAmount(DateUtil.getDoubleValue(earning.get("amount")));
+                        detail.setFormula((String) earning.get("formula"));
+                        detail.setCondition((String) earning.get("condition"));
+                        detail.setDependsOnPaymentDays(DateUtil.getBooleanValue(earning.get("depends_on_payment_days")));
+                        detail.setExemptFromPayrollTax(DateUtil.getBooleanValue(earning.get("exempt_from_payroll_tax")));
+                        detail.setDoNotIncludeInTotal(DateUtil.getBooleanValue(earning.get("do_not_include_in_total")));
+                        detail.setStatisticalComponent(DateUtil.getBooleanValue(earning.get("statistical_component")));
+                        earnings.add(detail);
+                    }
+                    slip.setEarnings(earnings);
+                }
+                
+                
+                List<Map<String, Object>> deductionsData = (List<Map<String, Object>>) data.get("deductions");
+                if (deductionsData != null) {
+                    List<PayrollSlipDTO.SalaryDetail> deductions = new ArrayList<>();
+                    for (Map<String, Object> deduction : deductionsData) {
+                        PayrollSlipDTO.SalaryDetail detail = new PayrollSlipDTO.SalaryDetail();
+                        detail.setSalaryComponent((String) deduction.get("salary_component"));
+                        detail.setAbbr((String) deduction.get("abbr"));
+                        detail.setAmount(DateUtil.getDoubleValue(deduction.get("amount")));
+                        detail.setFormula((String) deduction.get("formula"));
+                        detail.setCondition((String) deduction.get("condition"));
+                        detail.setDependsOnPaymentDays(DateUtil.getBooleanValue(deduction.get("depends_on_payment_days")));
+                        detail.setExemptFromPayrollTax(DateUtil.getBooleanValue(deduction.get("exempt_from_payroll_tax")));
+                        detail.setDoNotIncludeInTotal(DateUtil.getBooleanValue(deduction.get("do_not_include_in_total")));
+                        detail.setStatisticalComponent(DateUtil.getBooleanValue(deduction.get("statistical_component")));
+                        deductions.add(detail);
+                    }
+                    slip.setDeductions(deductions);
+                }
+                
+                
+                List<Map<String, Object>> loanRepaymentData = (List<Map<String, Object>>) data.get("loan_repayment");
+                if (loanRepaymentData != null) {
+                    List<PayrollSlipDTO.LoanRepaymentDetail> loanRepayments = new ArrayList<>();
+                    for (Map<String, Object> loan : loanRepaymentData) {
+                        PayrollSlipDTO.LoanRepaymentDetail detail = new PayrollSlipDTO.LoanRepaymentDetail();
+                        detail.setLoan((String) loan.get("loan"));
+                        detail.setLoanType((String) loan.get("loan_type"));
+                        detail.setPrincipalAmount(DateUtil.getDoubleValue(loan.get("principal_amount")));
+                        detail.setInterestAmount(DateUtil.getDoubleValue(loan.get("interest_amount")));
+                        detail.setTotalPayment(DateUtil.getDoubleValue(loan.get("total_payment")));
+                        loanRepayments.add(detail);
+                    }
+                    slip.setLoanRepayment(loanRepayments);
+                }
+                
+                return slip;
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error fetching detailed salary slip", e);
+        }
+        
+        return null;
+    }
+    
+}
+
+package mg.itu.controller;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.EmployeeDTO;
+import mg.itu.model.PayrollSlipDTO;
+import mg.itu.model.SalaryDetailDTO;
+import mg.itu.model.SummaryDTO;
+import mg.itu.service.HrmsService;
+import mg.itu.service.PdfExportService;
+import mg.itu.util.DateUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+@Controller
+@RequestMapping("/api/hrms")
+public class HrmsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsController.class);
+
+    @Autowired
+    private HrmsService hrmsService;
+
+    @Autowired
+    private PdfExportService pdfExportService;
+    
+    @GetMapping("/employees")
+    public String getEmployeeList(
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "department", required = false) String department,
+            @RequestParam(value = "designation", required = false) String designation,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate,
+            Model model, HttpSession session) {
+        try {
+            ApiResponse<EmployeeDTO> response = hrmsService.getEmployeeList(
+                    search, department, designation, status, startDate, endDate, session);
+            if ("success".equals(response.getStatus())) {
+                model.addAttribute("employees", response.getData());
+                model.addAttribute("totalEmployees", response.getData().size());
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching employee list", e);
+            model.addAttribute("error", "Error fetching employee list: " + e.getMessage());
+        }
+        return "views/hrms/employee-list";
+    }
+
+    
+    @GetMapping("/employee/{id}")
+    public String getEmployeeDetails(@PathVariable String id, Model model, HttpSession session) {
+        try {
+            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(id, session);
+            ApiResponse<SalaryDetailDTO> salaryResponse = hrmsService.getSalaryHistory(id, session);
+            session.setAttribute("employeID", id); 
+            if ("success".equals(empResponse.getStatus()) && "success".equals(salaryResponse.getStatus())) {
+                model.addAttribute("employee", empResponse.getData().get(0));
+                model.addAttribute("salaryHistory", salaryResponse.getData());
+            } else {
+                model.addAttribute("error", empResponse.getMessage() + " | " + salaryResponse.getMessage());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching employee details", e);
+            model.addAttribute("error", "Error fetching employee details: " + e.getMessage());
+        }
+        return "views/hrms/employee-details";
+    }
+
+    
+    @GetMapping("/employee/{id}/payroll")
+    public String getPayrollForm(@PathVariable String id, Model model, HttpSession session) {
+        try {
+            
+            String empId = (String) session.getAttribute("employeID");
+            if (empId == null) {
+                empId = id;
+                session.setAttribute("employeID", empId); 
+            }
+            
+            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(empId, session);
+            if ("success".equals(empResponse.getStatus())) {
+                model.addAttribute("employee", empResponse.getData().get(0));
+            } else {
+                model.addAttribute("error", empResponse.getMessage()); 
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching payroll form", e);
+            model.addAttribute("error", "Error fetching payroll form: " + e.getMessage());
+        }
+        return "views/hrms/payroll-form";
+    }
+   @PostMapping("/employee/{id}/payroll/generate")  
+    public String generatePayrollSlip(
+            @PathVariable String id, 
+            @RequestParam("monthYear") String monthYear, 
+            Model model, HttpSession session) {
+        try {
+            session.setAttribute("monthYear", monthYear); 
+            String emp = (String) session.getAttribute("employeID");
+            System.out.println("employe ID "+ emp);
+
+            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(emp, session);
+            
+            String startDate = DateUtil.getFirstDayOfMonth(monthYear);
+            String endDate = DateUtil.getLastDayOfMonth(monthYear);
+            
+            ApiResponse<PayrollSlipDTO> response = hrmsService.generatePayrollSlip(emp, startDate,endDate, session);
+            model.addAttribute("employee", empResponse.getData().get(0));
+            
+            if ("success".equals(empResponse.getStatus()) && "success".equals(response.getStatus())) {
+                model.addAttribute("payrollSlip", response.getData().get(0));
+                model.addAttribute("monthYear", monthYear);
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid date format: {}", e.getMessage());
+            model.addAttribute("error", "Format de date invalide: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error generating payroll slip", e); 
+            model.addAttribute("error", "Error generating payroll slip: " + e.getMessage());
+        }
+        return "views/hrms/payroll-form";
+    }
+    
+    @GetMapping("/employee/{id}/payroll/export")
+    public ResponseEntity<byte[]> exportPayrollSlipToPdf(
+            @PathVariable String id,
+            @RequestParam("monthYear") String monthYear,
+            HttpSession session) {
+        
+        try {
+            String emp = (String) session.getAttribute("employeID");
+            String month = (String) session.getAttribute("monthYear");
+            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(emp, session);
+            String startDate = DateUtil.getFirstDayOfMonth(month);
+            String endDate = DateUtil.getLastDayOfMonth(month);
+            ApiResponse<PayrollSlipDTO> response = hrmsService.generatePayrollSlip(emp, startDate, endDate, session);
+            
+            if (!"success".equals(empResponse.getStatus()) || !"success".equals(response.getStatus())) {
+                logger.error("Error retrieving data for PDF export: {}", response.getMessage());
+                return ResponseEntity.badRequest().build();
+            }
+            
+            EmployeeDTO employee = empResponse.getData().get(0);
+            PayrollSlipDTO payrollSlip = response.getData().get(0);
+            
+            
+            byte[] pdfBytes = pdfExportService.generatePayrollSlipPdf(employee, payrollSlip, month);
+            
+            
+            String filename = String.format("Fiche_Paie_%s_%s.pdf", 
+                employee.getFullName().replaceAll("\\s+", "_"), 
+                monthYear);
+                
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(ContentDisposition.attachment().filename(filename).build());
+            headers.setContentLength(pdfBytes.length);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+                    
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid date format: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e) {
+            logger.error("Error exporting payroll slip to PDF", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    
+    @GetMapping("/summary")
+    public String getMonthlySummary(
+            @RequestParam(value = "monthYear", required = false) String monthYear,
+            Model model, HttpSession session) {
+        try {
+            
+            model.addAttribute("monthYear", monthYear);
+            String startDate = DateUtil.getFirstDayOfMonth(monthYear);
+            String endDate = DateUtil.getLastDayOfMonth(monthYear);
+
+            ApiResponse<SummaryDTO> response = hrmsService.getMonthlySummary(startDate, endDate, session);
+            if ("success".equals(response.getStatus())) {
+                model.addAttribute("summary", response.getData());
+                double totalDeduction = 0 ,totalGross = 0, totalNet = 0;
+                List<Double> grossList = new ArrayList<>();
+                String currency = response.getData().isEmpty() ? "EUR" : response.getData().get(0).getCurrency();
+                for (SummaryDTO item : response.getData()) {
+                    totalGross += item.getTotalGross();
+                    totalNet += item.getNetPay();
+                    totalDeduction += item.getTotal_deduction();
+                    grossList.add(item.getTotalGross());
+                }
+                model.addAttribute("totalGross", totalGross);
+                model.addAttribute("totalNet", totalNet);
+                model.addAttribute("totalDeduction", totalDeduction);
+                model.addAttribute("currency", currency);
+                model.addAttribute("averageGross", response.getData().isEmpty() ? 0 : totalGross / response.getData().size());
+                Collections.sort(grossList);
+                double medianGross = grossList.isEmpty() ? 0 :
+                        grossList.size() % 2 == 0 ?
+                        (grossList.get(grossList.size() / 2 - 1) + grossList.get(grossList.size() / 2)) / 2 :
+                        grossList.get(grossList.size() / 2);
+                model.addAttribute("medianGross", medianGross);
+                model.addAttribute("totalEmployees", response.getData().size());
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid date format: {}", e.getMessage());
+            model.addAttribute("error", "Format de date invalide: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            model.addAttribute("error", "Erreur lors de la récupération du récapitulatif mensuel: " + e.getMessage());
+        }
+        return "views/hrms/monthly-summary";
+    }
+}
+
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Récapitulatif Mensuel - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        select, button {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        button {
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #444444;
+        }
+        th {
+            background-color: #F5F5F5;
+            font-weight: 600;
+        }
+        .total {
+            background-color: #F5F5F5;
+            font-weight: bold;
+        }
+        .message.error-message {
+            background-color: #fef2f2;
+            border: 1px solid #f43f5e;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>📊 Tableau Récapitulatif Mensuel</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="filters">
+                <form th:action="@{/api/hrms/summary}" method="get">
+                    <label>📅 Période:</label>
+                    <input type="month" 
+                           name="monthYear" 
+                           th:value="${monthYear != null ? monthYear : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
+                           required>
+                    <button type="submit">🔄 Actualiser</button>
+                </form>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom Employé</th>
+                        <th>Dept.</th>
+                        <th>date de publication</th>
+                        <th>Total Deduction</th>
+                        <th>Total Brut</th>
+                        <th>Net Payé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${summary}">
+                        <td th:text="${item.employeeId}"></td>
+                        <td th:text="${item.employeeName}"></td>
+                        <td th:text="${item.department}"></td>
+                        <td th:text="${item.postingDate}"></td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(item.total_deduction, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(item.totalGross, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(item.netPay, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                    </tr>
+                    <tr class="total">
+                        <td colspan="4">TOTAUX (<span th:text="${totalEmployees}"></span> employés actifs)</td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(totalDeduction, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(totalGross, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(totalNet, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div th:if="${error}" class="message error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

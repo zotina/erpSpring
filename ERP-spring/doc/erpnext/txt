@@ -1,0 +1,709 @@
+Part 1: Existing App Scenario
+
+This part focuses on creating a product, requesting materials, obtaining supplier quotations, issuing purchase orders, receiving invoices, and tracking their status.
+1. Création Produit (Item)
+
+Purpose: Create a new product (Item) in ERPNext to be used in subsequent processes like material requests or purchases.
+
+DocTypes Involved:
+
+    UOM (Unit of Measure): Defines the unit of measure for items.
+        Fields:
+            name (ID): Unique identifier.
+            uom_name: Name of the unit (e.g., "Unit", "Kilogram").
+    Item: Represents the product or material.
+        Fields:
+            name (ID): Unique identifier.
+            item_code: Unique code for the item.
+            item_name: Descriptive name of the item.
+            stock_uom: Stock unit of measure (links to UOM).
+            purchase_uom: Unit for purchasing (links to UOM).
+            sales_uom: Unit for sales (links to UOM).
+
+Order of Actions:
+
+    Create UOM (if not already exists):
+        Navigate to: Stock > Unit of Measure > New.
+        Enter uom_name (e.g., "Unit").
+        Save to create a new UOM.
+    Create Item:
+        Navigate to: Stock > Item > New.
+        Enter item_code, item_name, and select stock_uom, purchase_uom, sales_uom from UOM.
+        Save to create the item.
+
+Backend Updates:
+
+    UOM:
+        A new record is inserted into the tabUOM table.
+        Example SQL: INSERT INTO tabUOM (name, uom_name) VALUES ('uom-001', 'Unit').
+    Item:
+        A new record is inserted into the tabItem table.
+        Example SQL: INSERT INTO tabItem (name, item_code, item_name, stock_uom, purchase_uom, sales_uom) VALUES ('item-001', 'ITEM001', 'Sample Product', 'Unit', 'Unit', 'Unit').
+        The system checks for duplicate item_code to ensure uniqueness.
+        Metadata like creation and modified timestamps are set.
+
+Key Notes:
+
+    Ensure the UOM exists before creating the Item, as stock_uom, purchase_uom, and sales_uom are mandatory fields that link to tabUOM.
+    Items can have additional settings (e.g., is_stock_item for inventory tracking), which should be configured based on requirements.
+
+2. Faire une Demande de Besoin (Material Request)
+
+Purpose: Request materials needed for operations, which may trigger procurement.
+
+DocTypes Involved:
+
+    Material Request:
+        Fields:
+            name (ID): Unique identifier.
+            amended_from: Links to the original Material Request if amended.
+            material_request_type: Type (e.g., "Purchase", "Material Transfer").
+            transaction_date: Date of the request.
+            status: Status (e.g., "Draft", "Submitted", "Ordered").
+    Material Request Item (Child Table):
+        Fields:
+            name (ID): Unique identifier.
+            item_code: Links to Item (tabItem).
+            qty: Quantity requested.
+            parent: Links to Material Request (tabMaterial Request).
+
+Order of Actions:
+
+    Create Material Request:
+        Navigate to: Stock > Material Request > New.
+        Set material_request_type to "Purchase" (for supplier procurement).
+        Set transaction_date.
+        Add items in the Items table:
+            Select item_code from Item.
+            Enter qty.
+        Save and submit the Material Request.
+
+Backend Updates:
+
+    Material Request:
+        A new record is inserted into tabMaterial Request.
+        Example SQL: INSERT INTO tabMaterial Request (name, material_request_type, transaction_date, status) VALUES ('MR-001', 'Purchase', '2025-05-04', 'Draft').
+        On submission, status updates to "Submitted".
+    Material Request Item:
+        Records are inserted into tabMaterial Request Item for each item.
+        Example SQL: INSERT INTO tabMaterial Request Item (name, item_code, qty, parent) VALUES ('MRI-001', 'ITEM001', 10, 'MR-001').
+        The system validates item_code against tabItem and ensures qty is positive.
+    Status Tracking:
+        The status field is updated based on workflow actions (e.g., "Submitted", "Ordered").
+        If a Purchase Order is created later, the Material Request’s status may update to "Ordered".
+
+Key Notes:
+
+    The material_request_type determines the next steps (e.g., "Purchase" leads to procurement).
+    The system checks stock availability and may suggest creating a Purchase Order if stock is insufficient.
+
+3. Faire une Demande de Devis à un Fournisseur (Quotation)
+
+Purpose: Request quotations from suppliers for the items in the Material Request.
+
+DocTypes Involved:
+
+    Request for Quotation:
+        Fields:
+            name (ID): Unique identifier.
+            transaction_date: Date of the request.
+            status: Status (e.g., "Draft", "Submitted").
+    Request for Quotation Item (Child Table):
+        Fields:
+            name (ID): Unique identifier.
+            item_code: Links to Item (tabItem).
+            qty: Quantity requested.
+            parent: Links to Request for Quotation (tabRequest for Quotation).
+    Supplier Quotation:
+        Fields:
+            name (ID): Unique identifier.
+            supplier: Links to Supplier (tabSupplier).
+            transaction_date: Date of the quotation.
+            valid_till: Expiry date of the quotation.
+    Supplier Quotation Item (Child Table):
+        Fields:
+            name (ID): Unique identifier.
+            item_code: Links to Item (tabItem).
+            qty: Quantity quoted.
+            rate: Price per unit.
+            parent: Links to Supplier Quotation (tabSupplier Quotation).
+
+Order of Actions:
+
+    Create Request for Quotation:
+        From the Material Request, click "Create > Request for Quotation".
+        Select suppliers to send the RFQ to.
+        The system auto-populates items from the Material Request.
+        Save and submit the RFQ.
+    Supplier Submits Quotation:
+        Suppliers can log into ERPNext (via the Supplier Portal) and submit a Supplier Quotation.
+        Alternatively, manually create a Supplier Quotation:
+            Navigate to: Buying > Supplier Quotation > New.
+            Select supplier, set valid_till, and add items with item_code, qty, and rate.
+            Save and submit.
+
+Backend Updates:
+
+    Request for Quotation:
+        A new record is inserted into tabRequest for Quotation.
+        Example SQL: INSERT INTO tabRequest for Quotation (name, transaction_date, status) VALUES ('RFQ-001', '2025-05-04', 'Draft').
+        On submission, status updates to "Submitted".
+    Request for Quotation Item:
+        Records are inserted into tabRequest for Quotation Item.
+        Example SQL: INSERT INTO tabRequest for Quotation Item (name, item_code, qty, parent) VALUES ('RFQI-001', 'ITEM001', 10, 'RFQ-001').
+    Supplier Quotation:
+        A new record is inserted into tabSupplier Quotation.
+        Example SQL: INSERT INTO tabSupplier Quotation (name, supplier, transaction_date, valid_till) VALUES ('SQ-001', 'SUP-001', '2025-05-04', '2025-05-11').
+    Supplier Quotation Item:
+        Records are inserted into tabSupplier Quotation Item.
+        Example SQL: INSERT INTO tabSupplier Quotation Item (name, item_code, qty, rate, parent) VALUES ('SQI-001', 'ITEM001', 10, 100, 'SQ-001').
+    Linkages:
+        The Supplier Quotation is linked to the Request for Quotation via the request_for_quotation field.
+        The system validates valid_till and ensures rate is positive.
+
+Key Notes:
+
+    Suppliers can submit quotations via the ERPNext Supplier Portal, which requires a login (configured in the Supplier Portal settings).
+    The RFQ can be sent to multiple suppliers, and their responses are consolidated as Supplier Quotations.
+
+4. Faire un Bon de Commande (Purchase Order)
+
+Purpose: Issue a Purchase Order to a supplier based on the accepted Supplier Quotation.
+
+DocTypes Involved:
+
+    Purchase Order:
+        Fields:
+            name (ID): Unique identifier.
+            supplier: Links to Supplier (tabSupplier).
+            transaction_date: Date of the order.
+            status: Status (e.g., "Draft", "To Receive and Bill").
+    Purchase Order Item (Child Table):
+        Fields:
+            name (ID): Unique identifier.
+            item_code: Links to Item (tabItem).
+            qty: Quantity ordered.
+            rate: Price per unit.
+            parent: Links to Purchase Order (tabPurchase Order).
+
+Order of Actions:
+
+    Create Purchase Order:
+        From the Supplier Quotation, click "Create > Purchase Order".
+        The system auto-populates supplier, items, qty, and rate from the Supplier Quotation.
+        Set transaction_date and any additional terms.
+        Save and submit the Purchase Order.
+
+Backend Updates:
+
+    Purchase Order:
+        A new record is inserted into tabPurchase Order.
+        Example SQL: INSERT INTO tabPurchase Order (name, supplier, transaction_date, status) VALUES ('PO-001', 'SUP-001', '2025-05-04', 'Draft').
+        On submission, status updates to "To Receive and Bill".
+    Purchase Order Item:
+        Records are inserted into tabPurchase Order Item.
+        Example SQL: 'INSERT INTO tabPurchase Order Item (name, item_code, qty, rate, parent) VALUES ('POI-001', 'ITEM001', 10, 100, 'PO-001').
+    Linkages:
+        The Purchase Order is linked to the Supplier Quotation and Material Request.
+        The Material Request’s status updates to "Ordered".
+        Stock projections are updated in tabBin to reflect expected stock.
+
+Key Notes:
+
+    The status field tracks progress (e.g., "To Receive and Bill", "Completed").
+    The system validates that the qty ordered does not exceed the requested quantity in the Material Request.
+
+5. Recevoir Facture (Purchase Invoice)
+
+Purpose: Record the supplier’s invoice for the purchased items.
+
+DocTypes Involved:
+
+    Purchase Invoice:
+        Fields:
+            name (ID): Unique identifier.
+            supplier: Links to Supplier (tabSupplier).
+            posting_date: Date of the invoice.
+            status: Status (e.g., "Draft", "Unpaid").
+    Purchase Invoice Item (Child Table):
+        Fields:
+            name (ID): Unique identifier.
+            item_code: Links to Item (tabItem).
+            qty: Quantity invoiced.
+            rate: Price per unit.
+            parent: Links to Purchase Invoice (tabPurchase Invoice).
+
+Order of Actions:
+
+    Create Purchase Invoice:
+        From the Purchase Order, click "Create > Purchase Invoice".
+        The system auto-populates supplier, items, qty, and rate from the Purchase Order.
+        Set posting_date and any taxes or additional charges.
+        Save and submit the Purchase Invoice.
+
+Backend Updates:
+
+    Purchase Invoice:
+        A new record is inserted into tabPurchase Invoice.
+        Example SQL: INSERT INTO tabPurchase Invoice (name, supplier, posting_date, status) VALUES ('PI-001', 'SUP-001', '2025-05-04', 'Draft').
+        On submission, status updates to "Unpaid".
+    Purchase Invoice Item:
+        Records are inserted into tabPurchase Invoice Item.
+        Example SQL: INSERT INTO tabPurchase Invoice Item (name, item_code, qty, rate, parent) VALUES ('PII-001', 'ITEM001', 10, 100, 'PI-001').
+    Accounting Entries:
+        General Ledger (GL) entries are created in tabGL Entry to record the liability (e.g., Accounts Payable) and expense (e.g., Cost of Goods Sold).
+        Example GL Entries:
+            Debit: Expense Account (e.g., Cost of Goods Sold) – 1000 (10 units * 100).
+            Credit: Accounts Payable (Supplier) – 1000.
+    Stock Updates:
+        If the Purchase Invoice is linked to a Purchase Receipt, stock is updated in tabStock Ledger Entry and tabBin.
+
+Key Notes:
+
+    The Purchase Invoice must match the Purchase Order’s qty and rate to avoid discrepancies.
+    Taxes and charges can be applied via tabPurchase Taxes and Charges.
+
+6. Voir Statut des Factures (Purchase Invoice)
+
+Purpose: Track the status of Purchase Invoices (e.g., "Unpaid", "Paid").
+
+DocTypes Involved:
+
+    Purchase Invoice:
+        Fields (relevant for status):
+            status: Tracks invoice status (e.g., "Draft", "Unpaid", "Paid", "Overdue").
+
+Order of Actions:
+
+    View Purchase Invoice List:
+        Navigate to: Accounts > Purchase Invoice.
+        Use filters to view invoices by status (e.g., "Unpaid").
+    Check Individual Invoice:
+        Open a Purchase Invoice to see its status and payment details.
+
+Backend Updates:
+
+    No direct updates occur when viewing.
+    The system queries tabPurchase Invoice to display records.
+    Example SQL: SELECT name, supplier, posting_date, status FROM tabPurchase Invoice WHERE status = 'Unpaid'.
+
+Key Notes:
+
+    The status is updated automatically when payments are made (see below).
+    Reports like “Accounts Payable” can summarize invoice statuses.
+
+Part 2: New App Scenario
+
+This part focuses on supplier interactions, updating prices, listing documents, and managing payments in accounting mode.
+7. Mettre un Login (Compte ERPNext)
+
+Purpose: Provide suppliers with access to the ERPNext Supplier Portal.
+
+DocTypes Involved:
+
+    Supplier:
+        Fields:
+            name (ID): Unique identifier.
+            supplier_name: Name of the supplier.
+            supplier_group: Links to Supplier Group (tabSupplier Group).
+    User:
+        Fields:
+            name (ID): Email ID of the user.
+            first_name: Supplier contact’s name.
+            role: Role (e.g., "Supplier").
+    Portal Settings:
+        Configures portal access for suppliers.
+
+Order of Actions:
+
+    Create Supplier:
+        Navigate to: Buying > Supplier > New.
+        Enter supplier_name and supplier_group.
+        Save the Supplier.
+    Create User for Supplier:
+        Navigate to: Home > Users > User > New.
+        Enter name (email), first_name, and assign the “Supplier” role.
+        Save the User.
+    Enable Supplier Portal:
+        In Supplier settings, link the User to the Supplier record.
+        Ensure Portal Settings allow supplier access.
+
+Backend Updates:
+
+    Supplier:
+        A new record is inserted into tabSupplier.
+        Example SQL: INSERT INTO tabSupplier (name, supplier_name, supplier_group) VALUES ('SUP-001', 'Supplier ABC', 'General').
+    User:
+        A new record is inserted into tabUser.
+        Example SQL: INSERT INTO tabUser (name, first_name, role) VALUES ('supplier@abc.com', 'John Doe', 'Supplier').
+    Role Assignment:
+        The “Supplier” role is assigned in tabUser Role.
+        The Supplier Portal validates the User against the Supplier record for access.
+
+Key Notes:
+
+    Suppliers can log in to view RFQs, submit Supplier Quotations, and check Purchase Orders.
+    Ensure the “Supplier” role has permissions for relevant DocTypes (configured in Role Permissions).
+
+8. Choisir un Fournisseur
+
+Purpose: Select a supplier for procurement processes.
+
+DocTypes Involved:
+
+    Supplier (as above).
+
+Order of Actions:
+
+    Select Supplier:
+        In Request for Quotation, Purchase Order, or Purchase Invoice, select supplier from the dropdown (populated from tabSupplier).
+        Alternatively, use the Supplier list to choose a supplier manually.
+
+Backend Updates:
+
+    No direct updates occur when selecting a supplier.
+    The system queries tabSupplier to populate the dropdown.
+    Example SQL: SELECT name, supplier_name FROM tabSupplier.
+
+Key Notes:
+
+    Supplier selection links the supplier to the transaction (e.g., RFQ, PO).
+    Ensure the supplier is active and has valid contact details.
+
+9. Lister les Demandes de Devis
+
+Purpose: View all Requests for Quotation or Supplier Quotations.
+
+DocTypes Involved:
+
+    Request for Quotation (as above).
+    Supplier Quotation (as above).
+
+Order of Actions:
+
+    View RFQ List:
+        Navigate to: Buying > Request for Quotation.
+        Use filters to view RFQs by status or transaction_date.
+    View Supplier Quotation List:
+        Navigate to: Buying > Supplier Quotation.
+        Filter by supplier or valid_till.
+
+Backend Updates:
+
+    No direct updates occur when viewing.
+    The system queries tabRequest for Quotation and tabSupplier Quotation.
+    Example SQL: SELECT name, transaction_date, status FROM tabRequest for Quotation WHERE status = 'Submitted'.
+
+Key Notes:
+
+    Suppliers can view their RFQs and submitted quotations via the Supplier Portal.
+    Use reports like “Supplier Quotation Comparison” to analyze responses.
+
+10. Mettre à Jour les Prix
+
+Purpose: Update item prices in Supplier Quotations or Purchase Orders.
+
+DocTypes Involved:
+
+    Supplier Quotation (as above).
+    Purchase Order (as above).
+    Item Price:
+        Fields:
+            name (ID): Unique identifier.
+            item_code: Links to Item (tabItem).
+            price_list: Links to Price List (tabPrice List).
+            price_list_rate: Price per unit.
+
+Order of Actions:
+
+    Update Supplier Quotation:
+        Open a Supplier Quotation.
+        Edit the rate in the Items table.
+        Save and resubmit.
+    Update Purchase Order:
+        Open a Purchase Order.
+        Edit the rate in the Items table.
+        Save and resubmit.
+    Update Item Price (optional):
+        Navigate to: Stock > Item Price > New.
+        Select item_code, price_list (e.g., "Standard Buying"), and set price_list_rate.
+        Save to update the price.
+
+Backend Updates:
+
+    Supplier Quotation:
+        The rate field in tabSupplier Quotation Item is updated.
+        Example SQL: UPDATE tabSupplier Quotation Item SET rate = 120 WHERE name = 'SQI-001'.
+        The modified timestamp is updated.
+    Purchase Order:
+        The rate field in tabPurchase Order Item is updated.
+        Example SQL: UPDATE tabPurchase Order Item SET rate = 120 WHERE name = 'POI-001'.
+    Item Price:
+        A new record is inserted into tabItem Price.
+        Example SQL: INSERT INTO tabItem Price (name, item_code, price_list, price_list_rate) VALUES ('IP-001', 'ITEM001', 'Standard Buying', 120).
+    Validation:
+        The system checks for permissions (e.g., “write” access to Supplier Quotation).
+        Ensures rate is positive and updates linked documents (e.g., Purchase Invoice).
+
+Key Notes:
+
+    Updating prices in Supplier Quotations or Purchase Orders does not automatically update tabItem Price unless explicitly done.
+    Use Price Lists to maintain standardized pricing across transactions.
+
+11. Lister les Commandes
+
+Purpose: View all Purchase Orders.
+
+DocTypes Involved:
+
+    Purchase Order (as above).
+
+Order of Actions:
+
+    View Purchase Order List:
+        Navigate to: Buying > Purchase Order.
+        Use filters to view POs by status (e.g., "To Receive and Bill") or supplier.
+
+Backend Updates:
+
+    No direct updates occur when viewing.
+    The system queries tabPurchase Order.
+    Example SQL: SELECT name, supplier, transaction_date, status FROM tabPurchase Order WHERE status = 'To Receive and Bill'.
+
+Key Notes:
+
+    Suppliers can view their Purchase Orders via the Supplier Portal.
+    Use reports like “Purchase Order Summary” for detailed analysis.
+
+12. Voir le Status (Reçu, Payé)
+
+Purpose: Check the status of Purchase Orders (e.g., received) and Purchase Invoices (e.g., paid).
+
+DocTypes Involved:
+
+    Purchase Order (as above).
+    Purchase Invoice (as above).
+    Purchase Receipt:
+        Fields:
+            name (ID): Unique identifier.
+            supplier: Links to Supplier (tabSupplier).
+            posting_date: Date of receipt.
+            status: Status (e.g., "Draft", "Completed").
+    Purchase Receipt Item (Child Table):
+        Fields:
+            name (ID): Unique identifier.
+            item_code: Links to Item (tabItem).
+            qty: Quantity received.
+            parent: Links to Purchase Receipt (tabPurchase Receipt).
+
+Order of Actions:
+
+    Check Purchase Order Status:
+        Open a Purchase Order to view its status (e.g., “To Receive and Bill”).
+        If items are received, create a Purchase Receipt:
+            From the Purchase Order, click “Create > Purchase Receipt”.
+            Enter qty received and posting_date.
+            Save and submit.
+    Check Purchase Invoice Status:
+        Open a Purchase Invoice to view its status (e.g., “Unpaid”, “Paid”).
+        See payment details below.
+
+Backend Updates:
+
+    Purchase Receipt:
+        A new record is inserted into tabPurchase Receipt.
+        Example SQL: INSERT INTO tabPurchase Receipt (name, supplier, posting_date, status) VALUES ('PR-001', 'SUP-001', '2025-05-04', 'Draft').
+        On submission, status updates to “Completed”.
+    Purchase Receipt Item:
+        Records are inserted into tabPurchase Receipt Item.
+        Example SQL: INSERT INTO tabPurchase Receipt Item (name, item_code, qty, parent) VALUES ('PRI-001', 'ITEM001', 10, 'PR-001').
+    Stock Updates:
+        Stock is updated in tabStock Ledger Entry and tabBin.
+        Example SQL: INSERT INTO tabStock Ledger Entry (item_code, warehouse, actual_qty, posting_date) VALUES ('ITEM001', 'Stores', 10, '2025-05-04').
+    Purchase Order Status:
+        The status is updated based on receipt and billing progress (e.g., “To Bill” if received, “Completed” if fully received and billed).
+
+Key Notes:
+
+    A Purchase Receipt is required to mark items as received, which updates the Purchase Order’s status.
+    The Purchase Invoice’s status is updated separately (see payment below).
+
+13. Mode Comptable (Accounting)
+
+Purpose: Manage accounting entries and track financial transactions.
+
+DocTypes Involved:
+
+    GL Entry:
+        Fields:
+            name (ID): Unique identifier.
+            account: Links to Account (tabAccount).
+            debit: Debit amount.
+            credit: Credit amount.
+            voucher_type: Type (e.g., “Purchase Invoice”).
+            voucher_no: Links to the document (e.g., PI-001).
+    Account:
+        Fields:
+            name (ID): Unique identifier.
+            account_name: Name of the account (e.g., “Accounts Payable”).
+            account_type: Type (e.g., “Payable”, “Expense”).
+
+Order of Actions:
+
+    View GL Entries:
+        Navigate to: Accounts > General Ledger.
+        Filter by voucher_type (e.g., “Purchase Invoice”) or account.
+    Reconcile Accounts:
+        Use reports like “Accounts Payable” to track outstanding invoices.
+        Reconcile payments (see below).
+
+Backend Updates:
+
+    GL Entries are created automatically when Purchase Invoices or Payments are submitted.
+    Example SQL: SELECT name, account, debit, credit, voucher_type, voucher_no FROM tabGL Entry WHERE voucher_type = 'Purchase Invoice'.
+
+Key Notes:
+
+    The accounting module ensures double-entry bookkeeping (debits = credits).
+    Use the “Chart of Accounts” to manage accounts.
+
+14. Voir les Factures avec Status
+
+Purpose: View Purchase Invoices with their payment status.
+
+DocTypes Involved:
+
+    Purchase Invoice (as above).
+
+Order of Actions:
+
+    View Purchase Invoice List:
+        Navigate to: Accounts > Purchase Invoice.
+        Filter by status (e.g., “Unpaid”, “Paid”, “Overdue”).
+
+Backend Updates:
+
+    No direct updates occur when viewing.
+    Example SQL: SELECT name, supplier, posting_date, status FROM tabPurchase Invoice WHERE status = 'Unpaid'.
+
+Key Notes:
+
+    The status reflects payment progress (updated via Payment Entry).
+
+15. Payer
+
+Purpose: Record payments made to suppliers for Purchase Invoices.
+
+DocTypes Involved:
+
+    Payment Entry:
+        Fields:
+            name (ID): Unique identifier.
+            party_type: Type (e.g., “Supplier”).
+            party: Links to Supplier (tabSupplier).
+            posting_date: Date of payment.
+            paid_amount: Amount paid.
+            reference_no: Payment reference (e.g., bank transaction ID).
+    Payment Entry Reference (Child Table):
+        Fields:
+            name (ID): Unique identifier.
+            reference_doctype: Type (e.g., “Purchase Invoice”).
+            reference_name: Links to Purchase Invoice (tabPurchase Invoice).
+            allocated_amount: Amount allocated to the invoice.
+            parent: Links to Payment Entry (tabPayment Entry).
+
+Order of Actions:
+
+    Create Payment Entry:
+        From a Purchase Invoice, click “Create > Payment Entry”.
+        Select party_type as “Supplier” and party as the supplier.
+        The system auto-allocates the paid_amount to outstanding invoices.
+        Set posting_date and reference_no.
+        Save and submit the Payment Entry.
+
+Backend Updates:
+
+    Payment Entry:
+        A new record is inserted into tabPayment Entry.
+        Example SQL: INSERT INTO tabPayment Entry (name, party_type, party, posting_date, paid_amount) VALUES ('PE-001', 'Supplier', 'SUP-001', '2025-05-04', 1000).
+    Payment Entry Reference:
+        Records are inserted into tabPayment Entry Reference.
+        Example SQL: INSERT INTO tabPayment Entry Reference (name, reference_doctype, reference_name, allocated_amount, parent) VALUES ('PER-001', 'Purchase Invoice', 'PI-001', 1000, 'PE-001').
+    Purchase Invoice:
+        The status is updated to “Paid” if fully paid.
+        Example SQL: UPDATE tabPurchase Invoice SET status = 'Paid' WHERE name = 'PI-001'.
+    GL Entries:
+        GL Entries are created to record the payment.
+        Example GL Entries:
+            Debit: Accounts Payable (Supplier) – 1000.
+            Credit: Bank/Cash Account – 1000.
+
+Key Notes:
+
+    The system ensures the paid_amount does not exceed the outstanding amount.
+    Partial payments update the outstanding_amount in tabPurchase Invoice.
+
+Order of Actions (Summary)
+
+    Create Product:
+        Create UOM and Item.
+    Material Request:
+        Create and submit a Material Request.
+    Request for Quotation:
+        Create RFQ and receive Supplier Quotations.
+    Purchase Order:
+        Create and submit a Purchase Order.
+    Purchase Invoice:
+        Create and submit a Purchase Invoice.
+    Track Invoice Status:
+        View Purchase Invoice list.
+    Supplier Login:
+        Create Supplier and User for portal access.
+    Select Supplier:
+        Choose a supplier for transactions.
+    List RFQs:
+        View RFQs and Supplier Quotations.
+    Update Prices:
+        Update rates in Supplier Quotations, Purchase Orders, or Item Price.
+    List Purchase Orders:
+        View Purchase Order list.
+    Track Status (Received, Paid):
+        Create Purchase Receipt for received items; check Purchase Invoice status.
+    Accounting Mode:
+        View GL Entries and reconcile accounts.
+    View Invoices with Status:
+        Filter Purchase Invoices by status.
+    Make Payment:
+        Create and submit Payment Entry.
+
+Backend Updates (Summary)
+
+    Inserts: New records are created in tabUOM, tabItem, tabMaterial Request, tabRequest for Quotation, tabSupplier Quotation, tabPurchase Order, tabPurchase Invoice, tabPurchase Receipt, tabPayment Entry, etc.
+    Updates: Fields like status, rate, and outstanding_amount are updated in relevant tables.
+    GL Entries: Created for Purchase Invoices and Payment Entries to maintain accounting integrity.
+    Stock Updates: Created for Purchase Receipts to update tabStock Ledger Entry and tabBin.
+    Validations: The system checks for duplicates, permissions, and data integrity (e.g., positive qty, valid item_code).
+
+Key DocTypes Involved
+
+    UOM
+    Item
+    Material Request
+    Material Request Item
+    Request for Quotation
+    Request for Quotation Item
+    Supplier Quotation
+    Supplier Quotation Item
+    Purchase Order
+    Purchase Order Item
+    Purchase Invoice
+    Purchase Invoice Item
+    Purchase Receipt
+    Purchase Receipt Item
+    Supplier
+    User
+    Item Price
+    Payment Entry
+    Payment Entry Reference
+    GL Entry
+    Account

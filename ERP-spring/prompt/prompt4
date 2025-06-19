@@ -1,0 +1,198 @@
+voici le doc officiel du frappe erpnext : https://docs.frappe.io/erpnext , pour mon demande  suivant veuiller analyse le doc 
+
+modifier mon api qui update le prix rate d un item dans un supplier quotation , le processus de modification c est que lors que le supplier quotation et en status draft on peut modifier tout de suite le rate , mais lors que c est en status submit , on doit faire canceled all sur cette supplier quotation  regarder le doc pour voir comment le faire car sur le formulaire de erpnext pour faire un update en fait cette processus , lors qu on appuye sur cancelled all il  throws  si le supplier quotation  est deja  lie a un Purchase Item ou lie a un Purchase invoice  , si non il cree un doublant du supplier quotation  avec un status cancelled puui il y a un bouton amend dans le supplier quotation  anuller et si en clique decu on peut finalement faire un updte , regarder le doce officiel pour voir comment le faire cette proceder sur code  , voici mon api  : 
+
+
+import frappe
+from frappe import _
+from erpnext.controllers.api.utils import validate_jwt
+
+@frappe.whitelist(allow_guest=False)
+@validate_jwt
+def get_supplier_quotation_list(supplier=None):
+    """
+    REST API endpoint to fetch a list of Supplier Quotations with specific columns and child items.
+    Args:
+        supplier (str, optional): Filter by supplier name.
+    Returns: List of Supplier Quotations with Title, Status, Date, Valid Till, Grand Total, ID, child items, and supplier list in metadata.
+    Example usage:
+    http://erpnext.localhost:8000/api/method/erpnext.controllers.api.page.supplier_quotation_api.get_supplier_quotation_list?supplier=SUP-001
+    Header: Authorization: Bearer <jwt_token>
+    """
+    try:
+        # Prepare filters
+        filters = {}
+        if supplier:
+            filters["supplier"] = supplier
+
+        # Fetch Supplier Quotation records
+        supplier_quotations = frappe.get_all(
+            "Supplier Quotation",
+            fields=[
+                "title",
+                "status",
+                "transaction_date",
+                "valid_till",
+                "grand_total",
+                "name",
+                "supplier"
+            ],
+            filters=filters,
+            order_by="transaction_date desc"
+        )
+
+        # Fetch child items for each Supplier Quotation
+        for quotation in supplier_quotations:
+            child_items = frappe.get_all(
+                "Supplier Quotation Item",
+                filters={"parent": quotation["name"]},
+                fields=["name", "item_code", "item_name", "qty", "rate", "amount"]
+            )
+            quotation["child"] = child_items
+
+        # Fetch list of supplier names
+        suppliers = frappe.get_all("Supplier", fields=["name"], order_by="name asc")
+        supplier_names = [supplier["name"] for supplier in suppliers]
+
+        frappe.local.response["status"] = "success"
+        frappe.local.response["data"] = supplier_quotations
+        frappe.local.response["metadata"] = {"suppliers": supplier_names}
+
+        return
+
+    except Exception as e:
+        frappe.log_error(f"Error fetching Supplier Quotation list: {str(e)}", "Supplier Quotation API")
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = _("An error occurred while fetching the Supplier Quotation list.")
+        return
+
+@frappe.whitelist(allow_guest=False)
+@validate_jwt
+def get_supplier_quotation_item_details(parent):
+    """
+    REST API endpoint to fetch details of Supplier Quotation Items for a specific Supplier Quotation.
+    Args:
+        parent (str): The name of the Supplier Quotation (e.g., 'PUR-SQTN-2025-00001').
+    Returns: List of Supplier Quotation Items with item_code, item_name, qty, rate, amount, and name.
+    Example usage:
+    http://erpnext.localhost:8000/api/method/erpnext.controllers.api.page.supplier_quotation_api.get_supplier_quotation_item_details?parent=PUR-SQTN-2025-00001
+    Header: Authorization: Bearer <jwt_token>
+    """
+    try:
+        # Validate inputs
+        if not parent or     not isinstance(parent, str):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Invalid or missing parent parameter. Please provide a valid Supplier Quotation ID.")
+            return
+
+        # Check if the Supplier Quotation exists
+        if not frappe.db.exists("Supplier Quotation", parent):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Supplier Quotation {0} does not exist.").format(parent)
+            return
+
+        # Check permissions
+        if not frappe.has_permission("Supplier Quotation", "read"):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("You do not have permission to read Supplier Quotation records.")
+            return
+
+        # Fetch Supplier Quotation Item records
+        items = frappe.get_all(
+            "Supplier Quotation Item",
+            filters={"parent": parent},
+            fields=["name", "item_code", "item_name", "qty", "rate", "amount"]
+        )
+
+        if not items:
+            frappe.local.response["status"] = "success"
+            frappe.local.response["data"] = []
+            frappe.local.response["message"] = _("No items found for Supplier Quotation {0}.").format(parent)
+            return
+
+        frappe.local.response["status"] = "success"
+        frappe.local.response["data"] = items
+
+        return
+
+    except Exception as e:
+        frappe.log_error(f"Error fetching Supplier Quotation Item details: {str(e)}", "Supplier Quotation Item API")
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = _("An error occurred while fetching Supplier Quotation Item details.")
+        return
+
+@frappe.whitelist(allow_guest=False)
+@validate_jwt
+def update_supplier_quotation_item_rate(item_id, rate):
+    """
+    REST API endpoint to update the rate and amount of a specific Supplier Quotation Item.
+    Args:
+        item_id (str): The name of the Supplier Quotation Item (e.g., 'SQI-001').
+        rate (float): The new rate value to set for the item.
+    Returns: Success message or error details.
+    Example usage:
+    http://erpnext.localhost:8000/api/method/erpnext.controllers.api.page.supplier_quotation_api.update_supplier_quotation_item_rate?item_id=SQI-001&rate=200
+    Header: Authorization: Bearer <jwt_token>
+    """
+    try:
+        # Validate inputs
+        if not item_id or not isinstance(item_id, str):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Invalid or missing item_id parameter. Please provide a valid Supplier Quotation Item ID.")
+            return
+
+        try:
+            rate = float(rate)
+            if rate < 0:
+                frappe.local.response["status"] = "error"
+                frappe.local.response["message"] = _("Rate must be a non-negative number.")
+                return
+        except (ValueError, TypeError):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Invalid rate parameter. Please provide a valid number.")
+            return
+
+        # Check if the Supplier Quotation Item exists
+        if not frappe.db.exists("Supplier Quotation Item", item_id):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Supplier Quotation Item {0} does not exist.").format(item_id)
+            return
+
+        # Check permissions
+        if not frappe.has_permission("Supplier Quotation", "write"):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("You do not have permission to update Supplier Quotation records.")
+            return
+
+        # Fetch the Supplier Quotation Item
+        item = frappe.get_doc("Supplier Quotation Item", item_id)
+        parent = item.parent
+
+        # Update rate and amount
+        frappe.db.set_value(
+            "Supplier Quotation Item",
+            item_id,
+            {
+                "rate": rate,
+                "amount": rate * item.qty
+            }
+        )
+
+        # Load the parent Supplier Quotation and recalculate totals
+        supplier_quotation = frappe.get_doc("Supplier Quotation", parent)
+        supplier_quotation.run_method("calculate_taxes_and_totals")
+        supplier_quotation.db_update()
+
+        # Commit the changes
+        frappe.db.commit()
+
+        frappe.local.response["status"] = "success"
+        frappe.local.response["message"] = _("Successfully updated rate for Supplier Quotation Item {0}.").format(item_id)
+
+        return
+
+    except Exception as e:
+        frappe.log_error(f"Error updating Supplier Quotation Item: {str(e)}", "Supplier Quotation Item API")
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = _("An error occurred while updating the Supplier Quotation Item.")
+        return

@@ -1,0 +1,243 @@
+2025-06-04 00:46:37,625 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]', 'filters': '[["employee","=","HR-EMP-00042"],["posting_date","<=","2025-06-01"]]'}
+2025-06-04 00:47:00,893 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]', 'filters': '[["employee","=","HR-EMP-00042"],["posting_date","<=","2025-06-01"]]'}
+2025-06-04 00:47:16,757 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]', 'filters': '[["employee","=","HR-EMP-00042"],["posting_date","<=","2025-06-01"]]'}
+2025-06-04 00:47:24,350 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]', 'filters': '[["employee","=","HR-EMP-00042"],["posting_date","<=","2025-06-01"]]'}
+2025-06-04 00:47:34,541 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]', 'filters': '[["employee","=","HR-EMP-00042"],["posting_date","<=","2025-06-01"]]'}
+2025-06-04 11:10:14,024 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]'}
+2025-06-04 11:10:44,679 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]'}
+2025-06-04 11:11:19,376 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]'}
+2025-06-04 11:49:11,296 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["start_date","like","null-null%"]]', 'limit_page_length': 20}
+2025-06-04 11:49:24,598 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["start_date","like","2024-01%"]]', 'limit_page_length': 20}
+2025-06-04 11:49:27,268 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["start_date","like","2024-01%"]]', 'limit_page_length': 20}
+2025-06-04 12:45:38,787 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["start_date","like","null-null%"]]', 'limit_page_length': 20}
+2025-06-04 12:50:57,547 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["start_date","like","null-null%"]]', 'limit_page_length': 20}
+2025-06-04 12:51:03,465 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["start_date","like","2025-06%"]]', 'limit_page_length': 20}
+2025-06-04 12:51:06,267 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["start_date","like","2025-06%"]]', 'limit_page_length': 20}
+2025-06-04 12:56:17,172 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["posting_date",">=","2025-06-01"],["posting_date","<=","2025-06-30"]]]', 'limit_page_length': 20}
+2025-06-04 12:56:42,017 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["posting_date",">=","2025-06-01"],["posting_date","<=","2025-06-30"]]]', 'limit_page_length': 20}
+2025-06-04 12:59:19,012 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["posting_date",">=","2025-06-01"],["posting_date","<=","2025-06-30"]]]', 'limit_page_length': 20}
+2025-06-04 13:00:13,618 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["start_date","=","2025-06-01"],["end_date","<=","2025-06-30"]]]', 'limit_page_length': 20}
+2025-06-04 13:00:22,493 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["start_date","=","2025-06-01"],["end_date","=","2025-06-30"]]]', 'limit_page_length': 20}
+2025-06-04 13:03:13,778 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["full_name","like","%Alain Rakoto%"]]', 'limit_page_length': 20}
+2025-06-04 13:03:27,011 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["posting_date",">=","null"],["posting_date","<=","null"]]', 'limit_page_length': 20}
+2025-06-04 13:03:29,377 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["posting_date",">=","null"],["posting_date","<=","null"]]', 'limit_page_length': 20}
+2025-06-04 13:03:30,870 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["posting_date",">=","null"],["posting_date","<=","null"]]', 'limit_page_length': 20}
+2025-06-04 13:03:32,271 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["posting_date",">=","null"],["posting_date","<=","null"]]', 'limit_page_length': 20}
+2025-06-04 13:06:55,332 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["posting_date",">=","null"],["posting_date","<=","null"]]', 'limit_page_length': 20}
+2025-06-04 13:07:04,431 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["posting_date",">=","null"],["posting_date","<=","null"]]', 'limit_page_length': 20}
+2025-06-04 13:19:36,572 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]"', 'filters': '[["posting_date",">=","2025-06-01"],["posting_date","<=","2025-06-30"]]'}
+2025-06-04 13:19:43,471 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]"', 'filters': '[["posting_date",">=","2025-03-01"],["posting_date","<=","2025-03-31"]]'}
+2025-06-04 13:19:46,787 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]"', 'filters': '[["posting_date",">=","2025-04-01"],["posting_date","<=","2025-04-30"]]'}
+2025-06-04 13:20:32,985 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]"', 'filters': '[["posting_date",">=","2025-04-01"],["posting_date","<=","2025-04-30"]]'}
+2025-06-04 13:21:02,536 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]"'}
+2025-06-04 15:56:28,093 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]'}
+2025-06-04 16:01:47,842 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]'}
+2025-06-04 16:01:54,855 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]'}
+2025-06-04 16:57:57,861 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'doc': '{"name":"HR-PRUN-2025-00001","owner":"Administrator","creation":"2025-06-04 16:57:55.209031","modified":"2025-06-04 16:57:55.209031","modified_by":"Administrator","docstatus":0,"idx":0,"posting_date":"2025-06-04","company":"noufre society","currency":"EUR","exchange_rate":1,"payroll_payable_account":"Actif reçu mais non facturé - NS","status":"Draft","salary_slip_based_on_timesheet":0,"payroll_frequency":"Monthly","start_date":"2025-03-01","end_date":"2025-03-31","deduct_tax_for_unclaimed_employee_benefits":0,"deduct_tax_for_unsubmitted_tax_exemption_proof":0,"branch":null,"department":null,"designation":null,"grade":null,"number_of_employees":1,"validate_attendance":0,"cost_center":"Principal - NS","project":null,"payment_account":null,"bank_account":null,"salary_slips_created":0,"salary_slips_submitted":0,"error_message":null,"amended_from":null,"doctype":"Payroll Entry","employees":[{"name":"a70b90bn3o","owner":"Administrator","creation":"2025-06-04 16:57:55.209031","modified":"2025-06-04 16:57:55.209031","modified_by":"Administrator","docstatus":0,"idx":1,"employee":null,"employee_name":null,"department":null,"designation":null,"is_salary_withheld":0,"parent":"HR-PRUN-2025-00001","parentfield":"employees","parenttype":"Payroll Entry","doctype":"Payroll Employee Detail","__unsaved":1}],"__last_sync_on":"2025-06-04T13:57:55.635Z"}', 'action': 'Submit', 'cmd': 'frappe.desk.form.save.savedocs'}
+2025-06-04 17:52:16,416 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'report_name': 'General Ledger', 'filters': '{"company":"noufre society","from_date":"2025-01-01","to_date":"2025-12-31","account":["noufre society"],"party":[],"group_by":"Group by Voucher (Consolidated)","cost_center":[],"project":[],"include_dimensions":1,"include_default_book_entries":1}', 'ignore_prepared_report': 'false', 'are_default_filters': 'false', 'cmd': 'frappe.desk.query_report.run'}
+2025-06-04 21:13:06,995 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'employeesCsv': 'UmVmLE5vbSxQcmVub20sZ2VucmUsRGF0ZSBlbWJhdWNoZSxkYXRlIG5haXNzYW5jZSxjb21wYW55CjEsUmFrb3RvLEFsYWluLE1hc2N1bGluLDAzLzA0LzIwMjQsMDEvMDEvMTk4MCxNeSBDb21wYW55CjIsUmFzb2EsSmVhbm5lLEZlbWluaW4sMDgvMDYvMjAyNCwwMS8wMS8xOTkwLE15IENvbXBhbnkK', 'salaryStructureCsv': 'c2FsYXJ5IHN0cnVjdHVyZSxuYW1lLEFiYnIsdHlwZSx2YWxldXIsY29tcGFueQ0KZ2FzeTEsU2FsYWlyZSBCYXNlLFNCLGVhcm5pbmcsYmFzZSxNeSBDb21wYW55DQpnYXN5MSxJbmRlbW5pdMOpLElORCxlYXJuaW5nLFNCICogMC4zLE15IENvbXBhbnkNCmdhc3kxLFRheGUgc29jaWFsZSxUUyxkZWR1Y3Rpb24sKFNCICsgSU5EKSAqIDAuMixNeSBDb21wYW55', 'payrollCsv': 'TW9pcyxSZWYgRW1wbG95ZSxTYWxhaXJlIEJhc2UsU2FsYWlyZQ0KMDEvMDQvMjAyNSwxLDE1MDAwMDAsZ2FzeTENCjAxLzA0LzIwMjUsMiw5MDAwMDAsZ2FzeTENCjAxLzAzLzIwMjUsMSwxNjAwMDAwLGdhc3kxDQowMS8wMy8yMDI1LDIsOTAwMDAwLGdhc3kx', 'cmd': 'hrms.controllers.hrms_controller.import_csvs_from_json'}
+2025-06-04 21:16:14,893 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'employeesCsv': 'UmVmLE5vbSxQcmVub20sZ2VucmUsRGF0ZSBlbWJhdWNoZSxkYXRlIG5haXNzYW5jZSxjb21wYW55CjEsUmFrb3RvLEFsYWluLE1hc2N1bGluLDAzLzA0LzIwMjQsMDEvMDEvMTk4MCxNeSBDb21wYW55CjIsUmFzb2EsSmVhbm5lLEZlbWluaW4sMDgvMDYvMjAyNCwwMS8wMS8xOTkwLE15IENvbXBhbnkK', 'salaryStructureCsv': 'c2FsYXJ5IHN0cnVjdHVyZSxuYW1lLEFiYnIsdHlwZSx2YWxldXIsY29tcGFueQ0KZ2FzeTEsU2FsYWlyZSBCYXNlLFNCLGVhcm5pbmcsYmFzZSxNeSBDb21wYW55DQpnYXN5MSxJbmRlbW5pdMOpLElORCxlYXJuaW5nLFNCICogMC4zLE15IENvbXBhbnkNCmdhc3kxLFRheGUgc29jaWFsZSxUUyxkZWR1Y3Rpb24sKFNCICsgSU5EKSAqIDAuMixNeSBDb21wYW55', 'payrollCsv': 'TW9pcyxSZWYgRW1wbG95ZSxTYWxhaXJlIEJhc2UsU2FsYWlyZQ0KMDEvMDQvMjAyNSwxLDE1MDAwMDAsZ2FzeTENCjAxLzA0LzIwMjUsMiw5MDAwMDAsZ2FzeTENCjAxLzAzLzIwMjUsMSwxNjAwMDAwLGdhc3kxDQowMS8wMy8yMDI1LDIsOTAwMDAwLGdhc3kx', 'cmd': 'hrms.controllers.hrms_controller.import_csvs_from_json'}
+2025-06-04 21:39:53,566 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'docs': '{"docstatus":0,"doctype":"Salary Slip","name":"new-salary-slip-bdjuglxtav","__islocal":1,"__unsaved":1,"owner":"Administrator","company":"My Company","posting_date":"2025-06-04","status":"Draft","currency":"EUR","exchange_rate":1,"payroll_frequency":"Monthly","salary_slip_based_on_timesheet":0,"deduct_tax_for_unclaimed_employee_benefits":0,"deduct_tax_for_unsubmitted_tax_exemption_proof":0,"timesheets":[],"earnings":[],"deductions":[],"leave_details":[],"payroll_entry":"HR-PRUN-2025-00010","employee_name":"Alain Rakoto","department":"Ressources humaines","designation":"Employee","employee":"EMP-00003","idx":0,"total_working_days":1,"unmarked_days":0,"leave_without_pay":0,"absent_days":0,"payment_days":1,"total_working_hours":0,"hour_rate":0,"base_hour_rate":0,"gross_pay":0,"base_gross_pay":0,"gross_year_to_date":0,"base_gross_year_to_date":0,"total_deduction":0,"base_total_deduction":0,"net_pay":0,"base_net_pay":0,"rounded_total":0,"base_rounded_total":0,"year_to_date":0,"base_year_to_date":0,"month_to_date":0,"base_month_to_date":0,"ctc":0,"income_from_other_sources":0,"total_earnings":0,"non_taxable_earnings":0,"standard_tax_exemption_amount":0,"tax_exemption_declaration":0,"deductions_before_tax_calculation":0,"annual_taxable_amount":0,"income_tax_deducted_till_date":0,"current_month_income_tax":0,"future_income_tax_deductions":0,"total_income_tax":0,"end_date":""}', 'method': 'get_emp_and_working_day_details', 'cmd': 'run_doc_method'}
+2025-06-04 22:19:49,382 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'employeesCsv': 'UmVmLE5vbSxQcmVub20sZ2VucmUsRGF0ZSBlbWJhdWNoZSxkYXRlIG5haXNzYW5jZSxjb21wYW55CjEsUmFrb3RvLEFsYWluLE1hc2N1bGluLDAzLzA0LzIwMjQsMDEvMDEvMTk4MCxNeSBDb21wYW55CjIsUmFzb2EsSmVhbm5lLEZlbWluaW4sMDgvMDYvMjAyNCwwMS8wMS8xOTkwLE15IENvbXBhbnkK', 'salaryStructureCsv': 'c2FsYXJ5IHN0cnVjdHVyZSxuYW1lLEFiYnIsdHlwZSx2YWxldXIsY29tcGFueQ0KZ2FzeTEsU2FsYWlyZSBCYXNlLFNCLGVhcm5pbmcsYmFzZSxNeSBDb21wYW55DQpnYXN5MSxJbmRlbW5pdMOpLElORCxlYXJuaW5nLFNCICogMC4zLE15IENvbXBhbnkNCmdhc3kxLFRheGUgc29jaWFsZSxUUyxkZWR1Y3Rpb24sKFNCICsgSU5EKSAqIDAuMixNeSBDb21wYW55', 'payrollCsv': 'TW9pcyxSZWYgRW1wbG95ZSxTYWxhaXJlIEJhc2UsU2FsYWlyZQ0KMDEvMDQvMjAyNSwxLDE1MDAwMDAsZ2FzeTENCjAxLzA0LzIwMjUsMiw5MDAwMDAsZ2FzeTENCjAxLzAzLzIwMjUsMSwxNjAwMDAwLGdhc3kxDQowMS8wMy8yMDI1LDIsOTAwMDAwLGdhc3kx', 'cmd': 'hrms.controllers.hrms_controller.import_csvs_from_json'}
+2025-06-04 22:20:16,982 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'employeesCsv': 'UmVmLE5vbSxQcmVub20sZ2VucmUsRGF0ZSBlbWJhdWNoZSxkYXRlIG5haXNzYW5jZSxjb21wYW55CjEsUmFrb3RvLEFsYWluLE1hc2N1bGluLDAzLzA0LzIwMjQsMDEvMDEvMTk4MCxNeSBDb21wYW55CjIsUmFzb2EsSmVhbm5lLEZlbWluaW4sMDgvMDYvMjAyNCwwMS8wMS8xOTkwLE15IENvbXBhbnkK', 'salaryStructureCsv': 'c2FsYXJ5IHN0cnVjdHVyZSxuYW1lLEFiYnIsdHlwZSx2YWxldXIsY29tcGFueQ0KZ2FzeTEsU2FsYWlyZSBCYXNlLFNCLGVhcm5pbmcsYmFzZSxNeSBDb21wYW55DQpnYXN5MSxJbmRlbW5pdMOpLElORCxlYXJuaW5nLFNCICogMC4zLE15IENvbXBhbnkNCmdhc3kxLFRheGUgc29jaWFsZSxUUyxkZWR1Y3Rpb24sKFNCICsgSU5EKSAqIDAuMixNeSBDb21wYW55', 'payrollCsv': 'TW9pcyxSZWYgRW1wbG95ZSxTYWxhaXJlIEJhc2UsU2FsYWlyZQ0KMDEvMDQvMjAyNSwxLDE1MDAwMDAsZ2FzeTENCjAxLzA0LzIwMjUsMiw5MDAwMDAsZ2FzeTENCjAxLzAzLzIwMjUsMSwxNjAwMDAwLGdhc3kxDQowMS8wMy8yMDI1LDIsOTAwMDAwLGdhc3kx', 'cmd': 'hrms.controllers.hrms_controller.import_csvs_from_json'}
+2025-06-05 11:32:02,398 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]', 'limit_page_length': '500'}
+2025-06-05 11:45:40,214 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]', 'limit_page_length': '500'}
+2025-06-05 17:56:09,063 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year': '2024'}
+2025-06-05 17:56:54,946 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year': '2024'}
+2025-06-05 20:31:10,111 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year': '2024', 'cmd': 'hrms.controllers.payroll_controller.get_salary_evolution_data'}
+2025-06-05 20:32:27,027 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year': '2025', 'cmd': 'hrms.controllers.payroll_controller.get_salary_evolution_data'}
+2025-06-05 20:39:01,341 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year': '2025', 'cmd': 'hrms.controllers.payroll_controller.get_salary_evolution_data'}
+2025-06-05 21:13:22,706 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year': '2025'}
+2025-06-05 21:13:34,921 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year': '2025'}
+2025-06-05 21:14:32,646 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year': '2025'}
+2025-06-05 23:14:44,118 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year': 'null', 'cmd': 'hrms.controllers.payroll_controller.get_salary_evolution_data'}
+2025-06-05 23:15:08,184 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'cmd': 'hrms.controllers.payroll_controller.get_salary_evolution_data'}
+2025-06-06 12:41:47,874 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': '["*"]', 'limit_page_length': '500'}
+2025-06-07 14:57:58,409 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year_month': '2024-03', 'employee_id': 'HR-EMP-00594', 'cmd': 'hrms.controllers.payroll_controller.get_payroll_components'}
+2025-06-07 16:21:56,601 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year_month': 'Tue Apr 01 00:00:00 EAT 2025', 'employee_id': 'HR-EMP-00594', 'cmd': 'hrms.controllers.payroll_controller.get_payroll_components'}
+2025-06-07 16:24:01,344 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year_month': 'Tue Apr 01 00:00:00 EAT 2025', 'employee_id': 'HR-EMP-00594', 'cmd': 'hrms.controllers.payroll_controller.get_payroll_components'}
+2025-06-07 16:24:07,552 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year_month': '', 'employee_id': 'HR-EMP-00594', 'cmd': 'hrms.controllers.payroll_controller.get_payroll_components'}
+2025-06-07 16:27:07,640 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year_month': '', 'employee_id': 'HR-EMP-00594', 'cmd': 'hrms.controllers.payroll_controller.get_payroll_components'}
+2025-06-07 16:29:49,310 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'year_month': '', 'employee_id': 'HR-EMP-00594', 'cmd': 'hrms.controllers.payroll_controller.get_payroll_components'}
+2025-06-07 16:46:14,944 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["full_name","like","%Alain%"]]', 'limit_page_length': '500'}
+2025-06-07 16:46:20,284 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["full_name","like","%Alain Rakoto%"]]', 'limit_page_length': '500'}
+2025-06-07 16:46:31,681 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'filters': '[["full_name","like","%HR-EMP-00594%"]]', 'limit_page_length': '500'}
+2025-06-07 19:25:10,628 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['total_gross', 'total_deduction', 'net_pay', 'currency'], 'limit_page_length': 20}
+2025-06-07 19:25:36,342 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['total_gross', 'total_deduction', 'net_pay', 'currency'], 'limit_page_length': 20}
+2025-06-07 19:25:38,669 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['*'], 'limit_start': '-10', 'limit_page_length': '10'}
+2025-06-07 19:25:38,719 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['total_gross', 'total_deduction', 'net_pay', 'currency'], 'limit_page_length': 20}
+2025-06-07 19:25:42,422 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['total_gross', 'total_deduction', 'net_pay', 'currency'], 'limit_page_length': 20}
+2025-06-07 19:25:58,583 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['total_gross', 'total_deduction', 'net_pay', 'currency'], 'limit_page_length': 20}
+2025-06-10 16:23:05,637 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'fields': ['ref,name'], 'filters': '[["status","=","Active"]]', 'limit': '10', 'offset': '0', 'limit_page_length': '10'}
+2025-06-10 16:24:21,886 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'emp': 'HR-EMP-00961', 'monthYear': '2025-06', 'cmd': 'hrms.controllers.generator_controller.getLastBaseSalaryEmpFromDate'}
+2025-06-11 10:34:25,482 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'emp': 'HR-EMP-00961', 'from_date': '2025-08-01', 'salary_structure': 'g1', 'newBase': '900000', 'cmd': 'hrms.controllers.generator_controller.updateBaseAssignement'}
+2025-06-11 10:41:13,321 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'emp': 'HR-EMP-00961', 'from_date': '2025-08-01', 'salary_structure': 'g1', 'newBase': '900000', 'cmd': 'hrms.controllers.generator_controller.updateBaseAssignement'}
+2025-06-11 10:48:41,044 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'emp': 'HR-EMP-00961', 'monthDebut': '2025-05', 'monthFin': '2025-12', 'cmd': 'hrms.controllers.generator_controller.insert_slip_period'}
+2025-06-19 11:51:13,902 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'emp': 'HR-EMP-00961', 'monthDebut': '2025-06-01', 'monthFin': '2025-12-01', 'montant': '50000', 'cmd': 'hrms.controllers.generator_controller.insert_slip_period'}
+2025-06-19 11:51:49,809 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'emp': 'HR-EMP-00961', 'monthDebut': '2025-06-01', 'monthFin': '2025-12-01', 'montant': '50000', 'cmd': 'hrms.controllers.generator_controller.insert_slip_period'}
+2025-06-19 11:52:34,743 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'emp': 'HR-EMP-00961', 'monthDebut': '2025-06-01', 'monthFin': '2025-12-01', 'montant': '50000', 'cmd': 'hrms.controllers.generator_controller.insert_slip_period'}
+2025-06-19 13:02:16,438 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'salary_component': 'Indemnité', 'montant': '50000', 'infOrSup': '2026-12-01', '': '0', 'cmd': 'hrms.controllers.generator_controller.getFiltredSalary'}
+2025-06-19 13:02:51,389 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'salary_component': 'Indemnité', 'montant': '50000', 'infOrSup': '2026-12-01', '': '0', 'cmd': 'hrms.controllers.generator_controller.getFiltredSalary'}
+2025-06-19 13:06:46,145 ERROR frappe New Exception collected in error log
+Site: erpnext.localhost
+Form Dict: {'salary_component': 'Indemnité', 'montant': '50000', 'infOrSup': '1', 'cmd': 'hrms.controllers.generator_controller.getFiltredSalary'}

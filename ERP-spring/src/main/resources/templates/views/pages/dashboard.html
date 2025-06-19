@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ERPNext</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div> 
+    <div class="header">
+        <div>
+            <h1>Bonjour, 👋</h1>
+            <p>Voici un aperçu de votre activité aujourd'hui</p>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer}"></div> 
+</body>
+</html>

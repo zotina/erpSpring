@@ -1,0 +1,1302 @@
+https://docs.frappe.io/erpnext/user/manual/en/introduction
+
+https://docs.frappe.io/hr/introduction
+baser votre reponse a ces documentation 
+
+voici 3 fichier csv a importer : 
+
+
+Ref	Nom	Prenom	genre	"Date embauche"	"date naissance"	company
+1	Rakoto	Alain	Masculin	03/04/2024	01/01/1980	My Company
+2	Rasoa	Jeanne	Feminin	08/06/2024	01/01/1990	My Company
+						
+
+"salary structure"	name	Abbr	type	valeur	Remarque
+gasy1	Salaire Base	SB	earning	100%	
+gasy1	Indemnité	IND	earning	30%	salaire base
+gasy1	Taxe sociale	TS	deduction	20%	salaire base + indemnité
+					
+					
+Mois	"Ref Employe"	"Salaire Base"	Salaire
+01/04/2025	1	1500000	gasy1
+01/04/2025	2	900000	gasy1
+01/03/2025	1	1600000	gasy1
+01/03/2025	2	900000	gasy1
+			
+
+MariaDB [_4072d1dbcc0529b3]> select salary_component,salary_component_abbr,amount_based_on_formula from `tabSalary Component`;
++------------------+-----------------------+-------------------------+
+| salary_component | salary_component_abbr | amount_based_on_formula |
++------------------+-----------------------+-------------------------+
+| Indemnité        | I                     |                       0 |
+| Salaire Base     | SB                    |                       0 |
+| Taxe sociale     | TS                    |                       0 |
++------------------+-----------------------+-------------------------+
+3 rows in set (0,000 sec)
+
+
+
+il ya  ces colonnes sur  `tabSalary Component`
+
+mais ou on insere le tableau de Earnings et  Deductions dans le formulaire d insertion de salary stucture sur frappe 
+voici le colonne du Earnings et  Deductions qui s affiche sur le formulaire d insertion de salary stucture 
+
+
+
+No.
+Component fichier2.name
+Abbr recuperer par getvalue le abbr du salary component where name = fichier2.name
+Amount = 0
+Depends on Payment Days 0 
+Is Tax Applicable 0 
+Amount based on formula 1 
+Formula  c est le fichier2.Remarque mais remplacer toutes les nom de component qui conmpose cette remearque on leur abbr inserer a la base et pour le abbr BS  le formula deviendra base 
+
+
+
+
+import frappe
+from frappe import _
+from frappe.utils import getdate, flt
+from datetime import datetime
+from calendar import monthrange
+from hrms.dto.employee_dto import EmployeeDTO
+from hrms.dto.salary_structure_dto import SalaryStructureDTO
+from hrms.dto.payroll_dto import PayrollDTO
+from datetime import datetime
+
+# =============================================================================
+# PRE-TRANSACTION SETUP
+# =============================================================================
+
+def setup_hrms_data(employee_dtos: list[EmployeeDTO], salary_dtos: list[SalaryStructureDTO]):
+    """
+    Setup company with chart of accounts and default Holiday List.
+    Args:
+        employee_dtos: List of EmployeeDTO objects.
+        salary_dtos: List of SalaryStructureDTO objects.
+    Returns:
+        List of errors (empty if successful).
+    """
+    errors = []
+
+    try:
+        # Setup companies and their accounts
+        if employee_dtos:
+            companies = set(employee.company for employee in employee_dtos if employee.company)
+            
+            for company in companies:
+                if not company:
+                    errors.append({
+                        "line": 0,
+                        "error_message": "Champ 'company' manquant ou invalide dans EmployeeDTO",
+                        "data": {},
+                        "file": "employeesCsv"
+                    })
+                    continue
+
+                try:
+                    # Normalize company name and suffix
+                    company = company.strip()
+                    company_suffix = 'MC' if company.lower().startswith('my company') else company[:2].upper()
+                    print(f"Processing company: {company}, suffix: {company_suffix}")
+
+                    # Verify reference company
+                    ref_company = "noufre society"
+                    if not frappe.db.exists("Company", ref_company):
+                        ref_company = "_Test Company"
+                        if not frappe.db.exists("Company", ref_company):
+                            raise ValueError(f"Compagnie de référence '{ref_company}' n'existe pas")
+
+                    # Create company if it doesn't exist
+                    if not frappe.db.exists("Company", company):
+                        print(f"Inserting company: {company}")
+                        company_doc = frappe.new_doc("Company")
+                        company_doc.company_name = company
+                        company_doc.abbr = company_suffix
+                        company_doc.default_currency = "EUR"
+                        company_doc.create_chart_of_accounts_based_on = "Existing Company"
+                        company_doc.existing_company = ref_company
+                        company_doc.insert()
+                        print(f"Created company: {company} with COA from {ref_company}")
+                    else:
+                        print(f"Company {company} already exists")
+
+                    # Set default Holiday List for the company
+                    holiday_list = get_or_create_holiday_list(company)
+                    company_doc = frappe.get_doc("Company", company)
+                    if not company_doc.default_holiday_list:
+                        company_doc.default_holiday_list = holiday_list
+                        company_doc.save()
+                        print(f"Set default Holiday List '{holiday_list}' for company {company}")
+
+                    # Find root account
+                    root_account = frappe.db.get_value(
+                        "Account",
+                        {"company": company, "is_group": 1, "parent_account": ["is", None]},
+                        "name"
+                    )
+                    if not root_account:
+                        root_account_name = f"Root Account - {company_suffix}"
+                        if not frappe.db.exists("Account", {"company": company, "account_name": "Root Account"}):
+                            print(f"Inserting root account: {root_account_name}")
+                            frappe.get_doc({
+                                "doctype": "Account",
+                                "account_name": "Root Account",
+                                "company": company,
+                                "is_group": 1,
+                                "account_type": "",
+                                "root_type": ""
+                            }).insert()
+                            root_account = root_account_name
+                            print(f"Created fallback root account: {root_account_name} for {company}")
+                        else:
+                            root_account = frappe.db.get_value("Account", {"company": company, "account_name": "Root Account"}, "name")
+                    print(f"Using root account: {root_account} for {company}")
+
+                    # Setup HRMS accounts
+                    def create_account_if_not_exists(account_name, parent_account, account_type, root_type, is_group=1):
+                        existing_account = frappe.db.get_value(
+                            "Account", 
+                            {"company": company, "account_name": account_name}, 
+                            "name"
+                        )
+                        if not existing_account:
+                            try:
+                                print(f"Inserting account: {account_name}")
+                                account_doc = frappe.get_doc({
+                                    "doctype": "Account",
+                                    "account_name": account_name,
+                                    "company": company,
+                                    "parent_account": parent_account,
+                                    "account_type": account_type,
+                                    "root_type": root_type,
+                                    "is_group": is_group
+                                })
+                                account_doc.insert()
+                                print(f"Created account: {account_name}")
+                                return account_doc.name
+                            except Exception as e:
+                                error_msg = f"Failed to create {account_name}: {str(e)}"
+                                errors.append({
+                                    "line": 0,
+                                    "error_message": error_msg,
+                                    "data": {},
+                                    "file": "employeesCsv"
+                                })
+                                print(error_msg)
+                                return None
+                        else:
+                            print(f"Account {account_name} already exists (name: {existing_account})")
+                            return existing_account
+
+                    income_root_name = create_account_if_not_exists(
+                        "Income", root_account, "Income Account", "Income", 1
+                    )
+                    if not income_root_name:
+                        continue
+
+                    direct_income_name = create_account_if_not_exists(
+                        "Direct Income", income_root_name, "Income Account", "Income", 1
+                    )
+                    if not direct_income_name:
+                        continue
+
+                    expenses_root_name = create_account_if_not_exists(
+                        "Expenses", root_account, "Expense Account", "Expense", 1
+                    )
+                    if not expenses_root_name:
+                        continue
+
+                    direct_expenses_name = create_account_if_not_exists(
+                        "Direct Expenses", expenses_root_name, "Expense Account", "Expense", 1
+                    )
+                    if not direct_expenses_name:
+                        continue
+
+                    salary_income_name = create_account_if_not_exists(
+                        "Salary Income", direct_income_name, "Income Account", "Income", 0
+                    )
+
+                    salary_expense_name = create_account_if_not_exists(
+                        "Salary Expense", direct_expenses_name, "Expense Account", "Expense", 0
+                    )
+
+                except Exception as e:
+                    errors.append({
+                        "line": 0,
+                        "error_message": f"Erreur configuration compagnie {company}: {str(e)}",
+                        "data": {},
+                        "file": "employeesCsv"
+                    })
+                    print(f"Company setup error for {company}: {str(e)}")
+
+        # Setup salary components
+        if salary_dtos:
+            for idx, salary in enumerate(salary_dtos, start=1):
+                try:
+                    component_name = salary.name if hasattr(salary, 'name') else salary.get('name')
+                    component_type = salary.type if hasattr(salary, 'type') else salary.get('type')
+                    company = next((e.company for e in employee_dtos if e.company), 'My Company')
+
+                    if not component_name or not component_type:
+                        errors.append({
+                            "line": idx,
+                            "error_message": f"Champ 'name' ou 'type' manquant dans SalaryStructureDTO à la ligne {idx}",
+                            "data": vars(salary) if hasattr(salary, '__dict__') else salary,
+                            "file": "salaryStructureCsv"
+                        })
+                        continue
+
+                    if not isinstance(component_type, str):
+                        errors.append({
+                            "line": idx,
+                            "error_message": f"Type invalide pour le composant {component_name} à la ligne {idx}: {component_type}",
+                            "data": vars(salary) if hasattr(salary, '__dict__') else salary,
+                            "file": "salaryStructureCsv"
+                        })
+                        continue
+
+                    if not frappe.db.exists("Salary Component", component_name):
+                        account_field = "default_income_account" if component_type.lower() == "earning" else "default_expense_account"
+                        account = frappe.db.get_value("Account", {"company": company, "account_name": "Salary Income" if component_type.lower() == "earning" else "Salary Expense"}, "name")
+                        if not account:
+                            errors.append({
+                                "line": idx,
+                                "error_message": f"Compte requis non trouvé pour le composant {component_name}",
+                                "data": vars(salary) if hasattr(salary, '__dict__') else salary,
+                                "file": "salaryStructureCsv"
+                            })
+                            continue
+
+                        salary_component_doc = frappe.get_doc({
+                            "doctype": "Salary Component",
+                            "salary_component": component_name,
+                            "type": component_type.capitalize(),
+                            account_field: account
+                        })
+                        salary_component_doc.insert()
+                        print(f"Created salary component: {component_name} for {company}")
+
+                except Exception as e:
+                    errors.append({
+                        "line": idx,
+                        "error_message": f"Erreur création composant {component_name or 'inconnu'} à la ligne {idx}: {str(e)}",
+                        "data": vars(salary) if hasattr(salary, '__dict__') else salary,
+                        "file": "salaryStructureCsv"
+                    })
+
+    except Exception as e:
+        errors.append({
+            "line": 0,
+            "error_message": f"Erreur configuration initiale: {str(e)}",
+            "data": {},
+            "file": "global"
+        })
+
+    return errors
+
+# =============================================================================
+# INSERTION DES EMPLOYÉS (FICHIER 1)
+# =============================================================================
+def insert_employees(dto_list: list[EmployeeDTO]):
+    """
+    Insert Employee records from EmployeeDTO list.
+    Args:
+        dto_list: List of EmployeeDTO objects.
+    Returns:
+        Dictionary with created records and errors.
+    """
+    created = []
+    errors = []
+
+    for idx, dto in enumerate(dto_list, start=1):
+        try:
+            # Validate required fields
+            if not all([dto.ref, dto.prenom, dto.nom, dto.date_embauche, dto.date_naissance, dto.company]):
+                raise ValueError("Champs requis manquants (ref, prenom, nom, date_embauche, date_naissance, company)")
+
+            # Get default Holiday List for the company
+            holiday_list = get_or_create_holiday_list(dto.company)
+
+            # Prepare Employee data
+            employee_data = {
+                "doctype": "Employee",
+                "ref": str(dto.ref),
+                "name": str(dto.ref),
+                "employee": str(dto.ref),
+                "first_name": dto.prenom,
+                "last_name": dto.nom,
+                "gender": convert_gender(dto.genre),
+                "date_of_joining": getdate(dto.date_embauche),
+                "date_of_birth": getdate(dto.date_naissance),
+                "company": dto.company,
+                "status": "Active",
+                "employee_name": f"{dto.prenom} {dto.nom}",
+                "department": "Ressources humaines",
+                "designation": get_or_create_designation("Employee"),
+                "default_holiday_list": holiday_list  # Assign default Holiday List
+            }
+
+            # Check if employee exists
+            if frappe.db.exists("Employee", {"employee": dto.ref}):
+                errors.append({
+                    "line": idx,
+                    "error_message": f"Employé {dto.ref} existe déjà",
+                    "data": vars(dto)
+                })
+                continue
+
+            # Insert Employee
+            employee_doc = frappe.get_doc(employee_data)
+            employee_doc.insert()
+            employee_doc.submit(    )
+            print(f"Inserted employee: {employee_doc.ref}", "Employee Insertion")
+
+            created.append({
+                "employee_id": employee_doc.name,
+                "employee_number": employee_doc.employee,
+                "name": employee_doc.employee_name
+            })
+
+        except Exception as e:
+            errors.append({
+                "line": idx,
+                "error_message": f"Erreur employé {dto.ref}: {str(e)}",
+                "data": vars(dto)
+            })
+            print(f"Employee insertion failed: {dto.ref} - {str(e)}", "Employee Insertion Error")
+
+    return {
+        "success": len(errors) == 0,
+        "created_count": len(created),
+        "created": created,
+        "errors": errors
+    }
+    
+# =============================================================================
+# INSERTION DES COMPOSANTS SALARIAUX (FICHIER 2)
+# =============================================================================
+def insert_salary_components(dto_list: list[SalaryStructureDTO]):
+    """
+    Insert Salary Component records from SalaryStructureDTO list.
+    """
+    created = []
+    errors = []
+    processed_components = set()
+
+    for idx, dto in enumerate(dto_list, start=1):
+        try:
+            component_name = dto.name
+            print(f"Processing salary component: {component_name} at line {idx}", "Component Debug")
+
+            # Skip duplicates within the current list
+            if component_name in processed_components:
+                print(f"Skipping duplicate component in list: {component_name} at line {idx}", "Component Debug")
+                continue
+
+            if not component_name or not dto.type:
+                errors.append({
+                    "line": idx,
+                    "error_message": f"Champ 'name' ou 'type' manquant pour composant à la ligne {idx}",
+                    "data": vars(dto),
+                    "file": "salaryStructureCsv"
+                })
+                continue
+
+            # Check if component already exists in the database
+            if frappe.db.exists("Salary Component", {"salary_component": component_name}):
+                print(f"Salary component {component_name} already exists in database, skipping insertion", "Component Debug")
+                created.append(component_name)
+                processed_components.add(component_name)
+                continue
+
+            component_data = {
+                "doctype": "Salary Component",
+                "salary_component": component_name,
+                "salary_component_abbr": dto.abbr or component_name[:3].upper(),
+                "type": "Earning" if dto.type.lower() == "earning" else "Deduction",
+                "is_tax_applicable": 1 if dto.type.lower() == "deduction" else 0
+            }
+
+            print(f"Inserting salary component: {component_name}", "Component Debug")
+            component_doc = frappe.get_doc(component_data)
+            component_doc.insert()
+            component_doc.insert()
+
+            created.append(component_name)
+            processed_components.add(component_name)
+
+        except Exception as e:
+            errors.append({
+                "line": idx,
+                "error_message": f"Erreur composant {dto.name or 'inconnu'} à la ligne {idx}: {str(e)}",
+                "data": vars(dto),
+                "file": "salaryStructureCsv"
+            })
+            print(f"Component insertion error at line {idx}: {str(e)}", "Component Error")
+
+    return {
+        "success": len(errors) == 0,
+        "created_count": len(created),
+        "created": created,
+        "errors": errors
+    }
+# =============================================================================
+# INSERTION DES STRUCTURES SALARIALES (FICHIER 2)
+# =============================================================================
+def insert_salary_structures(dto_list: list[SalaryStructureDTO], payroll_dtos: list[PayrollDTO]):
+    """
+    Insert Salary Structure records from SalaryStructureDTO list, using company from matching PayrollDTO.
+    Args:
+        dto_list: List of SalaryStructureDTO objects.
+        payroll_dtos: List of PayrollDTO objects to determine company.
+    Returns:
+        Dictionary with created records and errors.
+    """
+    structures_data = {}
+    errors = []
+
+    # Group components by structure
+    for idx, dto in enumerate(dto_list, start=1):
+        try:
+            print(f"Processing salary structure DTO at line {idx}: name={dto.name}, structure={dto.salary_structure}", "Structure Debug")
+            structure_name = dto.salary_structure
+            if not structure_name:
+                errors.append({
+                    "line": idx,
+                    "error_message": f"Champ 'salary_structure' manquant à la ligne {idx}",
+                    "data": vars(dto) if hasattr(dto, '__dict__') else dict(dto),
+                    "file": "salaryStructureCsv"
+                })
+                continue
+
+            if structure_name not in structures_data:
+                # Find matching payroll DTO to get company
+                matching_payroll = next((p for p in payroll_dtos if p.salaire == structure_name), None)
+                print(matching_payroll)
+                company = None
+                if matching_payroll:
+                    # Get employee company from employee table
+                    employee_data = frappe.db.get_value(
+                        "Employee",
+                        {"ref": str(matching_payroll.ref_employe)},
+                        ["company"],
+                        as_dict=True
+                    )
+                    company = employee_data.company if employee_data else None
+
+                if not company:
+                    company = "My Company"  # Fallback if no matching payroll or company
+                    errors.append({
+                        "line": idx,
+                        "error_message": f"Compagnie non trouvée pour structure {structure_name}, utilisant 'My Company' par défaut",
+                        "data": vars(dto) if hasattr(dto, '__dict__') else dict(dto),
+                        "file": "salaryStructureCsv"
+                    })
+
+                structures_data[structure_name] = {
+                    "earnings": [],
+                    "deductions": [],
+                    "company": company
+                }
+
+            component_data = {
+                "salary_component": dto.name,
+                "amount":0,
+                "Abbr":,
+                "formula": parse_salary_formula(dto.valeur, dto.remarque)
+            }
+
+            if dto.type and dto.type.lower() == "earning":
+                structures_data[structure_name]["earnings"].append(component_data)
+            elif dto.type:
+                structures_data[structure_name]["deductions"].append(component_data)
+            else:
+                errors.append({
+                    "line": idx,
+                    "error_message": f"Type manquant pour composant {dto.name} à la ligne {idx}",
+                    "data": vars(dto) if hasattr(dto, '__dict__') else dict(dto),
+                    "file": "salaryStructureCsv"
+                })
+
+        except Exception as e:
+            errors.append({
+                "line": idx,
+                "error_message": f"Erreur traitement structure à la ligne {idx}: {str(e)}",
+                "data": vars(dto) if hasattr(dto, '__dict__') else dict(dto),
+                "file": "salaryStructureCsv"
+            })
+            print(f"Structure processing error at line {idx}: {str(e)}", "Structure Error")
+
+    created = []
+    for structure_name, components in structures_data.items():
+        try:
+            if frappe.db.exists("Salary Structure", structure_name):
+                errors.append({
+                    "line": 0,
+                    "error_message": f"Structure salariale {structure_name} existe déjà",
+                    "data": components,
+                    "file": "salaryStructureCsv"
+                })
+                continue
+
+            structure_data = {
+                "doctype": "Salary Structure",
+                "name": structure_name,
+                "structure_name": structure_name,
+                "company": components["company"],
+                "is_active": "Yes",
+                "earnings": components["earnings"],
+                "deductions": components["deductions"]
+            }
+
+            print(f"Inserting salary structure: {structure_data}", "Structure Insertion")
+
+            structure_doc = frappe.get_doc(structure_data)
+            structure_doc.flags.ignore_mandatory = True  # Bypass naming series
+            structure_doc.insert()
+            structure_doc.submit()
+
+            created.append(structure_name)
+
+        except Exception as e:
+            errors.append({
+                "line": 0,
+                "error_message": f"Erreur insertion structure {structure_name}: {str(e)}",
+                "data": components,
+                "file": "salaryStructureCsv"
+            })
+            print(f"Structure insertion error for {structure_name}: {str(e)}", "Structure Error")
+
+    return {
+        "success": len(errors) == 0,
+        "created_count": len(created),
+        "created": created,
+        "errors": errors
+    }
+# =============================================================================
+# INSERTION DES ASSIGNATIONS SALARIALES (FICHIER 3)
+# =============================================================================
+def insert_salary_assignments(dto_list: list[PayrollDTO]):
+    """
+    Insert Salary Structure Assignment records from PayrollDTO list.
+    """
+    assignments_data = {}
+    errors = []
+
+    # Group by employee and determine the earliest date
+    for idx, dto in enumerate(dto_list, start=1):
+        try:
+            employee_ref = dto.ref_employe
+            converted_date = convert_date_format(dto.mois)
+            if not converted_date:
+                raise ValueError(f"Invalid date format for mois: {dto.mois}")
+
+            if employee_ref not in assignments_data:
+                assignments_data[employee_ref] = {
+                    "salary_structure": dto.salaire,
+                    "base_salary": dto.salaire_base,
+                    "start_date": converted_date,
+                    "line": idx
+                }
+            else:
+                # Update start_date to the earliest date
+                existing_date = assignments_data[employee_ref]["start_date"]
+                if converted_date < existing_date:
+                    assignments_data[employee_ref]["start_date"] = converted_date
+        except Exception as e:
+            errors.append({
+                "line": idx,
+                "error_message": f"Erreur traitement données assignation pour employé {dto.ref_employe}: {str(e)}",
+                "data": vars(dto),
+                "file": "payrollCsv"
+            })
+
+    created = []
+    for employee_ref, assignment_data in assignments_data.items():
+        try:
+            # Get Employee details
+            employee_data = frappe.db.get_value("Employee", {"ref": employee_ref}, ["name", "company", "date_of_joining"], as_dict=True)
+            if not employee_data:
+                errors.append({
+                    "line": assignment_data["line"],
+                    "error_message": f"Employé {employee_ref} non trouvé",
+                    "data": assignment_data,
+                    "file": "payrollCsv"
+                })
+                continue
+
+            # Use date_of_joining if earlier than start_date
+            from_date = assignment_data["start_date"]
+            if employee_data.date_of_joining and employee_data.date_of_joining < getdate(from_date):
+                from_date = employee_data.date_of_joining.strftime("%Y-%m-%d")
+
+            # Check if Salary Structure exists
+            structure_name = frappe.db.get_value("Salary Structure", {"structure_name": assignment_data["salary_structure"]}, "name")
+            print(structure_name)
+            if not structure_name:
+                errors.append({
+                    "line": assignment_data["line"],
+                    "error_message": f"Structure salariale '{assignment_data['salary_structure']}' non trouvée",
+                    "data": assignment_data,
+                    "file": "payrollCsv"
+                })
+                continue
+
+            # Check if assignment exists
+            existing = frappe.db.exists("Salary Structure Assignment", {
+                "employee": employee_data.name,
+                "salary_structure": structure_name,
+                "from_date": ["<=", from_date],
+                "docstatus": 1
+            })
+            if existing:
+                print(f"Assignment already exists for {employee_ref} with structure {assignment_data['salary_structure']}", "Assignment Debug")
+                continue
+
+            assignment_doc_data = {
+                "doctype": "Salary Structure Assignment",
+                "employee": employee_data.name,
+                "salary_structure": structure_name,
+                "from_date": from_date,
+                "base": assignment_data["base_salary"],
+                "company": employee_data.company
+            }
+
+            print(f"Inserting assignment for {employee_ref}: {assignment_doc_data}", "Assignment Debug")
+            assignment_doc = frappe.get_doc(assignment_doc_data)
+            assignment_doc.insert()
+            assignment_doc.submit()  # Submit to set docstatus=1
+            created.append(f"{employee_ref} -> {assignment_data['salary_structure']} from {from_date}")
+
+        except Exception as e:
+            errors.append({
+                "line": assignment_data["line"],
+                "error_message": f"Erreur assignation pour {employee_ref}: {str(e)}",
+                "data": assignment_data,
+                "file": "payrollCsv"
+            })
+            print(f"Assignment error for {employee_ref}: {str(e)}", "Assignment Error")
+
+    return {
+        "success": len(errors) == 0,
+        "created_count": len(created),
+        "created": created,
+        "errors": errors
+    }
+
+# =============================================================================
+# INSERTION DES BULLETINS DE PAIE (FICHIER 3)
+# =============================================================================
+def insert_salary_slips(dto_list: list[PayrollDTO]):
+    """
+    Insert Salary Slip records from PayrollDTO list.
+    """
+    created = []
+    errors = []
+
+    for idx, dto in enumerate(dto_list, start=1):
+        try:
+            # Get Employee
+            employee = frappe.db.get_value("Employee", {"ref": dto.ref_employe}, "name")
+            if not employee:
+                errors.append({
+                    "line": idx,
+                    "error_message": f"Employé {dto.ref_employe} non trouvé",
+                    "data": vars(dto),
+                    "file": "payrollCsv"
+                })
+                continue
+
+            # Convert date
+            converted_date = convert_date_format(dto.mois)
+            print(f"Processing salary slip for employee {dto.ref_employe} on date {converted_date}", "Salary Slip Debug")
+
+            # Check if salary structure assignment exists
+            assignment = frappe.db.get_value(
+                "Salary Structure Assignment",
+                {
+                    "employee": employee,
+                    "from_date": ["<=", converted_date],
+                    "docstatus": 1
+                },
+                ["name", "salary_structure"],
+                as_dict=True
+            )
+            if not assignment:
+                errors.append({
+                    "line": idx,
+                    "error_message": f"Aucune structure salariale assignée à l'employé {dto.ref_employe} pour la date {dto.mois}",
+                    "data": vars(dto),
+                    "file": "payrollCsv"
+                })
+                continue
+
+            # Check if Salary Slip exists
+            existing = frappe.db.exists("Salary Slip", {
+                "employee": employee,
+                "start_date": converted_date
+            })
+            if existing:
+                print(f"Salary slip already exists for {dto.ref_employe} on {converted_date}", "Salary Slip Debug")
+                continue
+            employee_data = frappe.db.get_value("Employee", {"ref": dto.ref_employe}, ["name", "company", "date_of_joining"], as_dict=True)
+            
+            if not employee_data:
+                errors.append({
+                    "line":0,
+                    "error_message": f"Employé {dto.ref_employe} non trouvé",
+                    "data": "",
+                    "file": "payrollCsv"
+                })
+                continue
+            
+            salary_slip_data = {
+                "doctype": "Salary Slip",
+                "employee": employee,
+                "salary_structure": assignment.salary_structure,
+                "start_date": converted_date,
+                "end_date": get_month_end_date(dto.mois),
+                "posting_date": converted_date,
+                "company": employee_data.company
+            }
+
+            print(f"Inserting salary slip: {salary_slip_data}", "Salary Slip Debug")
+            slip_doc = frappe.get_doc(salary_slip_data)
+            slip_doc.insert()
+            slip_doc.submit()
+
+            created.append(f"{dto.ref_employe} -> {dto.mois}")
+
+        except Exception as e:
+            errors.append({
+                "line": idx,
+                "error_message": f"Erreur bulletin {dto.ref_employe}: {str(e)}",
+                "data": vars(dto),
+                "file": "payrollCsv"
+            })
+            print(f"Salary slip error for {dto.ref_employe}: {str(e)}", "Salary Slip Error")
+
+    return {
+        "success": len(errors) == 0,
+        "created_count": len(created),
+        "created": created,
+        "errors": errors
+    }
+# =============================================================================
+# FONCTIONS UTILITAIRES
+# =============================================================================
+def convert_gender(genre):
+    """Convert gender to ERPNext format."""
+    genre_lower = genre.lower() if genre else ""
+    if genre_lower in ['masculin', 'male', 'm']:
+        return 'Male'
+    elif genre_lower in ['feminin', 'female', 'f']:
+        return 'Female'
+    return 'Male'  # Default
+
+def get_or_create_designation(designation_name):
+    """Get or create a Designation."""
+    if not frappe.db.exists("Designation", designation_name):
+        desig_doc = frappe.get_doc({
+            "doctype": "Designation",
+            "designation_name": designation_name
+        })
+        desig_doc.insert()
+    return designation_name
+
+def parse_salary_value(valeur):
+    """Parse salary value (percentage or amount)."""
+    if valeur is None:
+        print("parse_salary_value: valeur is None", "Value Debug")
+        return 0
+    try:
+        valeur_str = str(valeur).strip()
+        if not valeur_str or valeur_str.lower() == "none":
+            return 0
+        if '%' in valeur_str:
+            return 0  # Use formula for percentages
+        return flt(valeur_str)
+    except Exception as e:
+        print(f"parse_salary_value error: {str(e)} for valeur={valeur}", "Value Debug")
+        return 0
+
+def parse_salary_formula(abr, valeur, remarque, salary_structure_name=None):
+    """
+    Parse salary formulas from CSV data.
+    
+    Args:
+        abr (str): Abbreviation du composant (ex: SB, IND, TS)
+        valeur (str): Valeur avec pourcentage (ex: "100%", "30%")  
+        remarque (str): Formule en texte (ex: "salaire base", "salaire base + indemnité")
+        salary_structure_name (str): Nom de la salary structure pour récupérer les abbr
+    
+    Returns:
+        str: Formule pour Frappe HR (ex: "base", "SB * 0.30", "(SB + IND) * 0.20")
+    """
+    
+    if valeur is None:
+        print("parse_salary_formula: valeur is None", "Formula Debug")
+        return ""
+    
+    try:
+        # Nettoyer les inputs
+        valeur_str = str(valeur).strip()
+        abr_str = str(abr).strip() if abr else ""
+        
+        if not valeur_str or valeur_str.lower() == "none":
+            return ""
+            
+        # Cas spécial : Si c'est le salaire de base (SB, BS, BASE, etc.)
+        base_abbreviations = ['SB', 'BS', 'BASE', 'SALAIRE_BASE']
+        if abr_str.upper() in base_abbreviations:
+            return "base"
+            
+        remarque_str = str(remarque).strip().lower() if remarque else ""
+        
+        # Vérifier si c'est un pourcentage
+        if '%' in valeur_str:
+            percentage = valeur_str.replace('%', '').strip()
+            pct = flt(percentage) / 100
+            
+            # Si pas de remarque, formule par défaut
+            if not remarque_str:
+                return f"base * {pct}"
+            
+            # Parser la remarque pour extraire les composants
+            formula_parts = parse_remarque_to_formula(remarque_str, salary_structure_name)
+            
+            if formula_parts:
+                return f"{formula_parts} * {pct}"
+            else:
+                # Fallback vers les anciennes règles
+                if 'salaire base + indemnité' in remarque_str:
+                    return f"(SB + IND) * {pct}"
+                elif 'salaire base' in remarque_str:
+                    return f"SB * {pct}"
+                else:
+                    return f"base * {pct}"
+        
+        # Si ce n'est pas un pourcentage, retourner tel quel
+        return valeur_str
+        
+    except Exception as e:
+        print(f"parse_salary_formula error: {str(e)} for abr={abr}, valeur={valeur}, remarque={remarque}", "Formula Debug")
+        return ""
+
+
+def parse_remarque_to_formula(remarque_str, salary_structure_name=None):
+    """
+    Convertit une remarque en formule avec les bonnes abréviations.
+    
+    Args:
+        remarque_str (str): Remarque en minuscules (ex: "salaire base + indemnité")
+        salary_structure_name (str): Nom de la salary structure
+    
+    Returns:
+        str: Formule avec abréviations (ex: "(SB + IND)")
+    """
+    
+    if not remarque_str or not salary_structure_name:
+        return ""
+    
+    try:
+        # Récupérer le mapping nom -> abréviation depuis la base de données
+        component_mapping = get_salary_components_mapping(salary_structure_name)
+        
+        # Nettoyer et préparer la remarque
+        formula = remarque_str.strip()
+        
+        # Remplacer chaque composant par son abréviation
+        for component_name, abbr in component_mapping.items():
+            # Recherche case-insensitive
+            component_lower = component_name.lower()
+            if component_lower in formula:
+                # Remplacer le nom par l'abréviation
+                formula = formula.replace(component_lower, abbr)
+        
+        # Nettoyer la formule finale
+        formula = clean_formula(formula)
+        
+        return formula
+        
+    except Exception as e:
+        print(f"parse_remarque_to_formula error: {str(e)}", "Formula Debug")
+        return ""
+
+
+def get_salary_components_mapping(salary_structure_name):
+    """
+    Récupère le mapping nom de composant -> abréviation depuis Frappe.
+    
+    Args:
+        salary_structure_name (str): Nom de la salary structure
+    
+    Returns:
+        dict: {nom_composant: abréviation}
+    """
+    
+    try:
+        # Récupérer tous les composants de cette salary structure
+        salary_structure = frappe.get_doc("Salary Structure", salary_structure_name)
+        
+        component_mapping = {}
+        
+        # Parcourir les earnings
+        for earning in salary_structure.earnings:
+            if earning.salary_component and earning.abbreviation:
+                component_name = frappe.get_value("Salary Component", earning.salary_component, "salary_component_name")
+                if component_name:
+                    component_mapping[component_name.lower()] = earning.abbreviation
+        
+        # Parcourir les deductions  
+        for deduction in salary_structure.deductions:
+            if deduction.salary_component and deduction.abbreviation:
+                component_name = frappe.get_value("Salary Component", deduction.salary_component, "salary_component_name")
+                if component_name:
+                    component_mapping[component_name.lower()] = deduction.abbreviation
+        
+        # Ajouter des mappings courants au cas où
+        default_mappings = {
+            'salaire base': 'SB',
+            'indemnité': 'IND', 
+            'indemnite': 'IND',
+            'taxe sociale': 'TS',
+            'base': 'SB'
+        }
+        
+        for name, abbr in default_mappings.items():
+            if name not in component_mapping:
+                component_mapping[name] = abbr
+                
+        return component_mapping
+        
+    except Exception as e:
+        print(f"get_salary_components_mapping error: {str(e)}", "Formula Debug")
+        # Fallback vers mapping par défaut
+        return {
+            'salaire base': 'SB',
+            'indemnité': 'IND',
+            'indemnite': 'IND', 
+            'taxe sociale': 'TS'
+        }
+
+
+def clean_formula(formula):
+    """
+    Nettoie et formate la formule finale.
+    
+    Args:
+        formula (str): Formule brute
+    
+    Returns:
+        str: Formule nettoyée
+    """
+    
+    if not formula:
+        return ""
+    
+    # Remplacer les opérateurs textuels par des symboles
+    replacements = {
+        ' + ': ' + ',
+        ' plus ': ' + ',
+        ' et ': ' + ',
+        ' moins ': ' - ',
+        ' - ': ' - '
+    }
+    
+    for old, new in replacements.items():
+        formula = formula.replace(old, new)
+    
+    # Ajouter des parenthèses si nécessaire (contient + ou -)
+    if ('+' in formula or '-' in formula) and not formula.startswith('('):
+        formula = f"({formula})"
+    
+    # Nettoyer les espaces multiples
+    formula = ' '.join(formula.split())
+    
+    return formula
+
+def get_month_end_date(date_str):
+    """Get the end date of the month for a given date string."""
+    try:
+        # Convert DD/MM/YYYY to datetime object
+        date_obj = datetime.strptime(date_str, '%d/%m/%Y')
+        last_day = monthrange(date_obj.year, date_obj.month)[1]
+        return f"{date_obj.year}-{date_obj.month:02d}-{last_day:02d}"
+    except ValueError:
+        try:
+            # If already in YYYY-MM-DD format
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            last_day = monthrange(date_obj.year, date_obj.month)[1]
+            return f"{date_obj.year}-{date_obj.month:02d}-{last_day:02d}"
+        except ValueError:
+            raise ValueError(f"Invalid date format for get_month_end_date: {date_str}. Expected DD/MM/YYYY or YYYY-MM-DD.")
+
+def convert_date_format(date_str):
+    """Convert date from DD/MM/YYYY to YYYY-MM-DD or return as is if already in correct format."""
+    if not date_str:
+        return date_str
+    try:
+        # Try parsing DD/MM/YYYY format
+        date_obj = datetime.strptime(date_str, '%d/%m/%Y')
+        return date_obj.strftime('%Y-%m-%d')
+    except ValueError:
+        try:
+            # If already in YYYY-MM-DD format, return as is
+            datetime.strptime(date_str, '%Y-%m-%d')
+            return date_str
+        except ValueError:
+            raise ValueError(f"Invalid date format: {date_str}. Expected DD/MM/YYYY or YYYY-MM-DD.")
+        
+        
+def get_or_create_holiday_list(company, year=None):
+    """
+    Get or create a default Holiday List for the given company and year.
+    Args:
+        company: Name of the company.
+        year: Year for the holiday list (default: current year).
+    Returns:
+        Name of the Holiday List.
+    """
+    if not year:
+        year = datetime.now().year
+
+    holiday_list_name = f"Default Holiday List - {company} - {year}"
+    
+    if not frappe.db.exists("Holiday List", holiday_list_name):
+        try:
+            holiday_list_doc = frappe.get_doc({
+                "doctype": "Holiday List",
+                "holiday_list_name": holiday_list_name,
+                "from_date": f"{year}-01-01",
+                "to_date": f"{year}-12-31",
+                "weekly_off": "Sunday",  # Example: Set Sunday as weekly off
+                "company": company
+            })
+            holiday_list_doc.insert()
+            print(f"Created Holiday List: {holiday_list_name} for {company}")
+        except Exception as e:
+            raise Exception(f"Failed to create Holiday List for {company}: {str(e)}")
+    
+    return holiday_list_name
+
+
+et voici le controller qui parse le donne csv en dto python :
+
+
+
+
+
+import frappe
+from frappe import _
+import base64
+from hrms.services.csv_service import CsvService
+from hrms.services.hrms_insertion import (
+    setup_hrms_data,
+    insert_employees,
+    insert_salary_components,
+    insert_salary_structures,
+    insert_salary_assignments,
+    insert_salary_slips
+)
+from hrms.dto.employee_dto import EmployeeDTO
+from hrms.dto.salary_structure_dto import SalaryStructureDTO
+from hrms.dto.payroll_dto import PayrollDTO
+
+@frappe.whitelist(allow_guest=False)
+def import_csvs_from_json():
+    """
+    API to import three CSV files for HRMS: employees, salary structures, payroll.
+    Endpoint: /api/method/hrms.controllers.hrms_controller.import_csvs_from_json
+    Method: POST
+    Expects: JSON payload with base64-encoded CSV files.
+    """
+    # Permission checks
+    for doctype in ["Employee", "Salary Structure", "Salary Slip", "Salary Component"]:
+        if not frappe.has_permission(doctype, "create"):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _(f"You do not have permission to create {doctype} records.")
+            return
+
+    try:
+        # Get JSON payload
+        data = frappe.request.get_json()
+        if not data:
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("No data provided in the request.")
+            return
+
+        csv_configs = [
+            {"file_key": "employeesCsv", "dto_class": EmployeeDTO},
+            {"file_key": "salaryStructureCsv", "dto_class": SalaryStructureDTO},
+            {"file_key": "payrollCsv", "dto_class": PayrollDTO}
+        ]
+
+        all_errors = []
+        all_parsed_data = {}
+        all_inserted_records = {}
+
+        # PHASE 1: Validate CSVs
+        for config in csv_configs:
+            file_key = config["file_key"]
+            dto_class = config["dto_class"]
+            file_content_b64 = data.get(file_key, "")
+
+            if not file_content_b64:
+                all_errors.append({
+                    "line": 0,
+                    "error_message": f"{file_key} est requis",
+                    "data": {},
+                    "file": file_key
+                })
+                continue
+
+            try:
+                file_content = base64.b64decode(file_content_b64).decode('utf-8')
+                print(f"Decoded {file_key} content: {file_content[:100]}...", "CSV Debug")
+            except Exception as e:
+                all_errors.append({
+                    "line": 0,
+                    "error_message": f"Erreur de décodage Base64 pour {file_key}: {str(e)}",
+                    "data": {},
+                    "file": file_key
+                })
+                continue
+
+            error_list, parsed_data = CsvService.import_csv(file_content.encode('utf-8'), dto_class)
+            print(f"{file_key} parsing completed. Records: {len(parsed_data)}, Errors: {len(error_list)}", "CSV Parsing")
+
+            if error_list:
+                for error in error_list:
+                    error["file"] = file_key
+                all_errors.extend(error_list)
+
+            if not parsed_data and not error_list:
+                all_errors.append({
+                    "line": 0,
+                    "error_message": f"Aucune donnée valide trouvée dans {file_key}",
+                    "data": {},
+                    "file": file_key
+                })
+                continue
+
+            all_parsed_data[dto_class.__name__] = parsed_data
+
+        # Split parsed data into separate lists
+        employee_dtos = all_parsed_data.get(EmployeeDTO.__name__, [])
+        salary_structure_dtos = all_parsed_data.get(SalaryStructureDTO.__name__, [])
+        payroll_dtos = all_parsed_data.get(PayrollDTO.__name__, [])
+
+        # Skip payroll if employees fail 
+        if not employee_dtos and any(e["file"] == "payrollCsv" for e in all_errors):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = "Échec de la validation des employés. Le traitement du payroll a été ignoré."
+            frappe.local.response["validation_errors"] = all_errors
+            frappe.local.response["inserted_records"] = all_inserted_records
+            return
+
+        # PHASE 2: Pre-transaction setup
+        setup_errors = setup_hrms_data(employee_dtos, salary_structure_dtos)
+        if setup_errors:
+            all_errors.extend(setup_errors)
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = "Échec de la configuration initiale."
+            frappe.local.response["validation_errors"] = all_errors
+            frappe.local.response["inserted_records"] = all_inserted_records
+            return
+
+        # PHASE 3: Process CSVs in transaction
+        try:
+            # Essayer de démarrer une transaction
+            try:
+                frappe.db.begin()
+                print("Transaction started", "CSV Transaction")
+            except Exception as tx_error:
+                print(f"Could not start transaction: {str(tx_error)}", "CSV Transaction")
+                # Continuer sans transaction explicite
+
+            # Process Employees
+            if employee_dtos:
+                result = insert_employees(employee_dtos)
+                all_inserted_records["employeesCsv"] = result["created"]
+                all_errors.extend([dict(err, file="employeesCsv") for err in result["errors"]])
+                print(f"Employee insertion: Created={len(result['created'])}, Errors={len(result['errors'])}", "Employee Insertion")
+
+            # Process Salary Structures
+            if salary_structure_dtos:
+                result = insert_salary_components(salary_structure_dtos)
+                all_inserted_records["salaryStructureCsv"] = result["created"]
+                all_errors.extend([dict(err, file="salaryStructureCsv") for err in result["errors"]])
+
+                result = insert_salary_structures(salary_structure_dtos, payroll_dtos)
+                all_inserted_records["salaryStructureCsv"].extend(result["created"])
+                all_errors.extend([dict(err, file="salaryStructureCsv") for err in result["errors"]])
+
+            # Process Payroll
+            if payroll_dtos:
+                result = insert_salary_assignments(payroll_dtos)
+                all_inserted_records["payrollCsv"] = result["created"]
+                all_errors.extend([dict(err, file="payrollCsv") for err in result["errors"]])
+
+                result = insert_salary_slips(payroll_dtos)
+                all_inserted_records["payrollCsv"].extend(result["created"])
+                all_errors.extend([dict(err, file="payrollCsv") for err in result["errors"]])
+
+            # PHASE 4: Commit or rollback
+            if all_errors:
+                try:
+                    frappe.db.rollback()
+                    print("Transaction rolled back due to errors", "CSV Transaction")
+                except Exception as rb_error:
+                    print(f"Could not rollback transaction: {str(rb_error)}", "CSV Transaction")
+                frappe.local.response["status"] = "error"
+                frappe.local.response["message"] = "Certaines insertions ont échoué. Toutes les modifications ont été annulées."
+                frappe.local.response["validation_errors"] = all_errors
+                frappe.local.response["inserted_records"] = all_inserted_records
+            else:
+                try:
+                    frappe.db.commit()
+                    print("Transaction committed successfully", "CSV Transaction")
+                except Exception as commit_error:
+                    print(f"Could not commit transaction: {str(commit_error)}", "CSV Transaction")
+                frappe.local.response["status"] = "success"
+                frappe.local.response["message"] = "Tous les CSV ont été importés avec succès."
+                frappe.local.response["validation_errors"] = []
+                frappe.local.response["inserted_records"] = all_inserted_records
+
+        except Exception as e:
+            try:
+                frappe.db.rollback()
+                print(f"Transaction rolled back due to exception: {str(e)}", "CSV Transaction")
+            except Exception as rb_error:
+                print(f"Could not rollback after exception: {str(rb_error)}", "CSV Transaction")
+            
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = f"Erreur lors de l'insertion: {str(e)}"
+            frappe.local.response["validation_errors"] = all_errors + [{
+                "line": 0,
+                "error_message": f"Erreur lors de l'insertion: {str(e)}",
+                "data": {},
+                "file": "global"
+            }]
+            frappe.local.response["inserted_records"] = all_inserted_records
+            print(f"Insertion error: {str(e)}", "CSV Insertion")
+
+    except Exception as e:
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = f"Erreur inattendue: {str(e)}"
+        frappe.local.response["validation_errors"] = all_errors + [{
+            "line": 0,
+            "error_message": f"Erreur inattendue: {str(e)}",
+            "data": {},
+            "file": "global"
+        }]
+        frappe.local.response["inserted_records"] = all_inserted_records
+        print(f"Unexpected error: {str(e)}", "CSV Error")
+
+    return
+
+
+realiser maintenant l insertion de ces tableau de Earnings et de  Deductions lors de l insertion du structure 

@@ -1,0 +1,9 @@
+public Mono<String> createEmployee(EmployeeDTO employee) {
+        return webClient.post()
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(employee)
+            .retrieve()
+            .bodyToMono(String.class)
+            .doOnSuccess(response -> System.out.println("Employé créé avec succès: " + response))
+            .doOnError(error -> System.err.println("Erreur lors de la création de l'employé: " + error.getMessage()));
+    }

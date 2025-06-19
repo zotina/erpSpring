@@ -1,0 +1,1051 @@
+voici le doc officiel du frappe erpnext : https://docs.frappe.io/erpnext 
+et voici le repo du projet erpnext personel : https://github.com/zotina/frappe_bench.git 
+ baser sur ces 2 resources 
+
+ j ai cette api sur frappe  :
+
+
+  import frappe
+from frappe import _
+from erpnext.controllers.api.utils import validate_jwt
+
+@frappe.whitelist(allow_guest=False)
+@validate_jwt
+def get_supplier_quotation_list(supplier=None):
+    """
+    REST API endpoint to fetch a list of Supplier Quotations with specific columns and child items.
+    Args:
+        supplier (str, optional): Filter by supplier name.
+    Returns: List of Supplier Quotations with Title, Status, Date, Valid Till, Grand Total, ID, child items, and supplier list in metadata.
+    Example usage:
+    http://erpnext.localhost:8000/api/method/erpnext.controllers.api.page.supplier_quotation_api.get_supplier_quotation_list?supplier=SUP-001
+    Header: Authorization: Bearer <jwt_token>
+    """
+    try:
+        # Prepare filters
+        filters = {}
+        if supplier:
+            filters["supplier"] = supplier
+
+        # Fetch Supplier Quotation records
+        supplier_quotations = frappe.get_all(
+            "Supplier Quotation",
+            fields=[
+                "title",
+                "status",
+                "transaction_date",
+                "valid_till",
+                "grand_total",
+                "name",
+                "supplier"
+            ],
+            filters=filters,
+            order_by="transaction_date desc"
+        )
+
+        # Fetch child items for each Supplier Quotation
+        for quotation in supplier_quotations:
+            child_items = frappe.get_all(
+                "Supplier Quotation Item",
+                filters={"parent": quotation["name"]},
+                fields=["name", "item_code", "item_name", "qty", "rate", "amount"]
+            )
+            quotation["child"] = child_items
+
+        # Fetch list of supplier names
+        suppliers = frappe.get_all("Supplier", fields=["name"], order_by="name asc")
+        supplier_names = [supplier["name"] for supplier in suppliers]
+
+        frappe.local.response["status"] = "success"
+        frappe.local.response["data"] = supplier_quotations
+        frappe.local.response["metadata"] = {"suppliers": supplier_names}
+
+        return
+
+    except Exception as e:
+        frappe.log_error(f"Error fetching Supplier Quotation list: {str(e)}", "Supplier Quotation API")
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = _("An error occurred while fetching the Supplier Quotation list.")
+        return
+
+@frappe.whitelist(allow_guest=False)
+@validate_jwt
+def get_supplier_quotation_item_details(parent):
+    """
+    REST API endpoint to fetch details of Supplier Quotation Items for a specific Supplier Quotation.
+    Args:
+        parent (str): The name of the Supplier Quotation (e.g., 'PUR-SQTN-2025-00001').
+    Returns: List of Supplier Quotation Items with item_code, item_name, qty, rate, amount, and name.
+    Example usage:
+    http://erpnext.localhost:8000/api/method/erpnext.controllers.api.page.supplier_quotation_api.get_supplier_quotation_item_details?parent=PUR-SQTN-2025-00001
+    Header: Authorization: Bearer <jwt_token>
+    """
+    try:
+        # Validate inputs
+        if not parent or     not isinstance(parent, str):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Invalid or missing parent parameter. Please provide a valid Supplier Quotation ID.")
+            return
+
+        # Check if the Supplier Quotation exists
+        if not frappe.db.exists("Supplier Quotation", parent):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Supplier Quotation {0} does not exist.").format(parent)
+            return
+
+        # Check permissions
+        if not frappe.has_permission("Supplier Quotation", "read"):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("You do not have permission to read Supplier Quotation records.")
+            return
+
+        # Fetch Supplier Quotation Item records
+        items = frappe.get_all(
+            "Supplier Quotation Item",
+            filters={"parent": parent},
+            fields=["name", "item_code", "item_name", "qty", "rate", "amount"]
+        )
+
+        if not items:
+            frappe.local.response["status"] = "success"
+            frappe.local.response["data"] = []
+            frappe.local.response["message"] = _("No items found for Supplier Quotation {0}.").format(parent)
+            return
+
+        frappe.local.response["status"] = "success"
+        frappe.local.response["data"] = items
+
+        return
+
+    except Exception as e:
+        frappe.log_error(f"Error fetching Supplier Quotation Item details: {str(e)}", "Supplier Quotation Item API")
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = _("An error occurred while fetching Supplier Quotation Item details.")
+        return
+
+
+
+@frappe.whitelist(allow_guest=False)
+@validate_jwt
+def update_supplier_quotation_item_rate(item_id, rate):
+    """
+    REST API endpoint to update the rate and amount of a specific Supplier Quotation Item.
+    Handles Draft, Submitted, and Cancelled Supplier Quotations according to ERPNext workflow:
+    - Draft: Updates rate directly and keeps the quotation in Draft status.
+    - Submitted: Cancels the quotation, amends the cancelled quotation to create a draft,
+                updates the rate, and submits the amended quotation.
+    - Cancelled: Creates an amended draft directly, updates the rate, and submits the amended quotation.
+    
+    Args:
+        item_id (str): The name of the Supplier Quotation Item (e.g., 'SQI-001').
+        rate (float): The new rate value to set for the item.
+    Returns: Success message with updated Supplier Quotation ID or error details.
+    Example usage:
+    http://erpnext.localhost:8000/api/method/erpnext.controllers.api.page.supplier_quotation_api.update_supplier_quotation_item_rate?item_id=SQI-001&rate=200
+    Header: Authorization: Bearer <jwt_token>
+    """
+    try:
+        # Validate inputs
+        if not item_id or not isinstance(item_id, str):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Invalid or missing item_id parameter. Please provide a valid Supplier Quotation Item ID.")
+            return
+
+        try:
+            rate = float(rate)
+            if rate < 0:
+                frappe.local.response["status"] = "error"
+                frappe.local.response["message"] = _("Rate must be a non-negative number.")
+                return
+        except (ValueError, TypeError):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Invalid rate parameter. Please provide a valid number.")
+            return
+
+        # Check if the Supplier Quotation Item exists
+        if not frappe.db.exists("Supplier Quotation Item", item_id):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Supplier Quotation Item {0} does not exist.").format(item_id)
+            return
+
+        # Check permissions
+        if not frappe.has_permission("Supplier Quotation", "write"):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("You do not have permission to update Supplier Quotation records.")
+            return
+
+        # Check submit permission for amended quotation
+        if not frappe.has_permission("Supplier Quotation", "submit"):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("You do not have permission to submit Supplier Quotation records.")
+            return
+
+        # Check cancel permission for submitted quotation
+        if not frappe.has_permission("Supplier Quotation", "cancel"):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("You do not have permission to cancel Supplier Quotation records.")
+            return
+
+        # Fetch the Supplier Quotation Item
+        item = frappe.get_doc("Supplier Quotation Item", item_id)
+        parent = item.parent
+
+        # Load the parent Supplier Quotation
+        supplier_quotation = frappe.get_doc("Supplier Quotation", parent)
+
+        if supplier_quotation.status == "Draft":
+            # Direct update for Draft status
+            frappe.db.set_value(
+                "Supplier Quotation Item",
+                item_id,
+                {
+                    "rate": rate,
+                    "amount": rate * item.qty
+                }
+            )
+            supplier_quotation.run_method("calculate_taxes_and_totals")
+            supplier_quotation.db_update()
+            frappe.db.commit()
+
+            frappe.local.response["status"] = "success"
+            frappe.local.response["message"] = _("Successfully updated rate for Supplier Quotation Item {0} in Supplier Quotation {1}.").format(item_id, parent)
+            frappe.local.response["data"] = {"supplier_quotation": parent}
+            return
+
+        elif supplier_quotation.status == "Submitted":
+            # Check if linked to Purchase Order
+            linked_purchase_orders = frappe.get_all(
+                "Purchase Order Item",
+                filters={"supplier_quotation": parent},
+                fields=["parent"]
+            )
+
+            # Check if linked Purchase Orders are referenced in Purchase Invoices
+            linked_purchase_invoices = []
+            if linked_purchase_orders:
+                purchase_order_names = [po.parent for po in linked_purchase_orders]
+                linked_purchase_invoices = frappe.get_all(
+                    "Purchase Invoice Item",
+                    filters={"purchase_order": ["in", purchase_order_names]},
+                    fields=["parent"]
+                )
+
+            if linked_purchase_orders or linked_purchase_invoices:
+                linked_docs = []
+                if linked_purchase_orders:
+                    linked_docs.extend([po.parent for po in linked_purchase_orders])
+                if linked_purchase_invoices:
+                    linked_docs.extend([pi.parent for pi in linked_purchase_invoices])
+                frappe.local.response["status"] = "error"
+                frappe.local.response["message"] = _("Cannot amend Supplier Quotation {0} as it is linked to {1}.").format(
+                    parent, ", ".join(set(linked_docs))  # Use set to avoid duplicate document names
+                )
+                return
+
+            # Cancel the Supplier Quotation
+            supplier_quotation.cancel()
+            frappe.db.commit()  # Commit cancellation
+
+        elif supplier_quotation.status != "Cancelled":
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Supplier Quotation {0} is in {1} status. Only Draft, Submitted, or Cancelled quotations can be updated.").format(
+                parent, supplier_quotation.status
+            )
+            return
+
+        # Amend the cancelled Supplier Quotation (for Submitted or Cancelled status)
+        amended_quotation = frappe.copy_doc(supplier_quotation)
+        amended_quotation.amended_from = parent
+        amended_quotation.status = "Draft"
+        # Clear the name to let ERPNext generate a unique name
+        amended_quotation.name = None
+        amended_quotation.insert()
+
+        # Find the corresponding item in the amended quotation
+        for amended_item in amended_quotation.items:
+            if amended_item.item_code == item.item_code and amended_item.qty == item.qty:
+                amended_item.rate = rate
+                amended_item.amount = rate * amended_item.qty
+                break
+        else:
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("Item {0} not found in amended Supplier Quotation.").format(item_id)
+            return
+
+        # Recalculate taxes and totals
+        amended_quotation.run_method("calculate_taxes_and_totals")
+        amended_quotation.save()
+
+        # Submit the amended quotation
+        amended_quotation.submit()
+        frappe.db.commit()
+
+        frappe.local.response["status"] = "success"
+        frappe.local.response["message"] = _("Successfully amended and submitted Supplier Quotation {0} with updated rate for item {1} in new Supplier Quotation {2}.").format(
+            parent, item_id, amended_quotation.name
+        )
+        frappe.local.response["data"] = {"supplier_quotation": amended_quotation.name}
+        return
+
+    except Exception as e:
+        frappe.log_error(f"Error updating Supplier Quotation Item: {str(e)}", "Supplier Quotation Item API")
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = _("An error occurred while updating the Supplier Quotation Item: {0}").format(str(e))
+        return
+
+
+        cette api sert a lister le supplier quotation puis lors qu on appuye sur le boutton details elle affiche les details du supplier quotation c est a dire ITEM , il y a boutton update pour modifier le rate du supplier item , et il suit cette demarche ci dessus pour l update , voici les model , service , ,controller  et les view spring boot pour cela  ;
+
+
+        package mg.itu.model;
+
+import java.util.List;
+
+public class SupplierQuotation {
+    private String title;
+    private String status;
+    private String transaction_date;
+    private String valid_till;
+    private Double grand_total;
+    private String name;
+    private String supplier; 
+    private List<SupplierQuotationItem> child;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getTransaction_date() {
+        return transaction_date;
+    }
+
+    public void setTransaction_date(String transaction_date) {
+        this.transaction_date = transaction_date;
+    }
+
+    public String getValid_till() {
+        return valid_till;
+    }
+
+    public void setValid_till(String valid_till) {
+        this.valid_till = valid_till;
+    }
+
+    public Double getGrand_total() {
+        return grand_total;
+    }
+
+    public void setGrand_total(Double grand_total) {
+        this.grand_total = grand_total;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(String supplier) {
+        this.supplier = supplier;
+    }
+
+    public List<SupplierQuotationItem> getChild() {
+        return child;
+    }
+
+    public void setChild(List<SupplierQuotationItem> child) {
+        this.child = child;
+    }
+}
+
+
+package mg.itu.model;
+
+public class SupplierQuotationItem {
+    private String name; 
+    private String item_code; 
+    private String item_name; 
+    private Double rate;
+    private Double qty;
+    private Double amount;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getItem_code() {
+        return item_code;
+    }
+
+    public void setItem_code(String item_code) {
+        this.item_code = item_code;
+    }
+
+    public String getItem_name() {
+        return item_name;
+    }
+
+    public void setItem_name(String item_name) {
+        this.item_name = item_name;
+    }
+
+    public Double getRate() {
+        return rate;
+    }
+
+    public void setRate(Double rate) {
+        this.rate = rate;
+    }
+
+    public Double getQty() {
+        return qty;
+    }
+
+    public void setQty(Double qty) {
+        this.qty = qty;
+    }
+
+    public Double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(Double amount) {
+        this.amount = amount;
+    }
+}
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SimpleApiResponse {
+    private String status;
+    private String message;
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
+
+package mg.itu.model;
+
+import java.util.List;
+
+public class ApiResponse<T> {
+    private String status;
+    private String message; 
+    private List<T> data;
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public List<T> getData() {
+        return data;
+    }
+
+    public void setData(List<T> data) {
+        this.data = data;
+    }
+}
+
+package mg.itu.model;
+
+import java.util.List;
+
+public class SupplierMetadataResponse<T> extends ApiResponse<T> {
+    private Metadata metadata;
+
+    public Metadata getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
+    }
+
+    public static class Metadata {
+        private List<String> suppliers;
+
+        public List<String> getSuppliers() {
+            return suppliers;
+        }
+
+        public void setSuppliers(List<String> suppliers) {
+            this.suppliers = suppliers;
+        }
+    }
+}
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class UpdateApiResponse {
+    @JsonProperty("status")
+    private String status;
+    @JsonProperty("message")
+    private String message;
+
+    
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
+
+package mg.itu.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.SimpleApiResponse;
+import mg.itu.model.SupplierMetadataResponse;
+import mg.itu.model.SupplierQuotation;
+import mg.itu.model.SupplierQuotationItem;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Service
+public class SupplierQuotationService {
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Value("${api.base-url}")
+    private String baseApiUrl;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public SupplierMetadataResponse<SupplierQuotation> getSupplierQuotationList(String supplier, HttpSession session) throws Exception {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "page.supplier_quotation_api.get_supplier_quotation_list";
+        if (supplier != null && !supplier.isEmpty()) {
+            url += "?supplier=" + supplier;
+        }
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory()
+                        .constructParametricType(SupplierMetadataResponse.class, SupplierQuotation.class));
+            }
+            SupplierMetadataResponse<SupplierQuotation> errorResponse = new SupplierMetadataResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setData(null);
+            return errorResponse;
+        } catch (Exception e) {
+            e.printStackTrace();
+            SupplierMetadataResponse<SupplierQuotation> errorResponse = new SupplierMetadataResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setData(null);
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<SupplierQuotationItem> getSupplierQuotationItemDetails(String parent, HttpSession session) throws Exception {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "page.supplier_quotation_api.get_supplier_quotation_item_details?parent=" + parent;
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory()
+                        .constructParametricType(ApiResponse.class, SupplierQuotationItem.class));
+            }
+            ApiResponse<SupplierQuotationItem> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch Supplier Quotation Item details");
+            return errorResponse;
+        } catch (Exception e) {
+            e.printStackTrace();
+            ApiResponse<SupplierQuotationItem> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage(e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public SimpleApiResponse updateSupplierQuotationItemRate(String itemId, Double rate, HttpSession session) throws Exception {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "page.supplier_quotation_api.update_supplier_quotation_item_rate?item_id=" + itemId + "&rate=" + rate;
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.post()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return objectMapper.readValue(response.getBody(), SimpleApiResponse.class);
+            }
+            SimpleApiResponse errorResponse = new SimpleApiResponse();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to update Supplier Quotation Item rate");
+            return errorResponse;
+        } catch (Exception e) {
+            e.printStackTrace();
+            SimpleApiResponse errorResponse = new SimpleApiResponse();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage(e.getMessage());
+            return errorResponse;
+        }
+    }
+}
+
+package mg.itu.controller;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.SimpleApiResponse;
+import mg.itu.model.SupplierMetadataResponse;
+import mg.itu.model.SupplierQuotation;
+import mg.itu.model.SupplierQuotationItem;
+import mg.itu.service.SupplierQuotationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
+@RequestMapping("/api/supplier-quotations")
+public class SupplierQuotationController {
+
+    @Autowired
+    private SupplierQuotationService supplierQuotationService;
+
+    @GetMapping("/")
+    public String getSupplierQuotations(@RequestParam(value = "supplier", required = false) String supplier, Model model, HttpSession session) {
+        try {
+            SupplierMetadataResponse<SupplierQuotation> response = supplierQuotationService.getSupplierQuotationList(supplier, session);
+            if (response != null && "success".equals(response.getStatus())) {
+                model.addAttribute("quotations", response.getData());
+                model.addAttribute("suppliers", response.getMetadata() != null ? response.getMetadata().getSuppliers() : null);
+                model.addAttribute("selectedSupplier", supplier);
+            } else {
+                model.addAttribute("error", "Failed to fetch Supplier Quotations");
+            }
+        } catch (IllegalStateException e) {
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "An error occurred while fetching Supplier Quotations");
+        }
+        return "views/supplier-quotations/supplier-quotations";
+    }
+
+    @GetMapping("/details/{id}")
+    public String getSupplierQuotationDetails(@PathVariable("id") String id, Model model, HttpSession session) {
+        try {
+            
+            SupplierMetadataResponse<SupplierQuotation> listResponse = supplierQuotationService.getSupplierQuotationList(null, session);
+            SupplierQuotation quotation = null;
+            if (listResponse != null && "success".equals(listResponse.getStatus())) {
+                quotation = listResponse.getData().stream()
+                        .filter(q -> q.getName().equals(id))
+                        .findFirst()
+                        .orElse(null);
+            }
+
+            
+            ApiResponse<SupplierQuotationItem> itemResponse = supplierQuotationService.getSupplierQuotationItemDetails(id, session);
+            if (itemResponse != null && "success".equals(itemResponse.getStatus())) {
+                model.addAttribute("items", itemResponse.getData());
+            } else {
+                model.addAttribute("error", itemResponse != null ? itemResponse.getMessage() : "Failed to fetch Supplier Quotation Item details");
+            }
+
+            if (quotation != null) {
+                model.addAttribute("quotation", quotation);
+            } else {
+                model.addAttribute("error", "Supplier Quotation not found");
+            }
+
+            return "views/supplier-quotations/supplier-quotation-details";
+        } catch (IllegalStateException e) {
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "An error occurred while fetching Supplier Quotation details");
+            return "views/supplier-quotations/supplier-quotations";
+        }
+    }
+
+    @PostMapping("/update-item")
+    public String updateSupplierQuotationItem(@RequestParam("itemId") String itemId,
+                                             @RequestParam("rate") Double rate,
+                                             @RequestParam("parent") String parent,
+                                             Model model,
+                                             HttpSession session) {
+        try {
+            SimpleApiResponse response = supplierQuotationService.updateSupplierQuotationItemRate(itemId, rate, session);
+            ApiResponse<SupplierQuotationItem> itemResponse = supplierQuotationService.getSupplierQuotationItemDetails(parent, session);
+            SupplierMetadataResponse<SupplierQuotation> listResponse = supplierQuotationService.getSupplierQuotationList(null, session);
+            SupplierQuotation quotation = null;
+            if (listResponse != null && "success".equals(listResponse.getStatus())) {
+                quotation = listResponse.getData().stream()
+                        .filter(q -> q.getName().equals(parent))
+                        .findFirst()
+                        .orElse(null);
+            }
+
+            if (response != null && "success".equals(response.getStatus())) {
+                model.addAttribute("success", response.getMessage());
+                if (quotation != null) {
+                    model.addAttribute("quotation", quotation);
+                }
+                if (itemResponse != null && "success".equals(itemResponse.getStatus())) {
+                    model.addAttribute("items", itemResponse.getData());
+                } else {
+                    model.addAttribute("error", "Updated successfully, but failed to fetch updated items");
+                }
+                return "views/supplier-quotations/supplier-quotation-details";
+            } else {
+                model.addAttribute("error", response != null ? response.getMessage() : "Failed to update Supplier Quotation Item");
+                if (quotation != null) {
+                    model.addAttribute("quotation", quotation);
+                }
+                if (itemResponse != null && "success".equals(itemResponse.getStatus())) {
+                    model.addAttribute("items", itemResponse.getData());
+                }
+                return "views/supplier-quotations/supplier-quotation-details";
+            }
+        } catch (IllegalStateException e) {
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "An error occurred while updating Supplier Quotation Item");
+            return "views/supplier-quotations/supplier-quotation-details";
+        }
+    }
+}
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Quotations - ERPNext</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .filter-container {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+        }
+        .filter-container label {
+            margin-right: 10px;
+            font-weight: 600;
+        }
+        .filter-container select {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .action-btn {
+            margin-right: 10px;
+            padding: 5px 10px;
+            background-color: #10b981;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .action-btn:hover {
+            background-color: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+
+    <div class="header">
+        <div>
+            <h1>Supplier Quotations</h1>
+        </div>
+    </div>
+
+    <!-- Supplier Filter -->
+    <div class="filter-container" th:if="${suppliers}">
+        <form th:action="@{/api/supplier-quotations/}" method="get">
+            <label for="supplierFilter">Filter by Supplier:</label>
+            <select id="supplierFilter" name="supplier" onchange="this.form.submit()">
+                <option value="">All Suppliers</option>
+                <option th:each="supplier : ${suppliers}" th:value="${supplier}" th:text="${supplier}" th:selected="${supplier == selectedSupplier}"></option>
+            </select>
+        </form>
+    </div>
+
+    <!-- Liste des Supplier Quotations -->
+    <div class="table-container" th:if="${quotations}">
+        <div class="table-responsive">
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Supplier</th>
+                        <th>Status</th>
+                        <th>Transaction Date</th>
+                        <th>Valid Till</th>
+                        <th>Grand Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="quotation : ${quotations}">
+                        <td th:text="${quotation.supplier}"></td>
+                        <td th:text="${quotation.status}"></td>
+                        <td th:text="${quotation.transaction_date}"></td>
+                        <td th:text="${quotation.valid_till}"></td>
+                        <td th:text="${quotation.grand_total}"></td>
+                        <td>
+                            <a th:href="@{/api/supplier-quotations/details/{id}(id=${quotation.name})}" class="action-btn">Details</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(quotations)}">
+                        <td colspan="7">No Supplier Quotations found</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div th:if="${error}" class="error" th:text="${error}"></div>
+
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Quotation Details - ERPNext</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .form-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .form-group label {
+            margin-right: 10px;
+            font-weight: 600;
+        }
+        .form-group input {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            width: 100px;
+        }
+        .form-group button {
+            background-color: #10b981;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .form-group button:hover {
+            background-color: #059669;
+        }
+        .success {
+            color: #10b981;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .child-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .child-table th, .child-table td {
+            border: 1px solid #d1d5db;
+            padding: 8px;
+            text-align: left;
+        }
+        .child-table th {
+            background-color: #e2e8f0;
+        }
+        .update-form {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+
+    <div class="header">
+        <h1>Supplier Quotation Details</h1>
+    </div>
+
+    <div class="form-container">
+        <table class="child-table">
+            <thead>
+                <tr>
+                    <th>Item Code</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${items}">
+                    <td th:text="${item.item_code}"></td>
+                    <td th:text="${item.item_name}"></td>
+                    <td th:text="${item.qty}"></td>
+                    <td th:text="${item.rate}"></td>
+                    <td th:text="${item.amount}"></td>
+                    <td>
+                        <form th:action="@{/api/supplier-quotations/update-item}" method="post" class="update-form">
+                            <input type="hidden" name="itemId" th:value="${item.name}">
+                            <input type="hidden" name="parent" th:value="${quotation.name}">
+                            <div class="form-group">
+                                <input type="number" name="rate" th:value="${item.rate}" step="0.01" min="0" required>
+                                <button type="submit">Update</button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(items)}">
+                    <td colspan="6">No items found</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${success}" class="success" th:text="${success}"></div>
+        <div th:if="${error}" class="error" th:text="${error}"></div>
+    </div>
+
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+
+mais le new app spring boot change un peu , au lieu d afficher le liste de supplier quotation il faut afficher le liste de Request for quotation 
+puis on peut voir le detail du request for quotation c est a dire l item , donc le supplier quotaion change seulement en request for quotation 
+puis pour l updte il doit cree un le supplier quotation pour cette request for quotation avec le prix recuperer  , doit toujours recree un supplier quotation avec le prix submiter pour l action update sur liste de details de request for quotation
+
+mais rajouter un boutton voir supplier  quotation sur cette liste de request for quotation pour voir les liste de supplier cree a partir de cette request for quotation 
+j ai deja cette liste mais le donner de la liste de supplier doit etre juste filtre par le request for quotation mere , puis apres on doit encore voir le detail sur la liste de supplier quotaion et le boutton update pour chaque line du details pour ca rien ne change jsute le liste de supplier filtre par le request for quotation apres l appuye du boutton  voir supplier quotation sur la liste de request for quotation et le procedure du supplier quotation ne chage pas , donc il aurra 2 boutton update ,l un sur le details de request for quotation pour l insertion du supplier quotation pour le request quotation avec l item selection 
+ et l autre c est sur le supplier quotation item qui existe deja
+
+ donc modifier mes api existant si necessire et cree moi les api non cree , puis modifier le spring pour avoir cette scenario

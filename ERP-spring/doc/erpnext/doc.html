@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation ERPNext - Formulaires et Scénario d'Automatisation</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .toc {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .toc ul li {
+            margin: 5px 0;
+        }
+        .toc ul li a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .toc ul li a:hover {
+            text-decoration: underline;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        pre {
+            background: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #007bff;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .back-to-top:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Documentation ERPNext - Formulaires et Scénario d'Automatisation</h1>
+
+        <!-- Table des matières -->
+        <div class="toc">
+            <h3>Tableau des matières</h3>
+            <ul>
+                <li><a href="#partie-1">Partie 1 : Code des pages de formulaires dans ERPNext</a>
+                    <ul>
+                        <li><a href="#partie-1-1">1.1 Où trouver le code des formulaires</a></li>
+                        <li><a href="#partie-1-2">1.2 Structure des formulaires</a></li>
+                    </ul>
+                </li>
+                <li><a href="#partie-2">Partie 2 : Actions sur les pages de formulaires</a>
+                    <ul>
+                        <li><a href="#partie-2-1">2.1 Boutons standards</a></li>
+                        <li><a href="#partie-2-2">2.2 Boutons personnalisés</a></li>
+                        <li><a href="#partie-2-3">2.3 Scripts clients (JavaScript)</a></li>
+                        <li><a href="#partie-2-4">2.4 Scripts serveurs (Python)</a></li>
+                        <li><a href="#partie-2-5">2.5 Actions spécifiques à scénario</a></li>
+                    </ul>
+                </li>
+                <li><a href="#partie-3">Partie 3 : Intégration avec scénario</a>
+                    <ul>
+                        <li><a href="#partie-3-1">3.1 Interaction avec les formulaires</a></li>
+                        <li><a href="#partie-3-2">3.2 Personnalisation des formulaires pour scénario</a></li>
+                    </ul>
+                </li>
+                <li><a href="#partie-4">Partie 4 : Autres documentations nécessaires</a>
+                    <ul>
+                        <li><a href="#partie-4-1">4.1 Personnalisation des formulaires</a></li>
+                        <li><a href="#partie-4-2">4.2 Permissions</a></li>
+                        <li><a href="#partie-4-3">4.3 Exportation CSV</a></li>
+                        <li><a href="#partie-4-4">4.4 Déplacer le script dans une application personnalisée</a></li>
+                        <li><a href="#partie-4-5">4.5 Débogage</a></li>
+                    </ul>
+                </li>
+                <li><a href="#partie-5">Partie 5 : Étapes de test et validation</a></li>
+                <li><a href="#documentation-finale">Documentation finale : Code des pages et actions</a></li>
+            </ul>
+        </div>
+
+        <!-- Partie 1 -->
+        <div class="section" id="partie-1">
+            <h2>Partie 1 : Code des pages de formulaires dans ERPNext</h2>
+
+            <div id="partie-1-1">
+                <h3>1.1 Où trouver le code des formulaires dans ERPNext</h3>
+                <p>Dans ERPNext, les formulaires sont générés dynamiquement à partir des définitions des <strong>DocTypes</strong> dans le framework Frappe.</p>
+                <ul>
+                    <li><strong>Définitions des DocTypes</strong> :
+                        <ul>
+                            <li>Emplacement : <code>~/frappe-bench/apps/erpnext/erpnext/&lt;module&gt;/doctype/&lt;doctype_name&gt;/&lt;doctype_name&gt;.json</code></li>
+                            <li>Exemple pour <code>Item</code> : <code>~/frappe-bench/apps/erpnext/erpnext/stock/doctype/item/item.json</code></li>
+                            <li>Contenu : Champs, propriétés, permissions.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Code de rendu des formulaires</strong> :
+                        <ul>
+                            <li><strong>Frontend (JavaScript)</strong> :
+                                <ul>
+                                    <li>Principal : <code>~/frappe-bench/apps/frappe/frappe/public/js/frappe/form/form.js</code></li>
+                                    <li>Templates : <code>~/frappe-bench/apps/frappe/frappe/public/js/frappe/templates/form.html</code></li>
+                                    <li>CSS : <code>~/frappe-bench/apps/frappe/frappe/public/css/form.css</code></li>
+                                </ul>
+                            </li>
+                            <li><strong>Backend (Python)</strong> :
+                                <ul>
+                                    <li>Logique : <code>~/frappe-bench/apps/frappe/frappe/model/document.py</code></li>
+                                    <li>API : <code>~/frappe-bench/apps/frappe/frappe/api/__init__.py</code></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><strong>Scripts spécifiques au DocType</strong> :
+                        <ul>
+                            <li><strong>Client-side (JS)</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/&lt;module&gt;/doctype/&lt;doctype_name&gt;/&lt;doctype_name&gt;.js</code></li>
+                            <li><strong>Server-side (Python)</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/&lt;module&gt;/doctype/&lt;doctype_name&gt;/&lt;doctype_name&gt;.py</code></li>
+                            <li>Exemple pour <code>Item</code> :
+                                <ul>
+                                    <li>JS : <code>~/frappe-bench/apps/erpnext/erpnext/stock/doctype/item/item.js</code></li>
+                                    <li>Python : <code>~/frappe-bench/apps/erpnext/erpnext/stock/doctype/item/item.py</code></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <p><strong>Exemple : Formulaire de l’Item</strong></p>
+                <pre><code>
+// item.js
+frappe.ui.form.on('Item', {
+    refresh: function(frm) {
+        frm.add_custom_button(__('View Ledger'), function() {
+            frappe.route_options = { item_code: frm.doc.name };
+            frappe.set_route('query-report', 'Stock Ledger');
+        });
+    }
+});
+</code></pre>
+                <pre><code>
+# item.py
+from frappe.model.document import Document
+
+class Item(Document):
+    def validate(self):
+        self.validate_item_code()
+        self.validate_stock_uom()
+</code></pre>
+                <p><strong>Autres DocTypes du scénario</strong> :</p>
+                <ul>
+                    <li><strong>Supplier Group</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier_group/*</code></li>
+                    <li><strong>Supplier</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier/*</code></li>
+                    <li><strong>Material Request</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/stock/doctype/material_request/*</code></li>
+                    <li><strong>Request for Quotation</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/buying/doctype/request_for_quotation/*</code></li>
+                    <li><strong>Supplier Quotation</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier_quotation/*</code></li>
+                    <li><strong>Purchase Order</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/buying/doctype/purchase_order/*</code></li>
+                    <li><strong>Purchase Receipt</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/stock/doctype/purchase_receipt/*</code></li>
+                    <li><strong>Purchase Invoice</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/accounts/doctype/purchase_invoice/*</code></li>
+                    <li><strong>Payment Entry</strong> : <code>~/frappe-bench/apps/erpnext/erpnext/accounts/doctype/payment_entry/*</code></li>
+                </ul>
+            </div>
+
+            <div id="partie-1-2">
+                <h3>1.2 Structure des formulaires</h3>
+                <ul>
+                    <li><strong>Métadonnées du DocType</strong> : Définit les champs, types, et propriétés.</li>
+                    <li><strong>Exemple pour Item (item.json)</strong> :
+                        <pre><code>
+{
+    "name": "Item",
+    "fields": [
+        {"fieldname": "item_code", "fieldtype": "Data", "label": "Item Code", "reqd": 1},
+        {"fieldname": "item_name", "fieldtype": "Data", "label": "Item Name", "reqd": 1},
+        {"fieldname": "stock_uom", "fieldtype": "Link", "label": "Stock UOM", "options": "UOM", "reqd": 1}
+    ]
+}
+                        </code></pre>
+                    </li>
+                    <li><strong>Rendu frontend</strong> : Géré par <code>frappe.ui.form.Form</code> avec JSON via API.</li>
+                    <li><strong>Personnalisation</strong> : Via <strong>Customize Form</strong> dans l’UI.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Partie 2 -->
+        <div class="section" id="partie-2">
+            <h2>Partie 2 : Actions sur les pages de formulaires</h2>
+
+            <div id="partie-2-1">
+                <h3>2.1 Boutons standards</h3>
+                <ul>
+                    <li><strong>Save</strong> : <code>frm.save('Save')</code> et <code>doc.save()</code></li>
+                    <li><strong>Submit</strong> : <code>frm.save('Submit')</code> et <code>doc.submit()</code></li>
+                    <li><strong>Cancel</strong> : <code>frm.save('Cancel')</code> et <code>doc.cancel()</code></li>
+                </ul>
+            </div>
+
+            <div id="partie-2-2">
+                <h3>2.2 Boutons personnalisés</h3>
+                <p>Définis dans le fichier JS du DocType.</p>
+                <pre><code>
+// item.js
+frappe.ui.form.on('Item', {
+    refresh: function(frm) {
+        frm.add_custom_button(__('Create BOM'), function() {
+            frappe.new_doc('BOM', { item: frm.doc.name });
+        });
+    }
+});
+                </code></pre>
+            </div>
+
+            <div id="partie-2-3">
+                <h3>2.3 Scripts clients (JavaScript)</h3>
+                <p>Événements : <code>refresh</code>, <code>validate</code>, <code>before_save</code>, etc.</p>
+                <pre><code>
+// purchase_order.js
+frappe.ui.form.on('Purchase Order', {
+    supplier: function(frm) {
+        frm.set_query('items.item_code', function() {
+            return { filters: { supplier: frm.doc.supplier } };
+        });
+    }
+});
+                </code></pre>
+            </div>
+
+            <div id="partie-2-4">
+                <h3>2.4 Scripts serveurs (Python)</h3>
+                <p>Définis dans le fichier Python du DocType.</p>
+                <pre><code>
+# purchase_order.py
+from frappe.model.document import Document
+
+class PurchaseOrder(Document):
+    def validate(self):
+        self.validate_schedule_date()
+                </code></pre>
+            </div>
+
+            <div id="partie-2-5">
+                <h3>2.5 Actions spécifiques à scénario</h3>
+                <ul>
+                    <li><strong>Item</strong> :
+                        <ul>
+                            <li>Boutons : “Create BOM”, “View Ledger”.</li>
+                            <li>Scripts : Validation de <code>item_code</code>.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Purchase Order</strong> :
+                        <ul>
+                            <li>Boutons : “Create Purchase Receipt”, “Create Purchase Invoice”.</li>
+                            <li>Scripts : Validation de <code>schedule_date</code>.</li>
+                        </ul>
+                    </li>
+                    <!-- Liste similaire pour Supplier Group, Supplier, etc. -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Partie 3 -->
+        <div class="section" id="partie-3">
+            <h2>Partie 3 : Intégration avec scénario</h2>
+
+            <div id="partie-3-1">
+                <h3>3.1 Interaction avec les formulaires</h3>
+                <p>Le script <code>scenario_automation.py</code> crée des documents via <code>frappe.get_doc</code>.</p>
+                <pre><code>
+# Création d’un Item
+item = frappe.get_doc({
+    "doctype": "Item",
+    "item_code": data["item_code"],
+    "item_name": data["item_name"],
+    "item_group": "All Item Groups",
+    "is_stock_item": 0,
+    "stock_uom": "Nos"
+})
+item.insert()
+                </code></pre>
+            </div>
+
+            <div id="partie-3-2">
+                <h3>3.2 Personnalisation des formulaires pour scénario</h3>
+                <ul>
+                    <li><strong>Ajouter un bouton</strong> :
+                        <pre><code>
+// scenario_automation.js
+frappe.ui.form.on('Item', {
+    refresh: function(frm) {
+        frm.add_custom_button(__('Run Automation Scenario'), function() {
+            frappe.call({
+                method: 'your_app.scenario_automation.run_scenario',
+                callback: function(r) {
+                    frappe.msgprint(__('Scénario exécuté avec succès'));
+                }
+            });
+        });
+    }
+});
+                        </code></pre>
+                    </li>
+                    <li><strong>Ajouter un champ personnalisé</strong> : Via <strong>Customize Form</strong>.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Partie 4 -->
+        <div class="section" id="partie-4">
+            <h2>Partie 4 : Autres documentations nécessaires</h2>
+
+            <div id="partie-4-1">
+                <h3>4.1 Personnalisation des formulaires</h3>
+                <ul>
+                    <li><a href="https://docs.frappe.io/docs/user/manual/en/customize-erpnext/customize-form">Customize Form</a></li>
+                    <li><a href="https://docs.frappe.io/docs/user/manual/en/customize-erpnext/custom-scripts">Custom Scripts</a></li>
+                </ul>
+            </div>
+
+            <div id="partie-4-2">
+                <h3>4.2 Permissions</h3>
+                <p>Configurer les permissions basées sur les rôles.</p>
+                <pre><code>
+@frappe.whitelist()
+def run_scenario():
+    if not frappe.has_permission('System Manager'):
+        frappe.throw(_('Permission requise: System Manager'))
+                </code></pre>
+            </div>
+
+            <div id="partie-4-3">
+                <h3>4.3 Exportation CSV</h3>
+                <pre><code>
+import csv
+@frappe.whitelist()
+def import_scenario_from_csv(file_path):
+    with open(file_path, 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            data = {
+                'item': {
+                    'item_code': row['item_code'],
+                    'item_name': row['item_name']
+                }
+            }
+            frappe.call('your_app.scenario_automation.run_scenario', data=data)
+                </code></pre>
+            </div>
+
+            <div id="partie-4-4">
+                <h3>4.4 Déplacer le script dans une application personnalisée</h3>
+                <p>Étapes :</p>
+                <pre><code>
+bench new-app your_app
+mv ~/frappe-bench/apps/erpnext/erpnext/services/data2_service.py ~/frappe-bench/apps/your_app/your_app/scenario_automation.py
+bench --site your_site_name install-app your_app
+                </code></pre>
+            </div>
+
+            <div id="partie-4-5">
+                <h3>4.5 Débogage</h3>
+                <p>Vérifier les logs :</p>
+                <pre><code>
+tail -f ~/frappe-bench/logs/bench.log
+                </code></pre>
+            </div>
+        </div>
+
+        <!-- Partie 5 -->
+        <div class="section" id="partie-5">
+            <h2>Partie 5 : Étapes de test et validation</h2>
+            <ol>
+                <li><strong>Déployer le script</strong> :
+                    <pre><code>
+bench --site your_site_name install-app your_app
+                    </code></pre>
+                </li>
+                <li><strong>Réinitialiser la base de données</strong> :
+                    <pre><code>
+frappe.call("your_app.module.reset_tables")
+                    </code></pre>
+                </li>
+                <li><strong>Exécuter le scénario</strong> :
+                    <pre><code>
+result = frappe.call("your_app.scenario_automation.run_scenario")
+                    </code></pre>
+                </li>
+                <li><strong>Vérifier les formulaires</strong> : Dans l’interface utilisateur.</li>
+                <li><strong>Vérifier les logs comptables</strong> :
+                    <pre><code>
+SELECT * FROM tabGL Entry WHERE voucher_type = 'Purchase Invoice';
+                    </code></pre>
+                </li>
+            </ol>
+        </div>
+
+        <!-- Documentation finale -->
+        <div class="section" id="documentation-finale">
+            <h2>Documentation finale : Code des pages et actions</h2>
+            <h3>Formulaire de l’Item</h3>
+            <ul>
+                <li><strong>Code</strong> :
+                    <ul>
+                        <li>JSON : <code>~/frappe-bench/apps/erpnext/erpnext/stock/doctype/item/item.json</code></li>
+                        <li>JS : <code>~/frappe-bench/apps/erpnext/erpnext/stock/doctype/item/item.js</code></li>
+                        <li>Python : <code>~/frappe-bench/apps/erpnext/erpnext/stock/doctype/item/item.py</code></li>
+                    </ul>
+                </li>
+                <li><strong>Actions</strong> :
+                    <ul>
+                        <li>Boutons : “Create BOM”, “View Ledger”.</li>
+                        <li>Scripts : Validation de <code>item_code</code>.</li>
+                    </ul>
+                </li>
+            </ul>
+            <h3>Formulaire du Purchase Order</h3>
+            <ul>
+                <li><strong>Code</strong> :
+                    <ul>
+                        <li>JSON : <code>~/frappe-bench/apps/erpnext/erpnext/buying/doctype/purchase_order/purchase_order.json</code></li>
+                        <li>JS : <code>~/frappe-bench/apps/erpnext/erpnext/buying/doctype/purchase_order/purchase_order.js</code></li>
+                        <li>Python : <code>~/frappe-bench/apps/erpnext/erpnext/buying/doctype/purchase_order/purchase_order.py</code></li>
+                    </ul>
+                </li>
+                <li><strong>Actions</strong> :
+                    <ul>
+                        <li>Boutons : “Create Purchase Receipt”, “Create Purchase Invoice”.</li>
+                        <li>Scripts : Validation de <code>schedule_date</code>.</li>
+                    </ul>
+                </li>
+            </ul>
+            <p><strong>Autres formulaires</strong> : Suivez le même modèle pour <code>Supplier Group</code>, <code>Supplier</code>, etc.</p>
+        </div>
+    </div>
+
+    <!-- Bouton Retour en haut -->
+    <a href="#" class="back-to-top">Retour en haut</a>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

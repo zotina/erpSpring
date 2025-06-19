@@ -1,0 +1,306 @@
+https://docs.frappe.io/erpnext/user/manual/en/introduction
+
+https://docs.frappe.io/hr/introduction
+basant a ces documentation 
+
+l exsting app sont erpnext et frappe HR
+et mon new app est springboot 
+sur spring j ai deja realiser le login avec compte erpnext , mais il me reste les gestions d employe et  de leur salaire 
+
+voici un fonctionalite a faire: 
+
+ExistingApp : l’application actuelle
+NewApp : une nouvelle application MVC qui doit utiliser une technologie différente de ExistingApp
+
+Lien via API uniquement entre NewApp -> ExistingApp
+
+existingapp
+
+Import Fichier CSV
+Données
+employé
+element de salaire
+etc…
+Validation import sur le format de date (erreur si date inexistante)
+Liste des employés avec filtre de recherche
+Fiche employé avec ses salaires par mois
+fiche de paie pour 1 mois avec export PDF soigné
+Tableau avec filtre mois contenant les employés et les éléments de salaires et le total
+
+
+voici les models de recuperations du reponse json de l api d erpnex : 
+
+package mg.itu.controller;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.PaymentResponse;
+import mg.itu.model.PurchaseInvoice;
+import mg.itu.service.PurchaseInvoiceService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
+@RequestMapping("/api/purchase-invoices")
+public class PurchaseInvoiceController {
+
+    @Autowired
+    private PurchaseInvoiceService purchaseInvoiceService;
+
+    @GetMapping("/")
+    public String getPurchaseInvoices(Model model, HttpSession session) {
+        try {
+            ApiResponse<PurchaseInvoice> response = purchaseInvoiceService.getPurchaseInvoiceList(session);
+            if (response != null && "success".equals(response.getStatus())) {
+                model.addAttribute("purchaseInvoices", response.getData());
+            } else { 
+                model.addAttribute("error", "Failed to fetch Purchase Invoices");
+            }
+        } catch (IllegalStateException e) {
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "An error occurred while fetching Purchase Invoices");
+        }
+        return "views/purchase-invoices/purchase-invoices";
+    }
+
+    @PostMapping("/pay")
+    public String payPurchaseInvoice(@RequestParam("invoice_name") String invoiceName, Model model, HttpSession session) {
+        try {
+            PaymentResponse response = purchaseInvoiceService.payPurchaseInvoice(invoiceName, session);
+            ApiResponse<PurchaseInvoice> listResponse = purchaseInvoiceService.getPurchaseInvoiceList(session);
+            if (listResponse != null && "success".equals(listResponse.getStatus())) {
+                model.addAttribute("purchaseInvoices", listResponse.getData());
+            } else {
+                model.addAttribute("error", "Failed to fetch updated Purchase Invoices");
+            }
+
+            if (response != null && "success".equals(response.getStatus())) {
+                model.addAttribute("success", response.getMessage());
+            } else {
+                model.addAttribute("error", response != null ? response.getMessage() : "Failed to pay Purchase Invoice");
+            }
+            return "views/purchase-invoices/purchase-invoices";
+        } catch (IllegalStateException e) {
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "An error occurred while paying the Purchase Invoice");
+            return "views/purchase-invoices/purchase-invoices";
+        }
+    }
+}
+
+
+
+package mg.itu.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.PaymentResponse;
+import mg.itu.model.PurchaseInvoice;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Service
+public class PurchaseInvoiceService {
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Value("${api.base-url}")
+    private String baseApiUrl;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public ApiResponse<PurchaseInvoice> getPurchaseInvoiceList(HttpSession session) throws Exception {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "page.purchase_invoice_api.get_purchase_invoice_list";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory()
+                        .constructParametricType(ApiResponse.class, PurchaseInvoice.class));
+            }
+            ApiResponse<PurchaseInvoice> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setData(null);
+            return errorResponse;
+        } catch (Exception e) {
+            e.printStackTrace();
+            ApiResponse<PurchaseInvoice> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setData(null);
+            return errorResponse;
+        }
+    }
+
+    public PaymentResponse payPurchaseInvoice(String invoiceName, HttpSession session) throws Exception {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "page.purchase_invoice_api.pay_purchase_invoice?invoice_name=" + invoiceName;
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.post()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return objectMapper.readValue(response.getBody(), PaymentResponse.class);
+            }
+            PaymentResponse errorResponse = new PaymentResponse();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to pay Purchase Invoice");
+            return errorResponse;
+        } catch (Exception e) {
+            e.printStackTrace();
+            PaymentResponse errorResponse = new PaymentResponse();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage(e.getMessage());
+            return errorResponse;
+        }
+    }
+}
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Invoices - DaybyDay</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .filter-container {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+        }
+        .filter-container label {
+            margin-right: 10px;
+            font-weight: 600;
+        }
+        .filter-container select {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .badge-paid {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .action-btn {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .action-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+
+    <div class="header">
+        <div>
+            <h1>Purchase Invoices</h1>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${success}" class="success" th:text="${success}"></div>
+    <div th:if="${error}" class="error" th:text="${error}"></div>
+
+    <!-- Liste des Purchase Invoices -->
+    <div class="table-container" th:if="${purchaseInvoices}">
+        <div class="table-responsive">
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Supplier Name</th>
+                        <th>Status</th>
+                        <th>Posting Date</th>
+                        <th>Due Date</th>
+                        <th>Grand Total</th>
+                        <th>Outstanding Amount</th>
+                        <th>ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="invoice : ${purchaseInvoices}">
+                        <td th:text="${invoice.supplier_name}"></td>
+                        <td>
+                            <span th:if="${invoice.status == 'Paid'}" class="badge-paid">Paid</span>
+                            <span th:unless="${invoice.status == 'Paid'}" th:text="${invoice.status}"></span>
+                        </td>
+                        <td th:text="${#dates.format(invoice.posting_date, 'yyyy-MM-dd')}"></td>
+                        <td th:text="${#dates.format(invoice.due_date, 'yyyy-MM-dd')}"></td>
+                        <td th:text="${invoice.grand_total}"></td>
+                        <td th:text="${invoice.outstanding_amount}"></td>
+                        <td th:text="${invoice.name}"></td>
+                        <td>
+                            <form th:if="${invoice.status != 'Paid' and invoice.status != 'Cancelled'}" 
+                                  th:action="@{/api/purchase-invoices/pay}" 
+                                  method="post" 
+                                  style="display:inline;">
+                                <input type="hidden" name="invoice_name" th:value="${invoice.name}"/>
+                                <button type="submit" class="action-btn">Pay</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(purchaseInvoices)}">
+                        <td colspan="8">No Purchase Invoices found</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+utiliser ce model 

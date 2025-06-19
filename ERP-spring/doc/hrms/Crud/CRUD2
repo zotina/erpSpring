@@ -1,0 +1,350 @@
+// Application Spring Boot pour consommer l'API Frappe HR
+
+// ============= APPLICATION MAIN CLASS =============
+// src/main/java/com/example/frappehr/FrappeHrApplication.java
+package com.example.frappehr;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestTemplate;
+
+@SpringBootApplication
+public class FrappeHrApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(FrappeHrApplication.class, args);
+    }
+    
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+
+// ============= CONFIGURATION =============
+// src/main/java/com/example/frappehr/config/FrappeConfig.java
+package com.example.frappehr.config;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+@Component
+@ConfigurationProperties(prefix = "frappe")
+public class FrappeConfig {
+    private String baseUrl;
+    private String apiKey;
+    private String apiSecret;
+    
+    // Getters and Setters
+    public String getBaseUrl() { return baseUrl; }
+    public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
+    
+    public String getApiKey() { return apiKey; }
+    public void setApiKey(String apiKey) { this.apiKey = apiKey; }
+    
+    public String getApiSecret() { return apiSecret; }
+    public void setApiSecret(String apiSecret) { this.apiSecret = apiSecret; }
+}
+
+// ============= MODELS =============
+// src/main/java/com/example/frappehr/dto/EmployeeDTO.java
+package com.example.frappehr.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.LocalDate;
+
+public class EmployeeDTO {
+    private String name;
+    
+    @JsonProperty("employee_name")
+    private String employeeName;
+    
+    @JsonProperty("employee_number")
+    private String employeeNumber;
+    
+    private String company;
+    
+    @JsonProperty("personal_email")
+    private String personalEmail;
+    
+    @JsonProperty("cell_number")
+    private String cellNumber;
+    
+    private String gender;
+    
+    @JsonProperty("date_of_birth")
+    private LocalDate dateOfBirth;
+    
+    @JsonProperty("date_of_joining")
+    private LocalDate dateOfJoining;
+    
+    private String department;
+    private String designation;
+    
+    @JsonProperty("employment_type")
+    private String employmentType;
+    
+    private String status;
+    
+    @JsonProperty("first_name")
+    private String firstName;
+    
+    @JsonProperty("last_name")
+    private String lastName;
+    
+    // Constructors
+    public EmployeeDTO() {}
+    
+    public EmployeeDTO(String employeeName, String company) {
+        this.employeeName = employeeName;
+        this.company = company;
+    }
+    
+    // Getters and Setters
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public String getEmployeeName() { return employeeName; }
+    public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
+    
+    public String getEmployeeNumber() { return employeeNumber; }
+    public void setEmployeeNumber(String employeeNumber) { this.employeeNumber = employeeNumber; }
+    
+    public String getCompany() { return company; }
+    public void setCompany(String company) { this.company = company; }
+    
+    public String getPersonalEmail() { return personalEmail; }
+    public void setPersonalEmail(String personalEmail) { this.personalEmail = personalEmail; }
+    
+    public String getCellNumber() { return cellNumber; }
+    public void setCellNumber(String cellNumber) { this.cellNumber = cellNumber; }
+    
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+    
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    
+    public LocalDate getDateOfJoining() { return dateOfJoining; }
+    public void setDateOfJoining(LocalDate dateOfJoining) { this.dateOfJoining = dateOfJoining; }
+    
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+    
+    public String getDesignation() { return designation; }
+    public void setDesignation(String designation) { this.designation = designation; }
+    
+    public String getEmploymentType() { return employmentType; }
+    public void setEmploymentType(String employmentType) { this.employmentType = employmentType; }
+    
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+}
+
+// src/main/java/com/example/frappehr/dto/ApiResponse.java
+package com.example.frappehr.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class ApiResponse<T> {
+    private boolean success;
+    private String message;
+    private T data;
+    
+    // Constructors
+    public ApiResponse() {}
+    
+    public ApiResponse(boolean success, String message, T data) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+    }
+    
+    // Getters and Setters
+    public boolean isSuccess() { return success; }
+    public void setSuccess(boolean success) { this.success = success; }
+    
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    
+    public T getData() { return data; }
+    public void setData(T data) { this.data = data; }
+}
+
+// src/main/java/com/example/frappehr/dto/PaginatedResponse.java
+package com.example.frappehr.dto;
+
+import java.util.List;
+
+public class PaginatedResponse<T> {
+    private List<T> employees;
+    private PaginationInfo pagination;
+    
+    // Getters and Setters
+    public List<T> getEmployees() { return employees; }
+    public void setEmployees(List<T> employees) { this.employees = employees; }
+    
+    public PaginationInfo getPagination() { return pagination; }
+    public void setPagination(PaginationInfo pagination) { this.pagination = pagination; }
+    
+    public static class PaginationInfo {
+        @JsonProperty("current_page")
+        private int currentPage;
+        
+        @JsonProperty("page_size")
+        private int pageSize;
+        
+        @JsonProperty("total_records")
+        private int totalRecords;
+        
+        @JsonProperty("total_pages")
+        private int totalPages;
+        
+        @JsonProperty("has_next")
+        private boolean hasNext;
+        
+        @JsonProperty("has_previous")
+        private boolean hasPrevious;
+        
+        // Getters and Setters
+        public int getCurrentPage() { return currentPage; }
+        public void setCurrentPage(int currentPage) { this.currentPage = currentPage; }
+        
+        public int getPageSize() { return pageSize; }
+        public void setPageSize(int pageSize) { this.pageSize = pageSize; }
+        
+        public int getTotalRecords() { return totalRecords; }
+        public void setTotalRecords(int totalRecords) { this.totalRecords = totalRecords; }
+        
+        public int getTotalPages() { return totalPages; }
+        public void setTotalPages(int totalPages) { this.totalPages = totalPages; }
+        
+        public boolean isHasNext() { return hasNext; }
+        public void setHasNext(boolean hasNext) { this.hasNext = hasNext; }
+        
+        public boolean isHasPrevious() { return hasPrevious; }
+        public void setHasPrevious(boolean hasPrevious) { this.hasPrevious = hasPrevious; }
+    }
+}
+package com.example.frappehr.service;
+
+import com.example.frappehr.config.FrappeConfig;
+import com.example.frappehr.dto.ApiResponse;
+import com.example.frappehr.dto.EmployeeDTO;
+import com.example.frappehr.dto.PaginatedResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+public class FrappeHrService {
+    
+    @Autowired
+    private WebClient webClient;
+    
+    @Autowired
+    private FrappeConfig frappeConfig;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
+    
+    public ApiResponse<EmployeeDTO> createEmployee(EmployeeDTO employee) {
+        try {
+            return webClient.post()
+                .uri("/api/method/create_employee")
+                .bodyValue(employee)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<EmployeeDTO>>() {})
+                .block();
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "Erreur lors de la création: " + e.getMessage(), null);
+        }
+    }
+    
+    public ApiResponse<EmployeeDTO> getEmployee(String employeeId) {
+        try {
+            return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                    .path("/api/method/get_employee")
+                    .queryParam("employee_id", employeeId)
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<EmployeeDTO>>() {})
+                .block();
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "Erreur lors de la récupération: " + e.getMessage(), null);
+        }
+    }
+    
+    public ApiResponse<EmployeeDTO> updateEmployee(String employeeId, EmployeeDTO employee) {
+        try {
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("employee_id", employeeId);
+            requestBody.put("employee_data", employee);
+            
+            return webClient.put()
+                .uri("/api/method/update_employee")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<EmployeeDTO>>() {})
+                .block();
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "Erreur lors de la mise à jour: " + e.getMessage(), null);
+        }
+    }
+    
+    public ApiResponse<Map<String, String>> deleteEmployee(String employeeId) {
+        try {
+            return webClient.delete()
+                .uri(uriBuilder -> uriBuilder
+                    .path("/api/method/delete_employee")
+                    .queryParam("employee_id", employeeId)
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<Map<String, String>>>() {})
+                .block();
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "Erreur lors de la suppression: " + e.getMessage(), null);
+        }
+    }
+    
+    public ApiResponse<PaginatedResponse<EmployeeDTO>> getEmployees(
+            int page, int pageSize, String search, Map<String, String> filters) {
+        try {
+            return webClient.get()
+                .uri(uriBuilder -> {
+                    UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/api/method/get_employees")
+                        .queryParam("page", page)
+                        .queryParam("page_size", pageSize);
+                    if (search != null && !search.isEmpty()) {
+                        builder.queryParam("search", search);
+                    }
+                    if (filters != null && !filters.isEmpty()) {
+                        try {
+                            builder.queryParam("filters", objectMapper.writeValueAsString(filters));
+                        } catch (Exception e) {
+                            throw new RuntimeException("Erreur lors de la sérialisation des filtres", e);
+                        }
+                    }
+                    return builder.build().toUri();
+                })
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<PaginatedResponse<EmployeeDTO>>>() {})
+                .block();
+        } catch (Exception e) {
+            return new ApiResponse<>(false, "Erreur lors de la récupération de la liste: " + e.getMessage(), null);
+        }
+    }
+}

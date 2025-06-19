@@ -1,0 +1,49 @@
+@GetMapping("/summary")
+    public String getMonthlySummary(
+            @RequestParam(value = "monthYear", required = false) String monthYear,
+            Model model, HttpSession session) {
+        try {
+            
+            model.addAttribute("monthYear", monthYear);
+            String startDate = DateUtil.getFirstDayOfMonth(monthYear);
+            String endDate = DateUtil.getLastDayOfMonth(monthYear);
+
+            ApiResponse<SummaryDTO> response = hrmsService.getMonthlySummary(startDate, endDate, session);
+            if ("success".equals(response.getStatus())) {
+                model.addAttribute("summary", response.getData());
+                double totalDeduction = 0 ,totalGross = 0, totalNet = 0;
+                List<Double> grossList = new ArrayList<>();
+                String currency = response.getData().isEmpty() ? "EUR" : response.getData().get(0).getCurrency();
+                for (SummaryDTO item : response.getData()) {
+                    totalGross += item.getTotalGross();
+                    totalNet += item.getNetPay();
+                    totalDeduction += item.getTotal_deduction();
+                    grossList.add(item.getTotalGross());
+                }
+                model.addAttribute("totalGross", totalGross);
+                model.addAttribute("totalNet", totalNet);
+                model.addAttribute("totalDeduction", totalDeduction);
+                model.addAttribute("currency", currency);
+                model.addAttribute("averageGross", response.getData().isEmpty() ? 0 : totalGross / response.getData().size());
+                Collections.sort(grossList);
+                double medianGross = grossList.isEmpty() ? 0 :
+                        grossList.size() % 2 == 0 ?
+                        (grossList.get(grossList.size() / 2 - 1) + grossList.get(grossList.size() / 2)) / 2 :
+                        grossList.get(grossList.size() / 2);
+                model.addAttribute("medianGross", medianGross);
+                model.addAttribute("totalEmployees", response.getData().size());
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid date format: {}", e.getMessage());
+            model.addAttribute("error", "Format de date invalide: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            model.addAttribute("error", "Erreur lors de la récupération du récapitulatif mensuel: " + e.getMessage());
+        }
+        return "views/hrms/monthly-summary";
+    }

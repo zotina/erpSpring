@@ -1,0 +1,90 @@
+https://docs.frappe.io/erpnext/user/manual/en/introduction https://docs.frappe.io/hr/introduction baser votre reponse a ces documentation ,
+j ai cette proceder d importation de donnees 
+ table_names = [
+            "Salary Slip",
+            "Salary Structure Assignment",
+            "Salary Detail",
+            "Salary Structure",
+            "Salary Component",
+            "Employee",
+
+et ces fonctionnalite :
+
+
+Evaluation J3 - mai 25 - P16
+Jour1
+https://docs.google.com/document/d/1iMx8bsZ5LONraP1ESK-HnF_A2S9V8BHwySJ82G9AT3s/edit?usp=sharing
+
+Jour2
+ExistingApp : l’application actuelle
+NewApp : une nouvelle application MVC qui doit utiliser une technologie différente de ExistingApp
+
+Lien via API uniquement entre NewApp -> ExistingApp
+
+existingapp
+
+
+newapp
+mettre un login (compte erpnext)
+Import Fichier CSV
+Données
+employé
+element de salaire
+etc…
+Validation import sur le format de date (erreur si date inexistante)
+Liste des employés avec filtre de recherche
+Fiche employé avec ses salaires par mois
+fiche de paie pour 1 mois avec export PDF soigné
+Tableau avec filtre mois contenant les employés et les éléments de salaires et le total
+
+Import : préparer l’import sur l’appli newapp (format à envoyer cet après midi)
+
+LIEN fichier import
+import-p16
+Jour 3
+newapp
+créer une page statistiques qui va contenir un tableau avec 1 ligne par mois contenant le total des salaires des employés , et mettre aussi les détails par éléments de salaire, ( avec un filtre par année)
+lorsqu’on clique sur le total des salaires, on arrive sur le tableau de détail par employé
+mettre 1 graphe d’évolution du total des salaires, et des différents éléments de salaire
+
+
+et voici les format de donnees importer sur ces fonctionnalites 
+
+
+permier csv 
+
+Ref	Nom	Prenom	genre	Date embauche	date naissance	company
+1	Rakoto	Alain	Masculin	03/04/2024	01/01/1980	Orinasa SA
+2	Rasoa	Jeanne	Feminin	08/06/2024	01/01/1990	Orinasa SA
+3	Rajao	Victor	Masculin	04/01/2023	01/01/1990	Orinasa SA
+4	Rabe	John	Masculin	01/02/2024	01/01/1990	Orinasa SA
+5	Jao	Jacqueline	Feminin	04/01/2023	01/01/1990	Orinasa SA
+
+2eme csv 
+
+salary structure	name	Abbr	type	valeur	company
+g1	Salaire Base	SB	earning	base	Orinasa SA
+g1	Indemnité	IDM	earning	SB * 0.35	Orinasa SA
+g1	Taxe spéciale	TSP	deduction	(SB + IDM) * 0.21	Orinasa SA
+g1	Impot	IMP	deduction	(SB + IDM - TSP ) * 0.1	Orinasa SA
+
+
+
+3em csv 
+
+
+Mois	Ref Employe	Salaire Base	Salaire
+01/04/2025	1	1300000	g1
+01/04/2025	2	910000	g1
+01/04/2025	3	1400000	g1
+01/04/2025	4	800000	g1
+01/03/2025	2	850000	g1
+
+
+
+sur les import de donnees et fonctionnalite il y a pas encore un logique de calcule 
+
+je vais vous donner de fonctionnalite apres et donner moi les doctype et le logique de metier sur frappe hrms , vous pouvez meme me donner l api pour le faire 
+
+
+ces fonctionnlites je l ai deja realiser mais attend juste les nouveaux fonctionnalite , je vous la donnerai apres 
