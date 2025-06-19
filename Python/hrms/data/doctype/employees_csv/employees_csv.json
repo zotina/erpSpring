@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-06-01 00:21:52.394554",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_le7y",
+  "ref",
+  "nom",
+  "prenom",
+  "genre",
+  "date_embauche",
+  "date_naissance",
+  "company"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_le7y",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ref",
+   "fieldtype": "Long Text",
+   "label": "Ref"
+  },
+  {
+   "fieldname": "nom",
+   "fieldtype": "Long Text",
+   "label": "Nom"
+  },
+  {
+   "fieldname": "prenom",
+   "fieldtype": "Long Text",
+   "label": "Prenom"
+  },
+  {
+   "fieldname": "genre",
+   "fieldtype": "Long Text",
+   "label": "genre"
+  },
+  {
+   "fieldname": "date_embauche",
+   "fieldtype": "Date",
+   "label": "Date embauche"
+  },
+  {
+   "fieldname": "date_naissance",
+   "fieldtype": "Date",
+   "label": "date naissance"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Long Text",
+   "label": "company"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-06-01 00:28:00.388843",
+ "modified_by": "Administrator",
+ "module": "data",
+ "name": "employees_csv",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
