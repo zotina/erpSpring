@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS CSV Import - DaybyDay</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7fa;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-container, .reset-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-container label, .reset-container label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-container input[type="file"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            font-size: 0.9rem;
+            color: #1e293b;
+            transition: border-color 0.2s ease;
+        }
+
+        .upload-container input[type="file"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .submit-btn, .reset-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .submit-btn {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+
+        .submit-btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .reset-btn {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
+
+        .reset-btn:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .response-container {
+            margin-top: 2rem;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .success {
+            background-color: #ecfdf5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+
+        .error-message {
+            background-color: #fef2f2;
+            border: 1px solid #f43f5e;
+            color: #b91c1c;
+        }
+
+        .error-list, .reset-error-list {
+            background-color: #fff1f2;
+            border: 1px solid #f43f5e;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .error-list ul, .reset-error-list ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        .error-list li, .reset-error-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+
+        .response-container .success {
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .response-container ul {
+            margin: 0.5rem 0 0 1.5rem;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .submit-btn, .reset-btn {
+                width: 100%;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+
+    <div class="header">
+        <div class="container">
+            <h1>HRMS CSV Import</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Success/Error Messages -->
+        <div th:if="${success}" class="message success" th:text="${success}"></div>
+        <div th:if="${error}" class="message error-message">
+            <strong th:text="${error}"></strong>
+            <div th:if="${validationErrors != null and !validationErrors.isEmpty()}" class="error-list">
+                <ul>
+                    <li th:each="error : ${validationErrors}">
+                        <strong>Fichier: </strong><span th:text="${error.file}"></span><br/>
+                        <strong>Ligne: </strong><span th:text="${error.line}"></span><br/>
+                        <strong>Erreur: </strong><span th:text="${error.error_message}"></span><br/>
+                        <strong>Données: </strong><span th:text="${error.data}"></span>
+                    </li>
+                </ul>
+            </div>
+            <div th:if="${resetErrors != null and !resetErrors.isEmpty()}" class="reset-error-list">
+                <ul>
+                    <li th:each="error : ${resetErrors}">
+                        <strong>Doctype: </strong><span th:text="${error.doctype}"></span><br/>
+                        <strong>Name: </strong><span th:text="${error.name}"></span><br/>
+                        <strong>Erreur: </strong><span th:text="${error.error_message}"></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CSV Upload Form -->
+        <div class="card upload-container">
+            <form th:action="@{/api/hrms-csv-import/import}" method="post" enctype="multipart/form-data">
+                <div>
+                    <label for="employeesCsv">Employees CSV</label>
+                    <input type="file" id="employeesCsv" name="employeesCsv" accept=".csv"/>
+                </div>
+                <div>
+                    <label for="salaryStructureCsv">Salary Structure CSV</label>
+                    <input type="file" id="salaryStructureCsv" name="salaryStructureCsv" accept=".csv"/>
+                </div>
+                <div>
+                    <label for="payrollCsv">Payroll CSV</label>
+                    <input type="file" id="payrollCsv" name="payrollCsv" accept=".csv"/>
+                </div>
+                <center>
+                    <div class="button-group">
+                        <button type="submit" class="submit-btn">Import CSVs</button>
+                    </div>
+                </center>
+            </form>
+        </div>
+
+        <!-- Reset Form -->
+        <div class="card reset-container">
+            <center>
+                <form th:action="@{/api/hrms-csv-import/reset}" method="post">
+                    <div class="button-group">
+                        <button type="submit" class="reset-btn">Reset HRMS Data</button>
+                    </div>
+                </form>
+            </center>
+            
+        </div>
+
+        <!-- Response Display for Import -->
+        <div class="response-container" th:if="${insertedRecords}">
+            <h3>Inserted Records</h3>
+            <div th:each="entry : ${insertedRecords}" class="card success">
+                <strong th:text="${entry.key}"></strong>
+                <ul>
+                    <li th:each="record : ${entry.value}" th:text="${record}"></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Response Display for Reset -->
+        <div class="response-container" th:if="${deletedRecords}">
+            <h3>Deleted Records</h3>
+            <div th:each="entry : ${deletedRecords}" class="card success">
+                <strong th:text="${entry.key}"></strong>
+                <ul>
+                    <li th:each="record : ${entry.value}" th:text="${record}"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

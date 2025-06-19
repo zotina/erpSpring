@@ -1,0 +1,7 @@
+https://docs.frappe.io/erpnext/user/manual/en/introduction
+
+https://docs.frappe.io/hr/introduction
+
+baser votre reponse a ces documentation , j ai 2 application  erpnext et spring , il se communique en api et le spring n a que l api comme accees au donnees de erpnext c est le principe , et j ai appeler quelque liste sur spring comment liste employe , salaire mensuel d employe , salaire mensuel , mensuel total , pour le liste d employe j ai utilise l api existant de resource : /api/resource/Employee?fields=["*"]&filters=[]&limit_page_length=500 pour le liste d employe  /api/resource/Salary%20Slip?fields=["*"]&limit_page_length=500 pour le salaire mensuel par employe suivi d un total de salaire mensuel par employe  avec un filtre mois-annee , j ai juste appeler cette api et traiter les donnes sur java pour les somme total des salaire , et le dernier c est les liste des somme total de salaire mensuel  j ai cree un api personaliser pour ce dernier  :  http://erpnext.localhost:8000/api/method/hrms.controllers.payroll_controller.get_monthly_payroll_summary?year=2024
+
+ maintenant je veux rajouter un pagination sur ces 3 listes , quelle est le bon pratique pour la realise , mon probleme c est sur liste de salaire mensuel des employes , il y a un somme pour le mois donc si en le pagine directement sur url il va sommer juste les donnees paginer mais pas toutes le donnees ,et supposons que le donnees peut etre 1000000 de line donc donnees moi le bon pratique apres toutes ces probleme 

@@ -1,0 +1,1126 @@
+    https://docs.frappe.io/erpnext/user/manual/en/introduction
+
+    https://docs.frappe.io/hr/introduction
+    baser votre reponse a ces documentation 
+
+    j ai deja cette service qui parse les donnees d un csv en doctype cree a partir du colonne du csv :  import csv
+    import frappe
+    from frappe.utils import getdate, get_datetime, get_time
+    from datetime import datetime
+    from io import StringIO
+
+    class CsvService:
+        @staticmethod
+        def import_csv(file_content, doctype):
+            result_list = []
+            error_list = []
+            line_number = 1  # Start from 1 for header row
+
+            print(f"Starting CSV parsing for doctype: {doctype}")
+
+            try:
+                print(f"Decoding file content (size: {len(file_content)} bytes)")
+                reader = StringIO(file_content.decode('utf-8') if isinstance(file_content, bytes) else file_content)
+                csv_reader = csv.DictReader(reader)
+                doctype_fields = {field.fieldname: field.fieldtype for field in frappe.get_meta(doctype).fields}
+
+                print(f"Doctype fields: {list(doctype_fields.keys())}")
+                print(f"CSV headers: {csv_reader.fieldnames}")
+
+                for row in csv_reader:
+                    line_number += 1  # Increment for each data row
+                    print(f"Processing row {line_number}: {row}")
+                    row_errors = []
+                    record = {}
+                    doc = None
+
+                    # Create a new Teste doctype instance
+                    try:
+                        doc = frappe.get_doc({"doctype": doctype})
+                    except Exception as e:
+                        row_errors.append(f"Failed to create doctype instance: {str(e)}")
+                        print(f"Error creating doctype instance for row {line_number}: {str(e)}")
+
+                    if doc:
+                        # Validate field values using doc.validate
+                        for fieldname, value in row.items():
+                            if fieldname in doctype_fields and value:
+                                try:
+                                    parsed_value = CsvService.parse_value(doctype_fields[fieldname], value)
+                                    if parsed_value is None:
+                                        row_errors.append(f"Field '{fieldname}' with value '{value}' could not be parsed for type '{doctype_fields[fieldname]}'")
+                                    else:
+                                        # Call non-static validate method on doc instance
+                                        try:
+                                            doc.validateAll(fieldname, parsed_value)
+                                            record[fieldname] = parsed_value
+                                            print(f"Mapped field {fieldname} with value: {parsed_value}")
+                                        except Exception as e:
+                                            error_list.append({
+                                                "line": line_number,
+                                                "error_message": str(e),
+                                                "data": row
+                                            })
+                                except Exception as e:
+                                    error_list.append({
+                                        "line": line_number,
+                                        "error_message": str(e),
+                                        "data": row
+                                    })
+
+                    # If there are errors, add to error_list
+                    if record:  # Only add if record contains parsed values
+                        result_list.append(record)
+                        print(f"Added record to result list: {record}")
+                        
+                print(f"CSV parsing completed. Total records parsed: {len(result_list)}, Errors: {len(error_list)}")
+                return error_list, result_list
+
+            except Exception as e:
+                print(f"Error parsing CSV: {str(e)}")
+                error_list.append({
+                    "line": 1,
+                    "error_message": f"Failed to parse CSV: {str(e)}",
+                    "data": {}
+                })
+                return error_list, result_list
+
+        @staticmethod
+        def parse_value(field_type, value):
+            print(f"Parsing value '{value}' for field type: {field_type}")
+            try:
+                if field_type in ['Int', 'Integer']:
+                    return int(value)
+                elif field_type in ['Float', 'Currency', 'Percent']:
+                    return float(value)
+                elif field_type == 'Check':
+                    return 1 if value.lower() in ['true', '1', 'yes'] else 0
+                elif field_type in ['Data', 'Long Text']:
+                    return value
+                elif field_type == 'Text':
+                    return value
+                elif field_type == 'Date':
+                    parsed_date = getdate(value)
+                    print(f"Parsed date: {parsed_date}")
+                    return parsed_date
+                elif field_type == 'Datetime':
+                    return get_datetime(value)
+                elif field_type == 'Time':
+                    return get_time(value)
+                elif field_type == 'Link':
+                    return value
+                elif field_type == 'Select':
+                    return value
+                elif field_type in ['Table', 'Table MultiSelect']:
+                    parsed_list = [v.strip() for v in value.split(',')]
+                    print(f"Parsed list: {parsed_list}")
+                    return parsed_list
+                else:
+                    print(f"Unsupported field type: {field_type}")
+                    return value
+            except Exception as e:
+                print(f"Error parsing value '{value}' for type '{field_type}': {str(e)}")
+                return None  ,  et je gerer les erreurs de cette facon : import frappe
+    from frappe import _
+    from frappe.model.document import Document
+    from frappe.utils import getdate
+
+    class csv1(Document):
+        # begin: auto-generated types
+        from typing import TYPE_CHECKING
+
+        if TYPE_CHECKING:
+            from frappe.types import DF
+
+            date: DF.Date | None
+            item_groupe: DF.LongText | None
+            item_name: DF.LongText | None
+            purpose: DF.LongText | None
+            quantity: DF.LongText | None
+            ref: DF.LongText | None
+            required_by: DF.Date | None
+            target_warehouse: DF.LongText | None
+        # end: auto-generated types
+
+        @staticmethod
+        def validate_date(data):
+            if not data:
+                frappe.throw(_("Le champ 'date' est obligatoire"))
+            try:
+                getdate(data)  # Validate date format
+            except ValueError:
+                frappe.throw(_("Le champ 'date' doit être une date valide"))
+
+        @staticmethod
+        def validate_item_name(data):
+            if not data:
+                frappe.throw(_("Le champ 'item_name' est obligatoire"))
+
+        @staticmethod
+        def validate_item_groupe(data):
+            if not data:
+                frappe.throw(_("Le champ 'item_groupe' est obligatoire"))
+            if not frappe.db.exists("Item Group", data):
+                frappe.throw(_("L'item_groupe '{0}' n'existe pas dans Item Group").format(data))
+
+        @staticmethod
+        def validate_required_by(data):
+            if not data:
+                frappe.throw(_("Le champ 'required_by' est obligatoire"))
+            try:
+                getdate(data)  # Validate date format
+            except ValueError:
+                frappe.throw(_("Le champ 'required_by' doit être une date valide"))
+
+        @staticmethod
+        def validate_quantity(data):
+            if not data:
+                frappe.throw(_("Le champ 'quantity' est obligatoire"))
+            try:
+                qty = float(data)
+                if qty <= 0:
+                    frappe.throw(_("La quantité doit être supérieure à 0"))
+            except ValueError:
+                frappe.throw(_("La quantité doit être un nombre valide"))
+
+        @staticmethod
+        def validate_purpose(data):
+            if not data:
+                frappe.throw(_("Le champ 'purpose' est obligatoire"))
+
+        @staticmethod
+        def validate_target_warehouse(data):
+            if not data:
+                frappe.throw(_("Le champ 'target_warehouse' est obligatoire"))
+
+        @staticmethod
+        def validate_ref(data):
+            if not data:
+                frappe.throw(_("Le champ 'ref' est obligatoire"))
+            if frappe.db.exists("Material Request", {"ref": data}):
+                frappe.throw(_("Un Material Request avec le ref '{0}' existe déjà").format(data))
+
+        def validateAll(self, fieldName, data):
+            """Validate the data for the given fieldName by calling the appropriate validation method."""
+            validators = {
+                "date": self.__class__.validate_date,
+                "item_name": self.__class__.validate_item_name,
+                "item_groupe": self.__class__.validate_item_groupe,
+                "required_by": self.__class__.validate_required_by,
+                "quantity": self.__class__.validate_quantity,
+                "purpose": self.__class__.validate_purpose,
+                "target_warehouse": self.__class__.validate_target_warehouse,
+                "ref": self.__class__.validate_ref
+            }
+            validator = validators.get(fieldName)
+            if validator:
+                validator(data)
+            else:
+                frappe.throw(_(f"Aucune méthode de validation n'existe pour le champ '{fieldName}'")) et je met toutes les fonction d insertion dans un fichier , et puis j integre tous dans un fichier controller  comme cette dernier :  from erpnext.services.data2_service import create_item, create_material_request, create_request_for_quotation_from_mr, create_supplier, process_csv3_data
+    import frappe
+    import base64
+    from io import StringIO
+    from erpnext.services.CsvService import CsvService
+
+    @frappe.whitelist(allow_guest=False)
+    def import_csvs_from_json(data):
+        response = {
+            "success": False,
+            "message": "",
+            "validation_errors": [],
+            "inserted_records": {}
+        }
+
+        try:
+            if isinstance(data, str):
+                data = frappe.parse_json(data)
+
+            csv_configs = [
+                {"file_key": "csv1", "doctype": "csv1"},
+                {"file_key": "csv2", "doctype": "csv2"},
+                {"file_key": "csv3", "doctype": "csv3"}
+            ]
+
+            all_errors = []
+            all_parsed_data = {}
+            all_inserted_records = {}
+
+            # PHASE 1: Validate all CSVs
+            for config in csv_configs:
+                file_key = config["file_key"]
+                doctype = config["doctype"]
+                file_content_b64 = data.get(file_key, "")
+
+                if not file_content_b64:
+                    all_errors.append({
+                        "line": 0,
+                        "error_message": f"{file_key} est requis",
+                        "data": {},
+                        "file": file_key
+                    })
+                    continue
+
+                if not frappe.db.exists("DocType", doctype):
+                    all_errors.append({
+                        "line": 0,
+                        "error_message": f"Le DocType '{doctype}' n'existe pas",
+                        "data": {},
+                        "file": file_key
+                    })
+                    continue
+
+                try:
+                    file_content = base64.b64decode(file_content_b64)
+                except Exception as e:
+                    all_errors.append({
+                        "line": 0,
+                        "error_message": f"Erreur de décodage Base64 pour {file_key}: {str(e)}",
+                        "data": {},
+                        "file": file_key
+                    })
+                    continue
+
+                error_list, parsed_data = CsvService.import_csv(file_content, doctype)
+                
+                if error_list:
+                    for error in error_list:
+                        error["file"] = file_key
+                    all_errors.extend(error_list)
+                
+                if not parsed_data:
+                    all_errors.append({
+                        "line": 0,
+                        "error_message": f"Aucune donnée valide trouvée dans {file_key}",
+                        "data": {},
+                        "file": file_key
+                    })
+                    continue
+
+                all_parsed_data[doctype] = parsed_data
+
+            # If validation errors exist, return early
+            if all_errors:
+                response["message"] = "Des erreurs sont survenues lors de la validation des fichiers CSV"
+                response["validation_errors"] = all_errors
+                return response
+
+            # PHASE 2: Process all CSVs in a single transaction
+            frappe.db.begin()
+            try:
+                for config in csv_configs:
+                    doctype = config["doctype"]
+                    file_key = config["file_key"]
+                    if doctype not in all_parsed_data:
+                        continue
+
+                    parsed_data = all_parsed_data[doctype]
+                    csv_errors = []
+                    csv_inserted_records = []
+
+                    if doctype == "csv1":
+                        for idx, record in enumerate(parsed_data, start=1):
+                            try:
+                                # Simulate Item creation
+                                item_data = {
+                                    "item_code": f"{record.get('item_name')}-{frappe.generate_hash(length=4)}",
+                                    "item_name": record.get("item_name"),
+                                    "item_group": record.get("item_groupe")
+                                }
+                                item_name = create_item(item_data)
+
+                                # Simulate Material Request creation
+                                mr_data = {
+                                    "material_request_type": record.get("purpose"),
+                                    "transaction_date": record.get("date"),
+                                    "schedule_date": record.get("required_by"),
+                                    "status": "Submitted",
+                                    "target_warehouse": record.get("target_warehouse"),
+                                    "ref": record.get("ref"),
+                                    "items": [{
+                                        "item_code": item_name,
+                                        "qty": float(record.get("quantity"))
+                                    }]
+                                }
+                                mr_name = create_material_request(mr_data)
+
+                                csv_inserted_records.append({"item": item_name, "material_request": mr_name})
+                            except Exception as e:
+                                csv_errors.append({
+                                    "line": idx,
+                                    "error_message": f"Erreur d'insertion csv1: {str(e)}",
+                                    "data": record,
+                                    "file": file_key
+                                })
+                                continue  # Continue to the next record
+
+                    elif doctype == "csv2":
+                        for idx, record in enumerate(parsed_data, start=1):
+                            try:
+                                supplier_data = {
+                                    "supplier_name": record.get("supplier_name"),
+                                    "country": record.get("country"),
+                                    "type": record.get("type") or record.get("_type")
+                                }
+                                supplier_name = create_supplier(supplier_data)
+                                csv_inserted_records.append({"supplier": supplier_name})
+                            except Exception as e:
+                                csv_errors.append({
+                                    "line": idx,
+                                    "error_message": f"Erreur d'insertion csv2: {str(e)}",
+                                    "data": record,
+                                    "file": file_key
+                                })
+                                continue  # Continue to the next record
+
+                    elif doctype == "csv3":
+                        try:
+                            processed_data = process_csv3_data(parsed_data)
+                            for idx, record in enumerate(processed_data, start=1):
+                                try:
+                                    rfq_name = create_request_for_quotation_from_mr(
+                                        record["ref_request_quotation"],
+                                        record["suppliers"]
+                                    )
+                                    csv_inserted_records.append({"request_for_quotation": rfq_name})
+                                except Exception as e:
+                                    csv_errors.append({
+                                        "line": idx,
+                                        "error_message": f"Erreur d'insertion csv3: {str(e)}",
+                                        "data": record,
+                                        "file": file_key
+                                    })
+                                    continue  # Continue to the next record
+                        except Exception as e:
+                            csv_errors.append({
+                                "line": 0,
+                                "error_message": f"Erreur de traitement csv3: {str(e)}",
+                                "data": {},
+                                "file": file_key
+                            })
+
+                    # If errors occurred in this CSV, store them
+                    if csv_errors:
+                        all_errors.extend(csv_errors)
+
+                    # Store inserted records even if errors, to report partial success
+                    if csv_inserted_records:
+                        all_inserted_records[file_key] = csv_inserted_records
+
+                # PHASE 3: Commit or rollback based on errors
+                if all_errors:
+                    frappe.db.rollback()
+                    response["success"] = False
+                    response["message"] = "Certaines insertions ont échoué. Toutes les modifications ont été annulées."
+                    response["validation_errors"] = all_errors
+                    response["inserted_records"] = all_inserted_records
+                else:
+                    frappe.db.commit()
+                    response["success"] = True
+                    response["message"] = "Tous les CSV ont été importés avec succès."
+                    response["inserted_records"] = all_inserted_records
+
+            except Exception as e:
+                frappe.db.rollback()
+                response["success"] = False
+                response["message"] = f"Erreur inattendue lors de l'insertion: {str(e)}"
+                response["validation_errors"] = [{
+                    "line": 0,
+                    "error_message": f"Erreur inattendue: {str(e)}",
+                    "data": {},
+                    "file": "global"
+                }]
+                response["inserted_records"] = all_inserted_records
+
+            return response
+
+        except Exception as e:
+            frappe.db.rollback()
+            response["message"] = f"Erreur inattendue: {str(e)}"
+            response["validation_errors"] = [{
+                "line": 0,
+                "error_message": f"Erreur inattendue: {str(e)}",
+                "data": {},
+                "file": "global"
+            }]
+            return response  ces fichiers sans toutes dans erpnext , services , controller , et le fichier contenant les insertion , 
+        et je veux utiliser cette services sur frappe hr deja installer avec l erpnext 
+        puis cree les fonctions d insertion sur hrms  et cree un controller pour appeler le parse de donnees du service erpenext existant avec le fonction d insertion que vous allez cree sur hrms 
+        
+        
+        voici les etapes de l importation des 3 csv et utiliser ce qui vous ai utile : 
+            
+        # api.py - API REST pour l'import des données CSV dans HRMS
+    import frappe
+    from frappe import _
+    from frappe.utils import getdate, flt, cstr
+    import csv
+    import json
+    from datetime import datetime
+
+    # =============================================================================
+    # API ENDPOINT PRINCIPAL
+    # =============================================================================
+
+    @frappe.whitelist(allow_guest=False)
+    def import_csv_data():
+        """
+        API principale pour importer les 3 fichiers CSV
+        Endpoint: /api/method/hrms_import.api.import_csv_data
+        Method: POST
+        """
+        try:
+            # Récupération des fichiers depuis la requête
+            files = frappe.request.files
+            
+            employees_file = files.get('employees_csv')
+            salary_structure_file = files.get('salary_structure_csv') 
+            payroll_file = files.get('payroll_csv')
+            
+            if not all([employees_file, salary_structure_file, payroll_file]):
+                return {
+                    "success": False,
+                    "message": "Tous les fichiers CSV sont requis (employees_csv, salary_structure_csv, payroll_csv)"
+                }
+            
+            results = {
+                "success": True,
+                "employees": {},
+                "salary_components": {},
+                "salary_structures": {},
+                "salary_assignments": {},
+                "salary_slips": {},
+                "errors": []
+            }
+            
+            # Import dans l'ordre correct
+            results["employees"] = import_employees(employees_file)
+            results["salary_components"] = import_salary_components(salary_structure_file)
+            results["salary_structures"] = import_salary_structures(salary_structure_file)
+            results["salary_assignments"] = import_salary_assignments(payroll_file)
+            results["salary_slips"] = import_salary_slips(payroll_file)
+            
+            return results
+            
+        except Exception as e:
+            frappe.log_error(frappe.get_traceback(), "CSV Import Error")
+            return {
+                "success": False,
+                "message": f"Erreur lors de l'import: {str(e)}"
+            }
+
+    # =============================================================================
+    # IMPORT DES EMPLOYÉS (FICHIER 1)
+    # =============================================================================
+
+    def import_employees(csv_file):
+        """Import des données employés depuis le CSV"""
+        try:
+            csv_content = csv_file.read().decode('utf-8')
+            csv_reader = csv.DictReader(csv_content.splitlines())
+            
+            created = []
+            errors = []
+            
+            for row in csv_reader:
+                try:
+                    # Nettoyage et validation des données
+                    employee_data = {
+                        "doctype": "Employee",
+                        "employee": row.get("Ref", "").strip(),
+                        "first_name": row.get("Prenom", "").strip(),
+                        "last_name": row.get("Nom", "").strip(),
+                        "gender": convert_gender(row.get("genre", "").strip()),
+                        "date_of_joining": convert_date(row.get("Date embauche", "")),
+                        "date_of_birth": convert_date(row.get("date naissance", "")),
+                        "company": row.get("company", "").strip(),
+                        "status": "Active",
+                        "employee_name": f"{row.get('Prenom', '').strip()} {row.get('Nom', '').strip()}",
+                        # Valeurs par défaut pour les champs obligatoires
+                        "department": get_or_create_department("General"),
+                        "designation": get_or_create_designation("Employee")
+                    }
+                    
+                    # Vérification si l'employé existe déjà
+                    if frappe.db.exists("Employee", {"employee": employee_data["employee"]}):
+                        errors.append(f"Employé {employee_data['employee']} existe déjà")
+                        continue
+                    
+                    # Création de l'employé
+                    employee_doc = frappe.get_doc(employee_data)
+                    employee_doc.insert()
+                    frappe.db.commit()
+                    
+                    created.append({
+                        "employee_id": employee_doc.name,
+                        "employee_number": employee_doc.employee,
+                        "name": employee_doc.employee_name
+                    })
+                    
+                except Exception as e:
+                    errors.append(f"Erreur employé {row.get('Ref', 'Unknown')}: {str(e)}")
+            
+            return {
+                "success": True,
+                "created_count": len(created),
+                "created": created,
+                "errors": errors
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Erreur lecture fichier employés: {str(e)}"
+            }
+
+    # =============================================================================
+    # IMPORT DES COMPOSANTS SALARIAUX (FICHIER 2)
+    # =============================================================================
+
+    def import_salary_components(csv_file):
+        """Import des composants salariaux"""
+        try:
+            csv_content = csv_file.read().decode('utf-8')
+            csv_reader = csv.DictReader(csv_content.splitlines())
+            
+            created = []
+            errors = []
+            processed_components = set()
+            
+            for row in csv_reader:
+                try:
+                    component_name = row.get("name", "").strip()
+                    
+                    # Éviter les doublons
+                    if component_name in processed_components:
+                        continue
+                        
+                    component_data = {
+                        "doctype": "Salary Component",
+                        "salary_component": component_name,
+                        "salary_component_abbr": row.get("Abbr", "").strip(),
+                        "type": "Earning" if row.get("type", "").strip().lower() == "earning" else "Deduction",
+                        "is_tax_applicable": 1 if row.get("type", "").strip().lower() == "deduction" else 0
+                    }
+                    
+                    # Vérification si le composant existe déjà
+                    if frappe.db.exists("Salary Component", {"salary_component": component_name}):
+                        continue
+                    
+                    # Création du composant
+                    component_doc = frappe.get_doc(component_data)
+                    component_doc.insert()
+                    frappe.db.commit()
+                    
+                    created.append(component_name)
+                    processed_components.add(component_name)
+                    
+                except Exception as e:
+                    errors.append(f"Erreur composant {row.get('name', 'Unknown')}: {str(e)}")
+            
+            return {
+                "success": True,
+                "created_count": len(created),
+                "created": created,
+                "errors": errors
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Erreur lecture fichier composants: {str(e)}"
+            }
+
+    # =============================================================================
+    # IMPORT DES STRUCTURES SALARIALES (FICHIER 2)
+    # =============================================================================
+
+    def import_salary_structures(csv_file):
+        """Import des structures salariales"""
+        try:
+            csv_content = csv_file.read().decode('utf-8')
+            csv_reader = csv.DictReader(csv_content.splitlines())
+            
+            # Grouper les composants par structure
+            structures_data = {}
+            
+            for row in csv_reader:
+                structure_name = row.get("salary structure", "").strip()
+                if structure_name not in structures_data:
+                    structures_data[structure_name] = {
+                        "earnings": [],
+                        "deductions": []
+                    }
+                
+                component_type = row.get("type", "").strip().lower()
+                component_data = {
+                    "salary_component": row.get("name", "").strip(),
+                    "amount": parse_salary_value(row.get("valeur", "")),
+                    "formula": parse_salary_formula(row.get("valeur", ""), row.get("Remarque", ""))
+                }
+                
+                if component_type == "earning":
+                    structures_data[structure_name]["earnings"].append(component_data)
+                else:
+                    structures_data[structure_name]["deductions"].append(component_data)
+            
+            created = []
+            errors = []
+            
+            # Créer les structures salariales
+            for structure_name, components in structures_data.items():
+                try:
+                    if frappe.db.exists("Salary Structure", structure_name):
+                        continue
+                    
+                    structure_data = {
+                        "doctype": "Salary Structure",
+                        "name": structure_name,
+                        "company": "My Company",
+                        "is_active": 1,
+                        "earnings": components["earnings"],
+                        "deductions": components["deductions"]
+                    }
+                    
+                    structure_doc = frappe.get_doc(structure_data)
+                    structure_doc.insert()
+                    frappe.db.commit()
+                    
+                    created.append(structure_name)
+                    
+                except Exception as e:
+                    errors.append(f"Erreur structure {structure_name}: {str(e)}")
+            
+            return {
+                "success": True,
+                "created_count": len(created),
+                "created": created,
+                "errors": errors
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Erreur création structures: {str(e)}"
+            }
+
+    # =============================================================================
+    # IMPORT DES ASSIGNATIONS SALARIALES (FICHIER 3)
+    # =============================================================================
+
+    def import_salary_assignments(csv_file):
+        """Import des assignations de structures salariales"""
+        try:
+            csv_content = csv_file.read().decode('utf-8')
+            csv_reader = csv.DictReader(csv_content.splitlines())
+            
+            assignments_data = {}
+            
+            # Grouper par employé pour prendre la première occurrence
+            for row in csv_reader:
+                employee_ref = row.get("Ref Employe", "").strip()
+                if employee_ref not in assignments_data:
+                    assignments_data[employee_ref] = {
+                        "salary_structure": row.get("Salaire", "").strip(),
+                        "base_salary": flt(row.get("Salaire Base", 0)),
+                        "start_date": convert_date(row.get("Mois", ""))
+                    }
+            
+            created = []
+            errors = []
+            
+            for employee_ref, assignment_data in assignments_data.items():
+                try:
+                    # Récupérer l'ID de l'employé
+                    employee = frappe.db.get_value("Employee", {"employee": employee_ref}, "name")
+                    if not employee:
+                        errors.append(f"Employé {employee_ref} non trouvé")
+                        continue
+                    
+                    # Vérifier si l'assignation existe déjà
+                    existing = frappe.db.exists("Salary Structure Assignment", {
+                        "employee": employee,
+                        "salary_structure": assignment_data["salary_structure"]
+                    })
+                    
+                    if existing:
+                        continue
+                    
+                    assignment_doc_data = {
+                        "doctype": "Salary Structure Assignment",
+                        "employee": employee,
+                        "salary_structure": assignment_data["salary_structure"],
+                        "from_date": assignment_data["start_date"],
+                        "base": assignment_data["base_salary"],
+                        "company": "My Company"
+                    }
+                    
+                    assignment_doc = frappe.get_doc(assignment_doc_data)
+                    assignment_doc.insert()
+                    frappe.db.commit()
+                    
+                    created.append(f"{employee_ref} -> {assignment_data['salary_structure']}")
+                    
+                except Exception as e:
+                    errors.append(f"Erreur assignation {employee_ref}: {str(e)}")
+            
+            return {
+                "success": True,
+                "created_count": len(created),
+                "created": created,
+                "errors": errors
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Erreur assignations: {str(e)}"
+            }
+
+    # =============================================================================
+    # IMPORT DES BULLETINS DE PAIE (FICHIER 3)
+    # =============================================================================
+
+    def import_salary_slips(csv_file):
+        """Import des bulletins de paie"""
+        try:
+            csv_content = csv_file.read().decode('utf-8')
+            csv_reader = csv.DictReader(csv_content.splitlines())
+            
+            created = []
+            errors = []
+            
+            for row in csv_reader:
+                try:
+                    employee_ref = row.get("Ref Employe", "").strip()
+                    
+                    # Récupérer l'employé
+                    employee = frappe.db.get_value("Employee", {"employee": employee_ref}, "name")
+                    if not employee:
+                        errors.append(f"Employé {employee_ref} non trouvé")
+                        continue
+                    
+                    payroll_date = convert_date(row.get("Mois", ""))
+                    
+                    # Vérifier si le bulletin existe déjà
+                    existing = frappe.db.exists("Salary Slip", {
+                        "employee": employee,
+                        "start_date": payroll_date
+                    })
+                    
+                    if existing:
+                        continue
+                    
+                    salary_slip_data = {
+                        "doctype": "Salary Slip",
+                        "employee": employee,
+                        "salary_structure": row.get("Salaire", "").strip(),
+                        "start_date": payroll_date,
+                        "end_date": get_month_end_date(payroll_date),
+                        "posting_date": payroll_date,
+                        "company": "My Company"
+                    }
+                    
+                    slip_doc = frappe.get_doc(salary_slip_data)
+                    slip_doc.insert()
+                    slip_doc.submit()
+                    frappe.db.commit()
+                    
+                    created.append(f"{employee_ref} - {payroll_date}")
+                    
+                except Exception as e:
+                    errors.append(f"Erreur bulletin {employee_ref}: {str(e)}")
+            
+            return {
+                "success": True,
+                "created_count": len(created),
+                "created": created,
+                "errors": errors
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Erreur bulletins: {str(e)}"
+            }
+
+    # =============================================================================
+    # FONCTIONS UTILITAIRES
+    # =============================================================================
+
+    def convert_gender(genre):
+        """Convertit le genre en format ERPNext"""
+        genre_lower = genre.lower()
+        if genre_lower in ['masculin', 'male', 'm']:
+            return 'Male'
+        elif genre_lower in ['feminin', 'female', 'f']:
+            return 'Female'
+        return 'Male'  # Valeur par défaut
+
+    def convert_date(date_str):
+        """Convertit une date DD/MM/YYYY en format YYYY-MM-DD"""
+        if not date_str:
+            return None
+        
+        try:
+            # Format DD/MM/YYYY vers YYYY-MM-DD
+            if '/' in date_str:
+                day, month, year = date_str.split('/')
+                return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+            return date_str
+        except:
+            return None
+
+    def get_or_create_department(dept_name):
+        """Récupère ou crée un département"""
+        if not frappe.db.exists("Department", dept_name):
+            dept_doc = frappe.get_doc({
+                "doctype": "Department",
+                "department_name": dept_name,
+                "company": "My Company"
+            })
+            dept_doc.insert()
+            frappe.db.commit()
+        return dept_name
+
+    def get_or_create_designation(designation_name):
+        """Récupère ou crée une désignation"""
+        if not frappe.db.exists("Designation", designation_name):
+            desig_doc = frappe.get_doc({
+                "doctype": "Designation",
+                "designation_name": designation_name
+            })
+            desig_doc.insert()
+            frappe.db.commit()
+        return designation_name
+
+    def parse_salary_value(valeur):
+        """Parse la valeur salariale (pourcentage ou montant)"""
+        if not valeur:
+            return 0
+        
+        valeur = str(valeur).strip()
+        if '%' in valeur:
+            return 0  # Pour les pourcentages, on utilise les formules
+        
+        try:
+            return flt(valeur)
+        except:
+            return 0
+
+    def parse_salary_formula(valeur, remarque):
+        """Parse les formules salariales"""
+        if not valeur:
+            return ""
+        
+        valeur = str(valeur).strip()
+        remarque = str(remarque).strip() if remarque else ""
+        
+        if '%' in valeur:
+            percentage = valeur.replace('%', '').strip()
+            try:
+                pct = flt(percentage) / 100
+                
+                if 'salaire base' in remarque.lower():
+                    return f"base * {pct}"
+                elif 'salaire base + indemnité' in remarque.lower():
+                    return f"(base + IND) * {pct}"
+                else:
+                    return f"base * {pct}"
+            except:
+                return ""
+        
+        return ""
+
+    def get_month_end_date(start_date):
+        """Récupère la date de fin du mois"""
+        from calendar import monthrange
+        from datetime import datetime
+        
+        if isinstance(start_date, str):
+            date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+        else:
+            date_obj = start_date
+        
+        last_day = monthrange(date_obj.year, date_obj.month)[1]
+        return f"{date_obj.year}-{date_obj.month:02d}-{last_day:02d}"
+
+    # =============================================================================
+    # API DE VÉRIFICATION DES DONNÉES
+    # =============================================================================
+
+    @frappe.whitelist(allow_guest=False)
+    def validate_csv_data():
+        """
+        API pour valider les données CSV avant import
+        Endpoint: /api/method/hrms_import.api.validate_csv_data
+        """
+        try:
+            files = frappe.request.files
+            
+            validation_results = {
+                "success": True,
+                "employees_validation": {},
+                "salary_structure_validation": {},
+                "payroll_validation": {},
+                "overall_errors": []
+            }
+            
+            # Validation de chaque fichier
+            if files.get('employees_csv'):
+                validation_results["employees_validation"] = validate_employees_csv(files['employees_csv'])
+            
+            if files.get('salary_structure_csv'):
+                validation_results["salary_structure_validation"] = validate_salary_structure_csv(files['salary_structure_csv'])
+            
+            if files.get('payroll_csv'):
+                validation_results["payroll_validation"] = validate_payroll_csv(files['payroll_csv'])
+            
+            return validation_results
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Erreur validation: {str(e)}"
+            }
+
+    def validate_employees_csv(csv_file):
+        """Valide le fichier des employés"""
+        errors = []
+        warnings = []
+        
+        try:
+            csv_content = csv_file.read().decode('utf-8')
+            csv_reader = csv.DictReader(csv_content.splitlines())
+            
+            required_columns = ['Ref', 'Nom', 'Prenom', 'genre', 'Date embauche', 'company']
+            header = csv_reader.fieldnames
+            
+            # Vérification des colonnes requises
+            missing_columns = [col for col in required_columns if col not in header]
+            if missing_columns:
+                errors.append(f"Colonnes manquantes: {', '.join(missing_columns)}")
+            
+            row_count = 0
+            for row in csv_reader:
+                row_count += 1
+                
+                # Validation des données
+                if not row.get('Ref', '').strip():
+                    errors.append(f"Ligne {row_count}: Référence employé manquante")
+                
+                if not convert_date(row.get('Date embauche', '')):
+                    warnings.append(f"Ligne {row_count}: Format de date d'embauche incorrect")
+            
+            return {
+                "valid": len(errors) == 0,
+                "row_count": row_count,
+                "errors": errors,
+                "warnings": warnings
+            }
+            
+        except Exception as e:
+            return {
+                "valid": False,
+                "errors": [f"Erreur lecture fichier: {str(e)}"]
+            }
+
+    def validate_salary_structure_csv(csv_file):
+        """Valide le fichier des structures salariales"""
+        # Implementation similaire pour validation
+        return {"valid": True, "errors": [], "warnings": []}
+
+    def validate_payroll_csv(csv_file):
+        """Valide le fichier des bulletins de paie"""
+        # Implementation similaire pour validation
+        return {"valid": True, "errors": [], "warnings": []}
+
+
+
+    FICHIER 1 - Données des employés
+    Colonnes et DocTypes concernés :
+    ColonneDocType concernéChamp ERPNext correspondantRemarqueRefEmployeeemployee (ID personnalisé)Référence uniqueNomEmployeelast_nameNom de famillePrenomEmployeefirst_namePrénomgenreEmployeegenderSexe (Male/Female)Date embaucheEmployeedate_of_joiningDate d'embauchedate naissanceEmployeedate_of_birthDate de naissancecompanyEmployeecompanyEntreprise d'affectation
+    DocTypes manquant des données requises :
+
+    Employee (données partielles seulement)
+
+    Données manquantes pour Employee :
+
+    employee_name (nom complet)
+    department (service)
+    designation (poste)
+    employment_type (type d'emploi)
+    status (statut actif/inactif)
+
+
+    FICHIER 2 - Structure salariale
+    Colonnes et DocTypes concernés :
+    ColonneDocType concernéChamp ERPNext correspondantRemarquesalary structureSalary StructurenameNom de la structurenameSalary Componentsalary_component_nameNom du composantAbbrSalary Componentsalary_component_abbrAbréviationtypeSalary Componenttypeearning/deductionvaleurSalary Structure (earnings/deductions)amount/formulaMontant ou formuleRemarqueSalary Structure (earnings/deductions)formulaFormule de calcul
+    DocTypes concernés par ce fichier :
+
+    Salary Structure - Structure principale
+    Salary Component - Composants individuels (SB, IND, TS)
+    Salary Structure (table child) - Liaison composants/structure
+
+    Données manquantes :
+
+    Salary Structure Assignment : Aucune colonne ne concerne ce DocType
+    Période de validité de la structure
+    Formules standardisées ERPNext
+
+
+    FICHIER 3 - Bulletins de paie
+    Colonnes et DocTypes concernés :
+    ColonneDocType concernéChamp ERPNext correspondantRemarqueMoisSalary Slipstart_date/end_datePériode de paieRef EmployeSalary SlipemployeeRéférence employéSalaire BaseSalary Slipbase (dans earnings)Salaire de baseSalaireSalary Slipsalary_structureStructure appliquée
+    DocTypes dérivables de ce fichier :
+
+    Salary Slip - Bulletin principal
+    Salary Structure Assignment - Peut être créé à partir de ces données
+
+    Données manquantes pour Salary Slip complet :
+
+    posting_date (date de création)
+    payment_days (jours payés)
+    leave_without_pay (congés sans solde)
+    Détail des earnings/deductions calculés
+    net_pay (salaire net)
+
+    Données utilisables pour Salary Structure Assignment :
+
+    Ref Employe → employee
+    Salaire → salary_structure ("gasy1")
+    Salaire Base → base
+    Mois → from_date (première occurrence par employé)
+
+
+    SYNTHÈSE GLOBALE DES DOCTYPES :
+    DocTypes avec données complètes :
+
+    Salary Component (fichier 2)
+
+    DocTypes avec données partielles :
+
+    Employee (fichier 1) - manque department, designation
+    Salary Structure (fichier 2) - manque périodes de validité
+    Salary Slip (fichier 3) - manque détails des calculs
+
+    DocTypes sans données directes :
+
+    Salary Structure Assignment - peut être dérivé du fichier 3
+    Department - doit être créé séparément
+    Designation - doit être créé séparément
+
+    Ordre d'import recommandé :
+
+    Department et Designation (création manuelle)
+    Employee (fichier 1 + compléments)
+    Salary Component (fichier 2)
+    Salary Structure (fichier 2)
+    Salary Structure Assignment (dérivé fichier 3)
+    Salary Slip (fichier 3)
+
+
+    metter ces commenataires dans le service d insertion pour ne pas perdre  si le fonction et trop long :
+
+    # =============================================================================
+    # INSERTION DES EMPLOYÉS (FICHIER 1)
+    # =============================================================================

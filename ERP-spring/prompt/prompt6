@@ -1,0 +1,804 @@
+voici le doc officiel du frappe erpnext : https://docs.frappe.io/erpnext 
+et voici le repo du projet erpnext personel : https://github.com/zotina/frappe_bench.git 
+ baser sur ces 2 resources 
+
+
+dans le l app erpnext 
+ j ai ces fonctions d insertion c est l ordre du scenario : import frappe
+from frappe import _
+from erpnext.buying.doctype.request_for_quotation.request_for_quotation import make_supplier_quotation_from_rfq
+from erpnext.buying.doctype.supplier_quotation.supplier_quotation import make_purchase_order as sq_make_purchase_order
+from erpnext.stock.doctype.purchase_receipt.purchase_receipt import make_purchase_invoice as pr_make_purchase_invoice
+from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
+
+@frappe.whitelist()
+def create_item(data):
+    try:
+        required_fields = ["item_code", "item_name"]
+        for field in required_fields:
+            if not data.get(field):
+                frappe.throw(_(f"Champ requis manquant: {field}"))
+
+        item = frappe.get_doc({
+            "doctype": "Item",
+            "name": data.get("name") or frappe.generate_hash(length=10),
+            "item_code": data["item_code"],
+            "item_name": data["item_name"],
+            "item_group": "All Item Groups",
+            "is_stock_item": 0,
+            "stock_uom": "Nos"
+        })
+        item.insert()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Item {item.name} créé avec succès"))
+        return item.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création de l'Item: {str(e)}"))
+
+@frappe.whitelist()
+def create_supplier_group(data):
+    try:
+        supplier_group = frappe.get_doc({
+            "doctype": "Supplier Group",
+            "name": data.get("name") or frappe.generate_hash("Supplier Group", 10),
+            "supplier_group_name": data.get("name") or "Default Group"
+        })
+        supplier_group.insert()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Supplier Group {supplier_group.name} créé avec succès"))
+        return supplier_group.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création du Supplier Group: {str(e)}"))
+
+@frappe.whitelist()
+def create_supplier(data):
+    try:
+        required_fields = ["supplier_name", "supplier_group"]
+        for field in required_fields:
+            if not data.get(field):
+                frappe.throw(_(f"Champ requis manquant: {field}"))
+
+        if not frappe.db.exists("Supplier Group", data["supplier_group"]):
+            frappe.throw(_(f"Supplier Group {data['supplier_group']} n'existe pas"))
+
+        supplier = frappe.get_doc({
+            "doctype": "Supplier",
+            "name": data.get("name") or frappe.generate_hash("Supplier", 10),
+            "supplier_name": data["supplier_name"],
+            "supplier_group": data["supplier_group"]
+        })
+        supplier.insert()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Supplier {supplier.name} créé avec succès"))
+        return supplier.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création du Supplier: {str(e)}"))
+
+@frappe.whitelist()
+def create_material_request(data):
+    try:
+        required_fields = ["material_request_type", "transaction_date", "items"]
+        for field in required_fields:
+            if not data.get(field):
+                frappe.throw(_(f"Champ requis manquant: {field}"))
+
+        mr = frappe.get_doc({
+            "doctype": "Material Request",
+            "name": data.get("name") or frappe.generate_hash("Material Request", 10),
+            "material_request_type": data["material_request_type"],
+            "transaction_date": data["transaction_date"],
+            "schedule_date": data.get("schedule_date") or data["transaction_date"],
+            "status": data.get("status", "Draft"),
+            "items": [
+                {
+                    "item_code": item["item_code"],
+                    "qty": item["qty"],
+                    "schedule_date": data.get("schedule_date") or data["transaction_date"]
+                } for item in data["items"]
+            ]
+        })
+        mr.insert()
+        mr.submit() if data.get("status") == "Submitted" else mr.save()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Material Request {mr.name} créé avec succès"))
+        return mr.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création du Material Request: {str(e)}"))
+
+@frappe.whitelist()
+def create_request_for_quotation_from_mr(mr_name, supplier_names):
+    try:
+        if not frappe.db.exists("Material Request", mr_name):
+            frappe.throw(_(f"Material Request {mr_name} n'existe pas"))
+
+        for supplier in supplier_names:
+            if not frappe.db.exists("Supplier", supplier):
+                frappe.throw(_(f"Supplier {supplier} n'existe pas"))
+
+        mr = frappe.get_doc("Material Request", mr_name)
+        rfq = frappe.get_doc({
+            "doctype": "Request for Quotation",
+            "transaction_date": frappe.utils.nowdate(),
+            "status": "Draft",
+            "message_for_supplier": "Please provide your best quote.",
+            "items": [
+                {
+                    "item_code": item.item_code,
+                    "qty": item.qty,
+                    "uom": item.uom or frappe.db.get_value("Item", item.item_code, "stock_uom"),
+                    "conversion_factor": 1.0,
+                    "material_request": mr_name
+                } for item in mr.items
+            ],
+            "suppliers": [
+                {
+                    "supplier": supplier
+                } for supplier in supplier_names
+            ]
+        })
+        rfq.insert()
+        rfq.submit()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Request for Quotation {rfq.name} créé avec succès"))
+        return rfq.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création du Request for Quotation: {str(e)}"))
+
+@frappe.whitelist()
+def create_supplier_quotation_from_rfq(rfq_name, supplier, items):
+    try:
+        if not frappe.db.exists("Request for Quotation", rfq_name):
+            frappe.throw(_(f"Request for Quotation {rfq_name} n'existe pas"))
+        if not frappe.db.exists("Supplier", supplier):
+            frappe.throw(_(f"Supplier {supplier} n'existe pas"))
+
+        sq = make_supplier_quotation_from_rfq(source_name=rfq_name, for_supplier=supplier)
+        sq.transaction_date = frappe.utils.nowdate()
+        sq.valid_till = frappe.utils.add_days(frappe.utils.nowdate(), 30)
+
+        # Update items with provided qty, rate, uom, and conversion_factor
+        for sq_item in sq.items:
+            for item in items:
+                if sq_item.item_code == item["item_code"]:
+                    sq_item.qty = item["qty"]
+                    sq_item.rate = item["rate"]
+                    sq_item.uom = frappe.db.get_value("Item", item["item_code"], "stock_uom")
+                    sq_item.conversion_factor = 1.0
+                    break
+
+        sq.insert()
+        sq.submit()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Supplier Quotation {sq.name} créé avec succès"))
+        return sq.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création du Supplier Quotation: {str(e)}"))
+
+@frappe.whitelist()
+def create_purchase_order_from_sq(sq_name):
+    try:
+        if not frappe.db.exists("Supplier Quotation", sq_name):
+            frappe.throw(_(f"Supplier Quotation {sq_name} n'existe pas"))
+
+        po = sq_make_purchase_order(source_name=sq_name)
+        po.transaction_date = frappe.utils.nowdate()
+        po.schedule_date = frappe.utils.nowdate()
+        for item in po.items:
+            item.schedule_date = frappe.utils.nowdate()
+        po.insert()
+        po.submit()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Purchase Order {po.name} créé avec succès"))
+        return po.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création du Purchase Order: {str(e)}"))
+
+@frappe.whitelist()
+def create_purchase_receipt_from_po(po_name):
+    try:
+        if not frappe.db.exists("Purchase Order", po_name):
+            frappe.throw(_(f"Purchase Order {po_name} n'existe pas"))
+
+        po = frappe.get_doc("Purchase Order", po_name)
+        pr = frappe.get_doc({
+            "doctype": "Purchase Receipt",
+            "supplier": po.supplier,
+            "posting_date": frappe.utils.nowdate(),
+            "status": "Draft",
+            "items": [
+                {
+                    "item_code": item.item_code,
+                    "qty": item.qty,
+                    "purchase_order": po_name
+                } for item in po.items
+            ]
+        })
+        pr.insert()
+        pr.submit()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Purchase Receipt {pr.name} créé avec succès"))
+        return pr.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création du Purchase Receipt: {str(e)}"))
+
+@frappe.whitelist()
+def create_purchase_invoice_from_pr(pr_name):
+    try:
+        if not frappe.db.exists("Purchase Receipt", pr_name):
+            frappe.throw(_(f"Purchase Receipt {pr_name} n'existe pas"))
+
+        pi = pr_make_purchase_invoice(source_name=pr_name)
+        pi.posting_date = frappe.utils.nowdate()
+        pi.insert()
+        pi.submit()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Purchase Invoice {pi.name} créé avec succès"))
+        return pi.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création du Purchase Invoice: {str(e)}"))
+
+@frappe.whitelist()
+def create_payment_entry_from_pi(pi_name, paid_amount, reference_no):
+    try:
+        if not frappe.db.exists("Purchase Invoice", pi_name):
+            frappe.throw(_(f"Purchase Invoice {pi_name} n'existe pas"))
+
+        pe = get_payment_entry(dt="Purchase Invoice", dn=pi_name)
+        pe.posting_date = frappe.utils.nowdate()
+        pe.paid_amount = paid_amount
+        pe.received_amount = paid_amount
+        pe.reference_no = reference_no
+        pe.insert()
+        pe.submit()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Payment Entry {pe.name} créé avec succès"))
+        return pe.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création du Payment Entry: {str(e)}"))
+
+@frappe.whitelist()
+def run_scenario():
+    try:
+        result = {}
+
+        test_data = {
+            "supplier_group": {
+                "name": "General"
+            },
+            "supplier": {
+                "supplier_name": "Supplier ABC",
+                "supplier_group": "General"
+            },
+            "item": {
+                "item_code": "ITEM001",
+                "item_name": "Sample Product"
+            },
+            "material_request": {
+                "material_request_type": "Purchase",
+                "transaction_date": frappe.utils.nowdate(),
+                "schedule_date": frappe.utils.nowdate(),
+                "status": "Submitted",
+                "items": [
+                    {
+                        "item_code": "ITEM001",
+                        "qty": 10
+                    }
+                ]
+            },
+            "supplier_quotation": {
+                "items": [
+                    {
+                        "item_code": "ITEM001",
+                        "qty": 10,
+                        "rate": 100
+                    }
+                ]
+            },
+            "payment_entry": {
+                "paid_amount": 1000,
+                "reference_no": "PAY001"
+            }
+        }
+
+        sg_name = create_supplier_group(test_data["supplier_group"])
+        result["supplier_group"] = sg_name
+
+        supplier_data = test_data["supplier"]
+        supplier_data["supplier_group"] = sg_name
+        supplier_name = create_supplier(supplier_data)
+        result["supplier"] = supplier_name
+
+        item_data = test_data["item"]
+        item_name = create_item(item_data)
+        result["item"] = item_name
+
+        mr_data = test_data["material_request"]
+        mr_data["items"][0]["item_code"] = item_name
+        mr_name = create_material_request(mr_data)
+        result["material_request"] = mr_name
+
+        rfq_name = create_request_for_quotation_from_mr(mr_name, [supplier_name])
+        result["request_for_quotation"] = rfq_name
+
+        sq_data = test_data["supplier_quotation"]
+        sq_data["items"][0]["item_code"] = item_name
+        sq_name = create_supplier_quotation_from_rfq(rfq_name, supplier_name, sq_data["items"])
+        result["supplier_quotation"] = sq_name
+
+        po_name = create_purchase_order_from_sq(sq_name)
+        result["purchase_order"] = po_name
+
+        pr_name = create_purchase_receipt_from_po(po_name)
+        result["purchase_receipt"] = pr_name
+
+        pi_name = create_purchase_invoice_from_pr(pr_name)
+        result["purchase_invoice"] = pi_name
+
+        payment_data = test_data["payment_entry"]
+        pe_name = create_payment_entry_from_pi(pi_name, payment_data["paid_amount"], payment_data["reference_no"])
+        result["payment_entry"] = pe_name
+
+        frappe.msgprint(_(f"Scénario exécuté avec succès"))
+        return result
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de l'exécution du scénario: {str(e)}"))
+
+
+je dois faire un import csv de ces donnees , mon methode c est de cree un doctype similaire au au colonne du csv pour la recuperer de dans et la traiter puis lorsque le csv est mapper dans cette doctype personaliser je peux inserer apres les colonnes dans son doctype specifique , voici l exemple de l iutilisation de mon service import 
+voici le service du import generaliser : import csv
+import frappe
+from frappe.utils import getdate, get_datetime, get_time
+from datetime import datetime
+from io import StringIO
+
+class CsvService:
+    @staticmethod
+    def import_csv(file_content, doctype):
+        result_list = []
+        error_list = []
+        line_number = 1  # Start from 1 for header row
+
+        print(f"Starting CSV parsing for doctype: {doctype}")
+
+        try:
+            print(f"Decoding file content (size: {len(file_content)} bytes)")
+            reader = StringIO(file_content.decode('utf-8') if isinstance(file_content, bytes) else file_content)
+            csv_reader = csv.DictReader(reader)
+            doctype_fields = {field.fieldname: field.fieldtype for field in frappe.get_meta(doctype).fields}
+
+            print(f"Doctype fields: {list(doctype_fields.keys())}")
+            print(f"CSV headers: {csv_reader.fieldnames}")
+
+            for row in csv_reader:
+                line_number += 1  # Increment for each data row
+                print(f"Processing row {line_number}: {row}")
+                row_errors = []
+                record = {}
+                doc = None
+
+                # Create a new Teste doctype instance
+                try:
+                    doc = frappe.get_doc({"doctype": doctype})
+                except Exception as e:
+                    row_errors.append(f"Failed to create doctype instance: {str(e)}")
+                    print(f"Error creating doctype instance for row {line_number}: {str(e)}")
+
+                if doc:
+                    # Validate field values using doc.validate
+                    for fieldname, value in row.items():
+                        if fieldname in doctype_fields and value:
+                            try:
+                                parsed_value = CsvService.parse_value(doctype_fields[fieldname], value)
+                                if parsed_value is None:
+                                    row_errors.append(f"Field '{fieldname}' with value '{value}' could not be parsed for type '{doctype_fields[fieldname]}'")
+                                else:
+                                    # Call non-static validate method on doc instance
+                                    try:
+                                        doc.validateAll(fieldname, parsed_value)
+                                        record[fieldname] = parsed_value
+                                        print(f"Mapped field {fieldname} with value: {parsed_value}")
+                                    except Exception as e:
+                                        error_list.append({
+                                            "line": line_number,
+                                            "error_message": str(e),
+                                            "data": row
+                                        })
+                            except Exception as e:
+                                error_list.append({
+                                    "line": line_number,
+                                    "error_message": str(e),
+                                    "data": row
+                                })
+
+                # If there are errors, add to error_list
+                if record:  # Only add if record contains parsed values
+                    result_list.append(record)
+                    print(f"Added record to result list: {record}")
+                    
+            print(f"CSV parsing completed. Total records parsed: {len(result_list)}, Errors: {len(error_list)}")
+            return error_list, result_list
+
+        except Exception as e:
+            print(f"Error parsing CSV: {str(e)}")
+            error_list.append({
+                "line": 1,
+                "error_message": f"Failed to parse CSV: {str(e)}",
+                "data": {}
+            })
+            return error_list, result_list
+
+    @staticmethod
+    def parse_value(field_type, value):
+        print(f"Parsing value '{value}' for field type: {field_type}")
+        try:
+            if field_type in ['Int', 'Integer']:
+                return int(value)
+            elif field_type in ['Float', 'Currency', 'Percent']:
+                return float(value)
+            elif field_type == 'Check':
+                return 1 if value.lower() in ['true', '1', 'yes'] else 0
+            elif field_type in ['Data', 'Long Text']:
+                return value
+            elif field_type == 'Text':
+                return value
+            elif field_type == 'Date':
+                parsed_date = getdate(value)
+                print(f"Parsed date: {parsed_date}")
+                return parsed_date
+            elif field_type == 'Datetime':
+                return get_datetime(value)
+            elif field_type == 'Time':
+                return get_time(value)
+            elif field_type == 'Link':
+                return value
+            elif field_type == 'Select':
+                return value
+            elif field_type in ['Table', 'Table MultiSelect']:
+                parsed_list = [v.strip() for v in value.split(',')]
+                print(f"Parsed list: {parsed_list}")
+                return parsed_list
+            else:
+                print(f"Unsupported field type: {field_type}")
+                return value
+        except Exception as e:
+            print(f"Error parsing value '{value}' for type '{field_type}': {str(e)}")
+            return None
+
+
+
+
+            voici comment en l utilise : import frappe
+import base64
+from io import StringIO
+from erpnext.services.CsvService import CsvService
+
+@frappe.whitelist(allow_guest=False)
+def import_csv_from_json(data):
+    response = {
+        "success": False,
+        "message": "",
+        "validation_errors": [],
+        "inserted_records": []
+    }
+
+    print("Début de import_csv_from_json")
+
+    try:
+        if isinstance(data, str):
+            data = frappe.parse_json(data)
+            print("Données JSON parsées")
+
+        file_content_b64 = data.get("filecontent", "")
+        doctype = "Teste"
+
+        if not file_content_b64:
+            response["message"] = "filecontent est requis"
+            response["validation_errors"].append({
+                "line": 0,
+                "error_message": "filecontent est requis",
+                "data": {}
+            })
+            print("Erreur: filecontent est requis")
+            return response
+
+        if not frappe.db.exists("DocType", doctype):
+            response["message"] = f"Le DocType '{doctype}' n'existe pas"
+            response["validation_errors"].append({
+                "line": 0,
+                "error_message": f"Le DocType '{doctype}' n'existe pas",
+                "data": {}
+            })
+            print(f"Erreur: Le DocType '{doctype}' n'existe pas")
+            return response
+
+        try:
+            file_content = base64.b64decode(file_content_b64)
+            print("Fichier décodé avec succès")
+        except Exception as e:
+            response["message"] = "Le format du fichier est invalide"
+            response["validation_errors"].append({
+                "line": 0,
+                "error_message": f"Erreur de décodage Base64: {str(e)}",
+                "data": {}
+            })
+            print(f"Erreur de décodage Base64: {str(e)}")
+            return response
+
+        error_list, parsed_data = CsvService.import_csv(file_content, doctype)
+        print(f"Données parsées: {len(parsed_data)} enregistrements")
+
+        if error_list:
+            response["message"] = "Validation errors occurred during CSV parsing or validation"
+            response["validation_errors"] = error_list
+            print(f"Validation errors found: {len(error_list)} errors")
+            return response
+
+        if not parsed_data:
+            response["success"] = True
+            response["message"] = "No valid data to insert"
+            response["inserted_records"] = []
+            print("Aucune donnée valide à insérer")
+            return response
+
+        inserted_records = []
+        for record in parsed_data:
+            try:
+                doc = frappe.get_doc({
+                    "doctype": doctype,
+                    **record
+                })
+                doc.insert()
+                inserted_records.append(doc.name)
+                print(f"Enregistrement inséré: {doc.name}")
+            except Exception as e:
+                error_list.append({
+                    "line": 0,
+                    "error_message": f"Insertion error: {str(e)}",
+                    "data": record
+                })
+                print(f"Erreur d'insertion pour l'enregistrement {record}: {str(e)}")
+
+        if error_list:
+            response["message"] = "Errors occurred during insertion"
+            response["validation_errors"] = error_list
+        else:
+            response["success"] = True
+            response["message"] = f"{len(inserted_records)} records inserted successfully"
+            response["inserted_records"] = inserted_records
+            frappe.db.commit()
+            print(f"{len(inserted_records)} enregistrements insérés avec succès")
+
+        return response
+
+    except Exception as e:
+        print(f"Erreur globale dans import_csv_from_json: {str(e)}")
+        response["message"] = f"Erreur inattendue: {str(e)}"
+        return response j i cree un doctype teste qui represente l ensemble du donnees du csv 
+
+        import frappe
+from frappe import _
+from frappe.model.document import Document
+from frappe.utils import getdate
+from datetime import datetime
+import re
+
+class Teste(Document):
+    from typing import TYPE_CHECKING
+    if TYPE_CHECKING:
+        from frappe.types import DF
+        date_naissance: DF.Date | None
+        libelle: DF.LongText | None
+
+    @staticmethod
+    def validate_libelle(data):
+        if not data:
+            frappe.throw(_("Le champ 'libelle' est obligatoire"))
+
+    @staticmethod
+    def validate_date_naissance(data):
+        if not data:
+            frappe.throw(_("La date de naissance est obligatoire"))
+        date = getdate(data)
+        today = getdate()
+        if date > today:
+            frappe.throw(_("La date de naissance ne peut pas être dans le futur"))
+        current_year = today.year
+        birth_year = date.year
+        age = current_year - birth_year
+        if today.month < date.month or (today.month == date.month and today.day < date.day):
+            age -= 1
+        if age < 18:
+            frappe.throw(_("La personne doit avoir au moins 18 ans"))
+
+    def validateAll(self, fieldName, data):
+        """Validate the data for the given fieldName by calling the appropriate validation method."""
+        if fieldName == "libelle":
+            self.__class__.validate_libelle(data)
+        elif fieldName == "date_naissance":
+            self.__class__.validate_date_naissance(data)
+        else:
+            frappe.throw(_(f"No validation method exists for field '{fieldName}'"))
+
+
+    voici les csv 
+
+    csv 1 :
+
+    date	item_name	item_groupe	required_by	quantity	purpose	target_warehouse	ref
+    02/05/2025	boulon	piece	02/06/2025	13	Purchase	All Warehouse	1
+    02/05/2025	ciment	consommable	02/06/2025	5	Purchase	All Warehouse	2  
+
+
+    csv2 : 
+
+    supplier_name	country	type
+    Sanifer	Madagascar	Company
+    Exxon	Usa	Company
+    Electroplus	Madagascar	Company
+
+    csv3 :
+
+    ref_request_quotation	supplier
+1	Sanifer
+1	Exxon
+2	Sanifer
+
+et voici les doctype du csv : 
+   voici le doctupe por chaque csv : # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
+# For license information, please see license.txt
+
+# import frappe
+from frappe.model.document import Document
+
+
+class csv1(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		date: DF.Date | None
+		item_groupe: DF.LongText | None
+		item_name: DF.LongText | None
+		purpose: DF.LongText | None
+		quantity: DF.LongText | None
+		ref: DF.LongText | None
+		required_by: DF.Date | None
+		target_warehouse: DF.LongText | None
+	# end: auto-generated types
+
+	pass
+
+
+
+# Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
+# For license information, please see license.txt
+
+# import frappe
+from frappe.model.document import Document
+
+
+class csv2(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		country: DF.LongText | None
+		supplier_name: DF.LongText | None
+		type: DF.LongText | None
+	# end: auto-generated types
+
+	pass
+
+
+
+# Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
+# For license information, please see license.txt
+
+# import frappe
+from frappe.model.document import Document
+
+
+class csv3(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		ref_request_quotation: DF.LongText | None
+		supplier: DF.LongText | None
+	# end: auto-generated types
+
+	pass
+
+dans cette section du controller il appel le service qui mapp les donnes du csv dans le doctype selectionner : error_list, parsed_data = CsvService.import_csv(file_content, doctype)
+
+
+donc cree moi un controller qui apppel cette fonction pojur les 3 csv au  les 3 doctype 
+
+puis
+rajouter les logiques d insertion apres la mapp du 3 csv 
+
+ c est a dire cette section : 
+  for record in parsed_data:
+            try:
+                doc = frappe.get_doc({
+                    "doctype": doctype,
+                    **record
+                })
+                doc.insert()
+                inserted_records.append(doc.name)
+                print(f"Enregistrement inséré: {doc.name}")
+            except Exception as e:
+                error_list.append({
+                    "line": 0,
+                    "error_message": f"Insertion error: {str(e)}",
+                    "data": record
+                })
+                print(f"Erreur d'insertion pour l'enregistrement {record}: {str(e)}")
+ c est pour dire dans quel doctype on inserer le colonne etr  je vais vous donne ci dessous le logique d insertion 
+NB utiliser les fonctions que j ai deja donnees ci dessus 
+ pour le csv 1: 
+
+ on insere : 
+    item_groupe,item_name dans Item par la fonction create_item(data) 
+    
+    et dans le fonction @frappe.whitelist()
+def create_item(data):
+    try:
+        required_fields = ["item_code", "item_name"]
+        for field in required_fields:
+            if not data.get(field):
+                frappe.throw(_(f"Champ requis manquant: {field}"))
+
+        item = frappe.get_doc({
+            "doctype": "Item",
+            "name": data.get("name") or frappe.generate_hash(length=10),
+            "item_code": data["item_code"],
+            "item_name": data["item_name"],
+            "item_group": "All Item Groups",
+            "is_stock_item": 0,
+            "stock_uom": "Nos"
+        })
+        item.insert()
+        frappe.db.commit()
+        frappe.msgprint(_(f"Item {item.name} créé avec succès"))
+        return item.name
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.throw(_(f"Erreur lors de la création de l'Item: {str(e)}")) l item group doit etre dans le data et faite en sorte qu il cree l item group si il n existe pas 
+
+    date,required_by,quantity,purpose,target_warehouse,ref par la fonction : create_material_request 
+    et le ref c est le name du Material Request  et modifier cette fonction create_material_request si necessaire a l insertion de ces colonnes
+    n oublier pas de rajouter que si le colonne reference n existe pas encore il faut la cree 
+
+
+
+csv2:
+    ces 3 colonnes :    supplier_name,country , sont tous inserer dans supplier donc modifier le fonction def create_supplier(data): pour le faire  et j ai deja un groupe nommer General et uliser le pour toute le supplier car il ne la pas preciser sur le csv 
+
+csv3:
+    ref_request_quotation c est le name de material_request  qu on va cree un request_for_quotation , le fonction et deja correct : ce sont ces 2 arguement mr_name, supplier_names le ref_request_quotation et le suppliera mais je analyse le doc pour savoir si on soit inserer le nom ou l id en reference 
+    pour le csv3 
+     cree un fonction pour transformer le doctype csv3 en objet{"ref_request_quotation ","suppliers"}  ce fonction sert a faire un distict le ref_request_quotation et mettez dans un tableau de supplier les supplier ayant la meme ref_request_quotation puis on donne cela au fonction d insertion de request_forquotation 

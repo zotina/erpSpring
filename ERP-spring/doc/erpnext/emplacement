@@ -1,0 +1,53 @@
+Supplier Group :
+
+    JSON : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier_group/supplier_group.json
+    JS : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier_group/supplier_group.js
+    Python : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier_group/supplier_group.py
+
+Supplier :
+
+    JSON : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier/supplier.json
+    JS : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier/supplier.js
+    Python : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier/supplier.py
+
+Material Request :
+
+    JSON : ~/frappe-bench/apps/erpnext/erpnext/stock/doctype/material_request/material_request.json
+    JS : ~/frappe-bench/apps/erpnext/erpnext/stock/doctype/material_request/material_request.js
+    Python : ~/frappe-bench/apps/erpnext/erpnext/stock/doctype/material_request/material_request.py
+
+Request for Quotation :
+
+    JSON : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/request_for_quotation/request_for_quotation.json
+    JS : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/request_for_quotation/request_for_quotation.js
+    Python : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/request_for_quotation/request_for_quotation.py
+
+Supplier Quotation :
+
+    JSON : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier_quotation/supplier_quotation.json
+    JS : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier_quotation/supplier_quotation.js
+    Python : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/supplier_quotation/supplier_quotation.py
+
+Purchase Order :
+
+    JSON : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/purchase_order/purchase_order.json
+    JS : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/purchase_order/purchase_order.js
+    Python : ~/frappe-bench/apps/erpnext/erpnext/buying/doctype/purchase_order/purchase_order.py
+
+Purchase Receipt :
+
+    JSON : ~/frappe-bench/apps/erpnext/erpnext/stock/doctype/purchase_receipt/purchase_receipt.json
+    JS : ~/frappe-bench/apps/erpnext/erpnext/stock/doctype/purchase_receipt/purchase_receipt.js
+    Python : ~/frappe-bench/apps/erpnext/erpnext/stock/doctype/purchase_receipt/purchase_receipt.py
+
+Purchase Invoice :
+
+    JSON : ~/frappe-bench/apps/erpnext/erpnext/accounts/doctype/purchase_invoice/purchase_invoice.json
+    JS : ~/frappe-bench/apps/erpnext/erpnext/accounts/doctype/purchase_invoice/purchase_invoice.js
+    Python : ~/frappe-bench/apps/erpnext/erpnext/accounts/doctype/purchase_invoice/purchase_invoice.py
+
+Payment Entry :
+
+    JSON : ~/frappe-bench/apps/erpnext/erpnext/accounts/doctype/payment_entry/payment_entry.json
+    JS : ~/frappe-bench/apps/erpnext/erpnext/accounts/doctype/payment_entry/payment_entry.js
+    Python : ~/frappe-bench/apps/erpnext/erpnext/accounts/doctype/payment_entry/payment_entry.py

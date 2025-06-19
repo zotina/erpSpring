@@ -1,0 +1,74 @@
+voici le doc officiel du frappe erpnext : https://docs.frappe.io/erpnext 
+et voici le repo du projet erpnext personel : https://github.com/zotina/frappe_bench.git 
+en basant  sur ces 2 resources existingapp
+j ai cette scenario:
+
+    création produit (item)
+    faire une demande de besoin (material request)
+    faire un demande de devis à un fournisseur (quotation)
+    faire un bon de commande (purchase order)
+    recevoir facture (Purchase Invoice)
+    voir statut des factures (purchase invoice)
+    newapp
+    mettre un login (compte erpnext)
+    Choisir un fournisseur 
+    lister les demandes de devis
+    mettre à jour les prix
+    lister les commandes
+    voir le status 
+    reçu
+    payé
+    mode comptable (accounting) 
+    voir les factures avec status
+    payer
+
+et j ai cette model qui presente quelles sont les doctype utiliser pour la creation d item le premier line et la demande de besoin
+ UOM  :
+    name(id)
+    uom_name
+Item :
+    name(id)
+    item_code 
+    item_name   
+    stock_uom 
+    purchase_uom
+    sales_uom
+
+    select 
+        name,
+        item_code,
+        item_name,
+        stock_uom,
+        purchase_uom,
+        sales_uom 
+    from tabItem
+
+Material Request:
+    name
+    amended_from 
+    material_request_type
+    transaction_date
+    status
+
+    select 
+        name,
+        material_request_type,
+        transaction_date,
+        status
+    from `tabMaterial Request`
+
+
+Material Request Item:
+    name 
+    item_code 
+    qty
+    parent
+
+    select 
+        name ,
+        item_code ,
+        qty,
+        parent
+    from `tabMaterial Request Item`
+
+je veux que vous poursuivez cette model pour toutes cette scenarion , je veux savoir quelles sont  les doctypes concerner pour chque scenario , et l ordre d action , et n oublie pas les action , comment update  , quelles sont les choses qu il fait en backend et kely quelles sont les doctypes concerner a cette update par exemple toutes les details 

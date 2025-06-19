@@ -1,0 +1,9 @@
+voici le doc officiel du frappe erpnext : https://docs.frappe.io/erpnext , pour mon demande  suivant veuiller analyse le doc 
+j ai fait cette scenario sur erpnext , 
+j ai cree un item puis cree un demande de besoin material request sur cette item , puis cree un demande de devis : request for Quotation puis supplier quotation puis j ai cree un bon de commande purchase order de cette dernier , puis j ai cree un facteur pour cette commande : Purchase Invoice
+
+cree un moi un service  pour faire  l insertion ,pour cette scenario , plutard je l utiliserai pour in import csv imbrique , donc le mieux c est de  cree le fonction pour chaque step mais pas en un seulement fonction , 
+
+analyse donc le doc pour chaque step d insertion , il faut savoir pour insertion de item dans leformulaire d erpnext qu est ce qu il fait dans le back , et ainsi de suite pour toutes les step 
+
+il doit cree toute les donnees concernant cette scenario , supossant il y a aucune donner concernant ces scenario , par exemple le fournisseur supplier  , vous devez cree un fonction pour faire son insertion car don supplier quotation on a besoin de lui , et verfier pour toutes les etapes d insertions 

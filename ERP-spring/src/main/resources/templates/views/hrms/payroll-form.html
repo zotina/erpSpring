@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche de Paie - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-box {
+            border: 1px solid #444444;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+        }
+        form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        select, button, input[type="month"] {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        input[type="month"] {
+            min-width: 150px;
+        }
+        button {
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #444444;
+        }
+        th {
+            background-color: #F5F5F5;
+            font-weight: 600;
+        }
+        .total {
+            background-color: #F5F5F5;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .statistical {
+            font-style: italic;
+            color: #6B7280;
+        }
+        .no-total {
+            color: #9CA3AF;
+        }
+        .summary-section {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            border: 2px solid #2E86AB;
+        }
+        .summary-table {
+            margin: 0;
+        }
+        .summary-table td {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .net-pay {
+            background-color: #2E86AB;
+            color: white;
+            font-size: 1.2rem;
+        }
+        .error-message {
+            background-color: #fef2f2;
+            border: 1px solid #f43f5e;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .export-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        .export-btn:hover {
+            background-color: #2563eb;
+        }
+        .back-link {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .back-link a {
+            color: #2E86AB;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        .actions {
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>📄 Fiche de Paie</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <form th:action="@{/api/hrms/employee/{id}/payroll/generate(id=${employee.employeeId})}" method="post">
+                <p><strong>👤 Employé:</strong> <span th:text="${employee.fullName} + ' (' + ${employee.employeeId} + ')'"></span></p>
+                <label>📅 Période:</label>
+                
+                <input type="month" 
+                       name="monthYear" 
+                       th:value="${monthYear != null ? monthYear : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
+                       required>
+                
+                <button type="submit">🔄 Voir</button>
+            </form>
+
+           
+            <div th:if="${payrollSlip != null}">
+                <!-- En-tête de l'entreprise -->
+                <div class="info-box">
+                    <p><strong><span th:text="${payrollSlip.company != null ? payrollSlip.company : 'ENTREPRISE'}">ENTREPRISE</span></strong></p>
+                    <p>Adresse: Rue de l'Indépendance, Antananarivo</p>
+                    <p>SIRET: 12345678901234 | Code APE: 6201Z</p>
+                    <p>Tél: +261 20 22 123 45</p>
+                </div>
+
+                <!-- Informations salarié -->
+                <div class="info-box">
+                    <p><strong>👤 SALARIÉ</strong></p>
+                    <p><strong>Nom:</strong> <span th:text="${payrollSlip.employeeName != null ? payrollSlip.employeeName : (employee != null and employee.fullName != null ? employee.fullName : 'N/A')}"></span></p>
+                    <p><strong>Matricule:</strong> <span th:text="${payrollSlip.employee != null ? payrollSlip.employee : (employee != null and employee.employeeId != null ? employee.employeeId : 'N/A')}"></span></p>
+                    <p><strong>Poste:</strong> <span th:text="${payrollSlip.designation != null ? payrollSlip.designation : (employee != null and employee.position != null ? employee.position : 'N/A')}"></span></p>
+                    <p><strong>Département:</strong> <span th:text="${payrollSlip.department != null ? payrollSlip.department : (employee != null and employee.department != null ? employee.department : 'N/A')}"></span></p>
+                    <p><strong>Fréquence de Paie:</strong> <span th:text="${payrollSlip.payrollFrequency != null ? payrollSlip.payrollFrequency : 'Mensuelle'}"></span></p>
+                    <p><strong>Devise:</strong> <span th:text="${payrollSlip.currency != null ? payrollSlip.currency : 'Ar'}"></span></p>
+                </div>
+                
+                <!-- Période et temps de travail -->
+                <div th:with="startFormatted=${payrollSlip.startDate != null ? T(mg.itu.util.DateUtil).parseToddMMyyyy(payrollSlip.startDate) : 'N/A'},
+                            endFormatted=${payrollSlip.endDate != null ? T(mg.itu.util.DateUtil).parseToddMMyyyy(payrollSlip.endDate) : 'N/A'}">
+                    <p><strong> PÉRIODE:</strong>
+                        Du <span th:text="${startFormatted}"></span>
+                        au <span th:text="${endFormatted}"></span>
+                    </p>
+                </div>
+
+                <p><strong> TEMPS DE TRAVAIL:</strong> 
+                    <span th:text="${(payrollSlip.paymentDays != null ? payrollSlip.paymentDays : 0) + ' jours payés sur ' + (payrollSlip.totalWorkingDays != null ? payrollSlip.totalWorkingDays : 0) + ' jours ouvrés'}"></span>
+                    <span th:if="${payrollSlip.totalWorkingHours != null && payrollSlip.totalWorkingHours > 0}" 
+                        th:text="' - ' + ${payrollSlip.totalWorkingHours} + ' heures'"></span>
+                </p>
+
+                <!-- Section Earnings/Rémunération -->
+                <h3> Éléments de Rémunération</h3>
+                <div th:if="${payrollSlip.earnings != null && !payrollSlip.earnings.isEmpty()}">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>COMPOSANT</th>
+                                <th>ABRÉVIATION</th>
+                                <th>MONTANT</th>
+                                <th>STATUT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="earning : ${payrollSlip.earnings}" 
+                                th:class="${(earning.statisticalComponent != null and earning.statisticalComponent ? 'statistical' : '') + (earning.doNotIncludeInTotal != null and earning.doNotIncludeInTotal ? ' no-total' : '')}">
+                                <td th:text="${earning.salaryComponent != null ? earning.salaryComponent : 'N/A'}"></td>
+                                <td th:text="${earning.abbr != null ? earning.abbr : ''}"></td>
+                                <td class="text-right">
+                                    <span class="currency-symbol" th:text="${payrollSlip.currency != null ? payrollSlip.currency : 'Ar'}"></span>
+                                    <span th:text="${earning.amount != null ? #numbers.formatDecimal(earning.amount, 0, 'COMMA', 0, 'POINT') : '0'}"></span>
+                                </td>
+                                <td>
+                                    <span th:if="${earning.statisticalComponent != null and earning.statisticalComponent}" class="statistical"> Statistique</span>
+                                    <span th:if="${earning.doNotIncludeInTotal != null and earning.doNotIncludeInTotal and (earning.statisticalComponent == null or !earning.statisticalComponent)}" class="no-total">⚪ Hors Total</span>
+                                    <span th:if="${earning.exemptFromPayrollTax != null and earning.exemptFromPayrollTax}"> Exonéré Taxe</span>
+                                    <span th:if="${earning.dependsOnPaymentDays != null and earning.dependsOnPaymentDays}"> Dépend Jours</span>
+                                </td>
+                            </tr>
+                            <tr class="total">
+                                <td colspan="3"><strong>TOTAL BRUT</strong></td>
+                                <td class="text-right">
+                                    <span class="currency-symbol" th:text="${payrollSlip.currency != null ? payrollSlip.currency : 'Ar'}"></span>
+                                    <span th:text="${payrollSlip.grossPay != null ? #numbers.formatDecimal(payrollSlip.grossPay, 0, 'COMMA', 0, 'POINT') : '0'}"></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:if="${payrollSlip.earnings == null || payrollSlip.earnings.isEmpty()}">
+                    <p class="text-center" style="color: #6b7280; font-style: italic;">Aucun élément de rémunération trouvé</p>
+                </div>
+
+                <!-- Section Deductions -->
+                <h3>Déductions</h3>
+                <div th:if="${payrollSlip.deductions != null && !payrollSlip.deductions.isEmpty()}">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>COMPOSANT</th>
+                                <th>ABRÉVIATION</th>
+                                <th>MONTANT</th>
+                                <th>STATUT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="deduction : ${payrollSlip.deductions}"
+                                th:class="${(deduction.statisticalComponent != null and deduction.statisticalComponent ? 'statistical' : '') + (deduction.doNotIncludeInTotal != null and deduction.doNotIncludeInTotal ? ' no-total' : '')}">
+                                <td th:text="${deduction.salaryComponent != null ? deduction.salaryComponent : 'N/A'}"></td>
+                                <td th:text="${deduction.abbr != null ? deduction.abbr : ''}"></td>
+                                <td class="text-right">
+                                    <span class="currency-symbol" th:text="${payrollSlip.currency != null ? payrollSlip.currency : 'Ar'}"></span>
+                                    <span th:text="${deduction.amount != null ? #numbers.formatDecimal(deduction.amount, 0, 'COMMA', 0, 'POINT') : '0'}"></span>
+                                </td>
+                                <td>
+                                    <span th:if="${deduction.statisticalComponent != null and deduction.statisticalComponent}" class="statistical"> Statistique</span>
+                                    <span th:if="${deduction.doNotIncludeInTotal != null and deduction.doNotIncludeInTotal and (deduction.statisticalComponent == null or !deduction.statisticalComponent)}" class="no-total">⚪ Hors Total</span>
+                                    <span th:if="${deduction.exemptFromPayrollTax != null and deduction.exemptFromPayrollTax}"> Exonéré Taxe</span>
+                                    <span th:if="${deduction.dependsOnPaymentDays != null and deduction.dependsOnPaymentDays}"> Dépend Jours</span>
+                                </td>
+                            </tr>
+                            <tr class="total">
+                                <td colspan="3"><strong>TOTAL DÉDUCTIONS</strong></td>
+                                <td class="text-right">
+                                    <span class="currency-symbol" th:text="${payrollSlip.currency != null ? payrollSlip.currency : 'Ar'}"></span>
+                                    <span th:text="${payrollSlip.totalDeduction != null ? #numbers.formatDecimal(payrollSlip.totalDeduction, 0, 'COMMA', 0, 'POINT') : '0'}"></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:if="${payrollSlip.deductions == null || payrollSlip.deductions.isEmpty()}">
+                    <p class="text-center" style="color: #6b7280; font-style: italic;">Aucune déduction trouvée</p>
+                </div>
+
+                <!-- Résumé Final -->
+                <div class="summary-section">
+                    <h3>📋 RÉSUMÉ</h3>
+                    <table class="summary-table">
+                        <tr>
+                            <td><strong> Total Brut:</strong></td>
+                            <td class="text-right">
+                                <span class="currency-symbol" th:text="${payrollSlip.currency != null ? payrollSlip.currency : 'Ar'}"></span>
+                                <span th:text="${payrollSlip.grossPay != null ? #numbers.formatDecimal(payrollSlip.grossPay, 0, 'COMMA', 0, 'POINT') : '0'}"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong> Total Déductions:</strong></td>
+                            <td class="text-right">
+                                <span class="currency-symbol" th:text="${payrollSlip.currency != null ? payrollSlip.currency : 'Ar'}"></span>
+                                <span th:text="${payrollSlip.totalDeduction != null ? #numbers.formatDecimal(payrollSlip.totalDeduction, 0, 'COMMA', 0, 'POINT') : '0'}"></span>
+                            </td>
+                        </tr>
+                        <tr th:if="${payrollSlip.roundedTotal != null && payrollSlip.netPay != null && payrollSlip.roundedTotal != payrollSlip.netPay && payrollSlip.roundedTotal > 0}">
+                            <td><strong> Arrondi:</strong></td>
+                            <td class="text-right">
+                                <span class="currency-symbol" th:text="${payrollSlip.currency != null ? payrollSlip.currency : 'Ar'}"></span>
+                                <span th:text="${#numbers.formatDecimal(payrollSlip.roundedTotal - payrollSlip.netPay, 0, 'COMMA', 0, 'POINT')}"></span>
+                            </td>
+                        </tr>
+                        <tr class="net-pay">
+                            <td><strong> NET À PAYER:</strong></td>
+                            <td class="text-right">
+                                <span class="currency-symbol" th:text="${payrollSlip.currency != null ? payrollSlip.currency : 'Ar'}"></span>
+                                <span th:text="${payrollSlip.netPay != null ? #numbers.formatDecimal(payrollSlip.netPay, 0, 'COMMA', 0, 'POINT') : '0'}"></span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions">
+                    <a th:href="@{/api/hrms/employee/{id}/payroll/export(id=${employee != null ? employee.employeeId : ''}, monthYear=${monthYear})}" 
+                    class="export-btn">📄 Exporter PDF</a>
+                </div>
+
+                <!-- Informations légales et signature -->
+                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; font-size: 0.9rem; color: #6b7280;">
+                    <p><strong>📅 Date d'édition:</strong> 
+                        <span th:text="${payrollSlip.postingDate != null ? #dates.format(payrollSlip.postingDate, 'dd/MM/yyyy') : #dates.format(#dates.createNow(), 'dd/MM/yyyy')}"></span>
+                    </p>
+                    <p><strong>ℹ️ Note:</strong> Ce bulletin de paie est généré automatiquement par le système HRMS.</p>
+                </div>
+            </div>
+
+            <!-- Message quand aucune fiche de paie n'est trouvée -->
+            <div th:if="${payrollSlip == null and error == null}">
+                <div class="info-box" style="text-align: center; background-color: #f0f9ff; border-color: #0ea5e9;">
+                    <p><strong>ℹ️ Aucune fiche de paie trouvée</strong></p>
+                    <p>Aucune fiche de paie n'a été trouvée pour la période sélectionnée.</p>
+                    <p style="color: #6b7280; font-size: 0.9rem;">Veuillez vérifier que les données de paie ont été saisies pour cette période.</p>
+                </div>
+            </div>
+
+            <!-- Lien de retour -->
+            <div class="back-link">
+                <a href="/api/hrms/employees">← Retour à la liste des employés</a>
+            </div>
+        </div>
+        
+        <!-- Message d'erreur -->
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

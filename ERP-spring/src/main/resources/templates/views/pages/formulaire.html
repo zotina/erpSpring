@@ -1,0 +1,122 @@
+<div th:replace="fragments/side-bar"></div>
+
+    <div class="header">
+        <div>
+            <h1>Nouveau produit</h1>
+            <p>Ajoutez un nouveau produit à votre catalogue</p>
+        </div>
+        <button class="new-project-btn">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Ajouter à l'inventaire
+        </button>
+    </div>
+
+    
+    <div class="product-form-container">
+        <div class="form-card">
+            <div class="form-header">
+                <h2>Informations du produit</h2>
+            </div>
+            <div class="form-content">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="product-name">Nom du produit</label>
+                        <input type="text" id="product-name" class="form-control" placeholder="Nom du produit">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-sku">SKU</label>
+                        <input type="text" id="product-sku" class="form-control" placeholder="SKU-12345">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="product-category">Catégorie</label>
+                        <select id="product-category" class="form-control">
+                            <option value="">Sélectionner une catégorie</option>
+                            <option value="electronics">Électronique</option>
+                            <option value="clothing">Vêtements</option>
+                            <option value="furniture">Mobilier</option>
+                            <option value="food">Alimentation</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-brand">Marque</label>
+                        <input type="text" id="product-brand" class="form-control" placeholder="Nom de la marque">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="product-description">Description</label>
+                        <textarea id="product-description" class="form-control" rows="4" placeholder="Description détaillée du produit..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-card half-width">
+                <div class="form-header">
+                    <h2>Prix et stock</h2>
+                </div>
+                <div class="form-content">
+                    <div class="form-group">
+                        <label for="product-price">Prix (€)</label>
+                        <input type="number" id="product-price" class="form-control" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-cost">Coût d'achat (€)</label>
+                        <input type="number" id="product-cost" class="form-control" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-stock">Quantité en stock</label>
+                        <input type="number" id="product-stock" class="form-control" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-threshold">Seuil d'alerte stock</label>
+                        <input type="number" id="product-threshold" class="form-control" placeholder="10">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-card half-width">
+                <div class="form-header">
+                    <h2>Images et détails</h2>
+                </div>
+                <div class="form-content">
+                    <div class="form-group">
+                        <label>Image principale</label>
+                        <div class="image-upload-container">
+                            <svg viewBox="0 0 24 24" class="upload-icon">
+                                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <p>Déposez une image ou <span class="upload-link">parcourez</span></p>
+                            <input type="file" id="product-image" class="file-input" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-weight">Poids (kg)</label>
+                        <input type="number" id="product-weight" class="form-control" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-dimensions">Dimensions (L × l × H cm)</label>
+                        <div class="dimensions-inputs">
+                            <input type="number" placeholder="L" class="form-control dimension-input" step="0.1">
+                            <input type="number" placeholder="l" class="form-control dimension-input" step="0.1">
+                            <input type="number" placeholder="H" class="form-control dimension-input" step="0.1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button class="btn btn-secondary">Annuler</button>
+            <button class="btn btn-primary">Enregistrer le produit</button>
+        </div>
+    </div>
+    
+<div th:replace="fragments/footer"></div>

@@ -1,0 +1,1755 @@
+https://docs.frappe.io/erpnext/user/manual/en/introduction
+
+https://docs.frappe.io/hr/introduction
+baser votre reponse a ces documentation 
+ 
+
+
+ j ai deja cree un application spring boot qui appeler les api du hrsm 
+
+ voici les codes :
+
+
+ package mg.itu.controller;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.EmployeeDTO;
+import mg.itu.model.PayrollSlipDTO;
+import mg.itu.model.SalaryDetailDTO;
+import mg.itu.model.SummaryDTO;
+import mg.itu.service.HrmsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Controller
+@RequestMapping("/api/hrms")
+public class HrmsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsController.class);
+
+    @Autowired
+    private HrmsService hrmsService;
+
+    // Employee List with Filters
+    @GetMapping("/employees")
+    public String getEmployeeList(
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "department", required = false) String department,
+            @RequestParam(value = "designation", required = false) String designation,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate,
+            Model model, HttpSession session) {
+        try {
+            ApiResponse<EmployeeDTO> response = hrmsService.getEmployeeList(
+                    search, department, designation, status, startDate, endDate, session);
+            if ("success".equals(response.getStatus())) {
+                model.addAttribute("employees", response.getData());
+                model.addAttribute("totalEmployees", response.getData().size());
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching employee list", e);
+            model.addAttribute("error", "Error fetching employee list: " + e.getMessage());
+        }
+        return "views/hrms/employee-list";
+    }
+
+    // Employee Details with Salary History
+    @GetMapping("/employee/{id}")
+    public String getEmployeeDetails(@PathVariable String id, Model model, HttpSession session) {
+        try {
+            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(id, session);
+            ApiResponse<SalaryDetailDTO> salaryResponse = hrmsService.getSalaryHistory(id, session);
+            if ("success".equals(empResponse.getStatus()) && "success".equals(salaryResponse.getStatus())) {
+                model.addAttribute("employee", empResponse.getData().get(0));
+                model.addAttribute("salaryHistory", salaryResponse.getData());
+            } else {
+                model.addAttribute("error", empResponse.getMessage() + " | " + salaryResponse.getMessage());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching employee details", e);
+            model.addAttribute("error", "Error fetching employee details: " + e.getMessage());
+        }
+        return "views/hrms/employee-details";
+    }
+
+    // Payroll Slip Generation Form
+    @GetMapping("/employee/{id}/payroll")
+    public String getPayrollForm(@PathVariable String id, Model model, HttpSession session) {
+        try {
+            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(id, session);
+            if ("success".equals(empResponse.getStatus())) {
+                model.addAttribute("employee", empResponse.getData().get(0));
+            } else {
+                model.addAttribute("error", empResponse.getMessage());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching payroll form", e);
+            model.addAttribute("error", "Error fetching payroll form: " + e.getMessage());
+        }
+        return "views/hrms/payroll-form";
+    }
+
+    // Generate Payroll Slip
+    @PostMapping("/employee/{id}/payroll/generate")
+    public String generatePayrollSlip(
+            @PathVariable String id,
+            @RequestParam("month") String month,
+            @RequestParam("year") String year,
+            Model model, HttpSession session) {
+        try {
+            ApiResponse<PayrollSlipDTO> response = hrmsService.generatePayrollSlip(id, month, year, session);
+            if ("success".equals(response.getStatus())) {
+                model.addAttribute("payrollSlip", response.getData().get(0));
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error generating payroll slip", e);
+            model.addAttribute("error", "Error generating payroll slip: " + e.getMessage());
+        }
+        return "views/hrms/payroll-slip";
+    }
+
+    // Export Payroll Slip as PDF
+    @GetMapping("/employee/{id}/payroll/export")
+    public String exportPayrollSlip(
+            @PathVariable String id,
+            @RequestParam("month") String month,
+            @RequestParam("year") String year,
+            Model model, HttpSession session) {
+        try {
+            ApiResponse<String> response = hrmsService.exportPayrollSlip(id, month, year, session);
+            if ("success".equals(response.getStatus())) {
+                model.addAttribute("pdfPath", response.getData().get(0));
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error exporting payroll slip", e);
+            model.addAttribute("error", "Error exporting payroll slip: " + e.getMessage());
+        }
+        return "views/hrms/payroll-export";
+    }
+
+    // Monthly Summary Table
+    @GetMapping("/summary")
+    public String getMonthlySummary(
+            @RequestParam(value = "month", required = false) String month,
+            @RequestParam(value = "year", required = false) String year,
+            @RequestParam(value = "department", required = false) String department,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "contractType", required = false) String contractType,
+            Model model, HttpSession session) {
+        try {
+            ApiResponse<SummaryDTO> response = hrmsService.getMonthlySummary(month, year, department, status, contractType, session);
+            if ("success".equals(response.getStatus())) {
+                model.addAttribute("summary", response.getData());
+                // Calculate totals, average, median
+                double totalBase = 0, totalBonuses = 0, totalOvertime = 0, totalGross = 0, totalNet = 0;
+                List<Double> grossList = new ArrayList<>();
+                for (SummaryDTO item : response.getData()) {
+                    totalBase += item.getBaseSalary();
+                    totalBonuses += item.getBonuses();
+                    totalOvertime += item.getOvertimePay();
+                    totalGross += item.getTotalGross();
+                    totalNet += item.getNetPay();
+                    grossList.add(item.getTotalGross());
+                }
+                model.addAttribute("totalBase", totalBase);
+                model.addAttribute("totalBonuses", totalBonuses);
+                model.addAttribute("totalOvertime", totalOvertime);
+                model.addAttribute("totalGross", totalGross);
+                model.addAttribute("totalNet", totalNet);
+                model.addAttribute("averageGross", totalGross / response.getData().size());
+                Collections.sort(grossList);
+                double medianGross = grossList.size() % 2 == 0 ?
+                        (grossList.get(grossList.size() / 2 - 1) + grossList.get(grossList.size() / 2)) / 2 :
+                        grossList.get(grossList.size() / 2);
+                model.addAttribute("medianGross", medianGross);
+                model.addAttribute("totalEmployees", response.getData().size());
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            model.addAttribute("error", "Error fetching monthly summary: " + e.getMessage());
+        }
+        return "views/hrms/monthly-summary";
+    }
+}
+
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.Date;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class EmployeeDTO {
+    private String employeeId;
+    private String fullName;
+    private String email;
+    private String phone;
+    private String address;
+    private Date dateOfBirth;
+    private String cin;
+    private String department;
+    private String designation;
+    private Date dateOfJoining;
+    private String contractType;
+    private String managerId;
+    private String status;
+
+    // Getters and Setters
+    public String getEmployeeId() { return employeeId; }
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public Date getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(Date dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public String getCin() { return cin; }
+    public void setCin(String cin) { this.cin = cin; }
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+    public String getDesignation() { return designation; }
+    public void setDesignation(String designation) { this.designation = designation; }
+    public Date getDateOfJoining() { return dateOfJoining; }
+    public void setDateOfJoining(Date dateOfJoining) { this.dateOfJoining = dateOfJoining; }
+    public String getContractType() { return contractType; }
+    public void setContractType(String contractType) { this.contractType = contractType; }
+    public String getManagerId() { return managerId; }
+    public void setManagerId(String managerId) { this.managerId = managerId; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public static EmployeeDTO fromDict(Map<String, Object> data) {
+        EmployeeDTO dto = new EmployeeDTO();
+        dto.setEmployeeId((String) data.get("employee_id"));
+        dto.setFullName((String) data.get("full_name"));
+        dto.setEmail((String) data.get("email"));
+        dto.setPhone((String) data.get("phone"));
+        dto.setAddress((String) data.get("address"));
+        dto.setDateOfBirth(CsvService.parseValue("Date", (String) data.get("date_of_birth")));
+        dto.setCin((String) data.get("cin"));
+        dto.setDepartment((String) data.get("department"));
+        dto.setDesignation((String) data.get("designation"));
+        dto.setDateOfJoining(CsvService.parseValue("Date", (String) data.get("date_of_joining")));
+        dto.setContractType((String) data.get("contract_type"));
+        dto.setManagerId((String) data.get("manager_id"));
+        dto.setStatus((String) data.get("status"));
+        return dto;
+    }
+}
+
+
+
+package mg.itu.model;
+
+import java.util.Date;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class PayrollSlipDTO {
+    private String employeeId;
+    private String employeeName;
+    private Date periodStart;
+    private Date periodEnd;
+    private int workingDays;
+    private double baseSalary;
+    private double performanceBonus;
+    private double overtimePay;
+    private double transportAllowance;
+    private double mealAllowance;
+    private double housingAllowance;
+    private double cnapsDeduction;
+    private double osieDeduction;
+    private double smieDeduction;
+    private double irsaDeduction;
+    private double salaryAdvance;
+    private double loanRepayment;
+    private double totalGross;
+    private double totalDeductions;
+    private double netPay;
+
+    // Getters and Setters
+    public String getEmployeeId() { return employeeId; }
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public String getEmployeeName() { return employeeName; }
+    public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
+    public Date getPeriodStart() { return periodStart; }
+    public void setPeriodStart(Date periodStart) { this.periodStart = periodStart; }
+    public Date getPeriodEnd() { return periodEnd; }
+    public void setPeriodEnd(Date periodEnd) { this.periodEnd = periodEnd; }
+    public int getWorkingDays() { return workingDays; }
+    public void setWorkingDays(int workingDays) { this.workingDays = workingDays; }
+    public double getBaseSalary() { return baseSalary; }
+    public void setBaseSalary(double baseSalary) { this.baseSalary = baseSalary; }
+    public double getPerformanceBonus() { return performanceBonus; }
+    public void setPerformanceBonus(double performanceBonus) { this.performanceBonus = performanceBonus; }
+    public double getOvertimePay() { return overtimePay; }
+    public void setOvertimePay(double overtimePay) { this.overtimePay = overtimePay; }
+    public double getTransportAllowance() { return transportAllowance; }
+    public void setTransportAllowance(double transportAllowance) { this.transportAllowance = transportAllowance; }
+    public double getMealAllowance() { return mealAllowance; }
+    public void setMealAllowance(double mealAllowance) { this.mealAllowance = mealAllowance; }
+    public double getHousingAllowance() { return housingAllowance; }
+    public void setHousingAllowance(double housingAllowance) { this.housingAllowance = housingAllowance; }
+    public double getCnapsDeduction() { return cnapsDeduction; }
+    public void setCnapsDeduction(double cnapsDeduction) { this.cnapsDeduction = cnapsDeduction; }
+    public double getOsieDeduction() { return osieDeduction; }
+    public void setOsieDeduction(double osieDeduction) { this.osieDeduction = osieDeduction; }
+    public double getSmieDeduction() { return smieDeduction; }
+    public void setSmieDeduction(double smieDeduction) { this.smieDeduction = smieDeduction; }
+    public double getIrsaDeduction() { return irsaDeduction; }
+    public void setIrsaDeduction(double irsaDeduction) { this.irsaDeduction = irsaDeduction; }
+    public double getSalaryAdvance() { return salaryAdvance; }
+    public void setSalaryAdvance(double salaryAdvance) { this.salaryAdvance = salaryAdvance; }
+    public double getLoanRepayment() { return loanRepayment; }
+    public void setLoanRepayment(double loanRepayment) { this.loanRepayment = loanRepayment; }
+    public double getTotalGross() { return totalGross; }
+    public void setTotalGross(double totalGross) { this.totalGross = totalGross; }
+    public double getTotalDeductions() { return totalDeductions; }
+    public void setTotalDeductions(double totalDeductions) { this.totalDeductions = totalDeductions; }
+    public double getNetPay() { return netPay; }
+    public void setNetPay(double netPay) { this.netPay = netPay; }
+
+    public static PayrollSlipDTO fromDict(Map<String, Object> data) {
+        PayrollSlipDTO dto = new PayrollSlipDTO();
+        dto.setEmployeeId((String) data.get("employee_id"));
+        dto.setEmployeeName((String) data.get("employee_name"));
+        dto.setPeriodStart(CsvService.parseValue("Date", (String) data.get("period_start")));
+        dto.setPeriodEnd(CsvService.parseValue("Date", (String) data.get("period_end")));
+        dto.setWorkingDays(CsvService.parseValue("Int", (String) data.get("working_days")));
+        dto.setBaseSalary(CsvService.parseValue("Currency", (String) data.get("base_salary")));
+        dto.setPerformanceBonus(CsvService.parseValue("Currency", (String) data.get("performance_bonus")));
+        dto.setOvertimePay(CsvService.parseValue("Currency", (String) data.get("overtime_pay")));
+        dto.setTransportAllowance(CsvService.parseValue("Currency", (String) data.get("transport_allowance")));
+        dto.setMealAllowance(CsvService.parseValue("Currency", (String) data.get("meal_allowance")));
+        dto.setHousingAllowance(CsvService.parseValue("Currency", (String) data.get("housing_allowance")));
+        dto.setCnapsDeduction(CsvService.parseValue("Currency", (String) data.get("cnaps_deduction")));
+        dto.setOsieDeduction(CsvService.parseValue("Currency", (String) data.get("osie_deduction")));
+        dto.setSmieDeduction(CsvService.parseValue("Currency", (String) data.get("smie_deduction")));
+        dto.setIrsaDeduction(CsvService.parseValue("Currency", (String) data.get("irsa_deduction")));
+        dto.setSalaryAdvance(CsvService.parseValue("Currency", (String) data.get("salary_advance")));
+        dto.setLoanRepayment(CsvService.parseValue("Currency", (String) data.get("loan_repayment")));
+        dto.setTotalGross(CsvService.parseValue("Currency", (String) data.get("total_gross")));
+        dto.setTotalDeductions(CsvService.parseValue("Currency", (String) data.get("total_deductions")));
+        dto.setNetPay(CsvService.parseValue("Currency", (String) data.get("net_pay")));
+        return dto;
+    }
+}
+
+
+
+package mg.itu.model;
+
+import java.util.Date;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SalaryDetailDTO {
+    private String employeeId;
+    private Date period;
+    private double baseSalary;
+    private double performanceBonus;
+    private double overtimePay;
+    private double transportAllowance;
+    private double mealAllowance;
+    private double housingAllowance;
+    private double totalGross;
+    private double totalNet;
+
+    // Getters and Setters
+    public String getEmployeeId() { return employeeId; }
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public Date getPeriod() { return period; }
+    public void setPeriod(Date period) { this.period = period; }
+    public double getBaseSalary() { return baseSalary; }
+    public void setBaseSalary(double baseSalary) { this.baseSalary = baseSalary; }
+    public double getPerformanceBonus() { return performanceBonus; }
+    public void setPerformanceBonus(double performanceBonus) { this.performanceBonus = performanceBonus; }
+    public double getOvertimePay() { return overtimePay; }
+    public void setOvertimePay(double overtimePay) { this.overtimePay = overtimePay; }
+    public double getTransportAllowance() { return transportAllowance; }
+    public void setTransportAllowance(double transportAllowance) { this.transportAllowance = transportAllowance; }
+    public double getMealAllowance() { return mealAllowance; }
+    public void setMealAllowance(double mealAllowance) { this.mealAllowance = mealAllowance; }
+    public double getHousingAllowance() { return housingAllowance; }
+    public void setHousingAllowance(double housingAllowance) { this.housingAllowance = housingAllowance; }
+    public double getTotalGross() { return totalGross; }
+    public void setTotalGross(double totalGross) { this.totalGross = totalGross; }
+    public double getTotalNet() { return totalNet; }
+    public void setTotalNet(double totalNet) { this.totalNet = totalNet; }
+
+    public static SalaryDetailDTO fromDict(Map<String, Object> data) {
+        SalaryDetailDTO dto = new SalaryDetailDTO();
+        dto.setEmployeeId((String) data.get("employee_id"));
+        dto.setPeriod(CsvService.parseValue("Date", (String) data.get("period")));
+        dto.setBaseSalary(CsvService.parseValue("Currency", (String) data.get("base_salary")));
+        dto.setPerformanceBonus(CsvService.parseValue("Currency", (String) data.get("performance_bonus")));
+        dto.setOvertimePay(CsvService.parseValue("Currency", (String) data.get("overtime_pay")));
+        dto.setTransportAllowance(CsvService.parseValue("Currency", (String) data.get("transport_allowance")));
+        dto.setMealAllowance(CsvService.parseValue("Currency", (String) data.get("meal_allowance")));
+        dto.setHousingAllowance(CsvService.parseValue("Currency", (String) data.get("housing_allowance")));
+        dto.setTotalGross(CsvService.parseValue("Currency", (String) data.get("total_gross")));
+        dto.setTotalNet(CsvService.parseValue("Currency", (String) data.get("total_net")));
+        return dto;
+    }
+}
+
+
+package mg.itu.model;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SummaryDTO {
+    private String employeeId;
+    private String employeeName;
+    private String department;
+    private double baseSalary;
+    private double bonuses;
+    private double overtimePay;
+    private double totalGross;
+    private double netPay;
+
+    // Getters and Setters
+    public String getEmployeeId() { return employeeId; }
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public String getEmployeeName() { return employeeName; }
+    public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+    public double getBaseSalary() { return baseSalary; }
+    public void setBaseSalary(double baseSalary) { this.baseSalary = baseSalary; }
+    public double getBonuses() { return bonuses; }
+    public void setBonuses(double bonuses) { this.bonuses = bonuses; }
+    public double getOvertimePay() { return overtimePay; }
+    public void setOvertimePay(double overtimePay) { this.overtimePay = overtimePay; }
+    public double getTotalGross() { return totalGross; }
+    public void setTotalGross(double totalGross) { this.totalGross = totalGross; }
+    public double getNetPay() { return netPay; }
+    public void setNetPay(double netPay) { this.netPay = netPay; }
+
+    public static SummaryDTO fromDict(Map<String, Object> data) {
+        SummaryDTO dto = new SummaryDTO();
+        dto.setEmployeeId((String) data.get("employee_id"));
+        dto.setEmployeeName((String) data.get("employee_name"));
+        dto.setDepartment((String) data.get("department"));
+        dto.setBaseSalary(CsvService.parseValue("Currency", (String) data.get("base_salary")));
+        dto.setBonuses(CsvService.parseValue("Currency", (String) data.get("bonuses")));
+        dto.setOvertimePay(CsvService.parseValue("Currency", (String) data.get("overtime_pay")));
+        dto.setTotalGross(CsvService.parseValue("Currency", (String) data.get("total_gross")));
+        dto.setNetPay(CsvService.parseValue("Currency", (String) data.get("net_pay")));
+        return dto;
+    }
+}
+
+
+package mg.itu.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.EmployeeDTO;
+import mg.itu.model.PayrollSlipDTO;
+import mg.itu.model.SalaryDetailDTO;
+import mg.itu.model.SummaryDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class HrmsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsService.class);
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Value("${api.method}")
+    private String baseApiUrl;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public ApiResponse<EmployeeDTO> getEmployeeList(String search, String department, String designation,
+                                                   String status, String startDate, String endDate, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        StringBuilder filters = new StringBuilder("[");
+        List<String> conditions = new ArrayList<>();
+        if (search != null && !search.isEmpty()) {
+            conditions.add("[\"full_name\",\"like\",\"%" + search + "%\"]");
+        }
+        if (department != null && !department.equals("Tous")) {
+            conditions.add("[\"department\",\"=\",\"" + department + "\"]");
+        }
+        if (designation != null && !designation.equals("Tous")) {
+            conditions.add("[\"designation\",\"=\",\"" + designation + "\"]");
+        }
+        if (status != null && !status.equals("Tous")) {
+            conditions.add("[\"status\",\"=\",\"" + status + "\"]");
+        }
+        if (startDate != null && !startDate.isEmpty()) {
+            conditions.add("[\"date_of_joining\",\">=\",\"" + startDate + "\"]");
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            conditions.add("[\"date_of_joining\",\"<=\",\"" + endDate + "\"]");
+        }
+        filters.append(String.join(",", conditions)).append("]");
+
+        String url = baseApiUrl + "/api/resource/Employee?filters=" + filters.toString();
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<EmployeeDTO> employees = data.stream().map(EmployeeDTO::fromDict).collect(Collectors.toList());
+                ApiResponse<EmployeeDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Employees fetched successfully");
+                apiResponse.setData(employees);
+                return apiResponse;
+            }
+
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch employees");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching employees", e);
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching employees: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<EmployeeDTO> getEmployeeDetails(String id, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "/api/resource/Employee/" + id;
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                Map<String, Object> data = (Map<String, Object>) responseMap.get("data");
+                EmployeeDTO employee = EmployeeDTO.fromDict(data);
+                ApiResponse<EmployeeDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Employee details fetched successfully");
+                apiResponse.setData(List.of(employee));
+                return apiResponse;
+            }
+
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch employee details");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching employee details", e);
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching employee details: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<SalaryDetailDTO> getSalaryHistory(String id, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "/api/resource/Salary Slip?filters=[[\"employee\",\"=\",\"" + id + "\"]]";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SalaryDetailDTO> salaries = data.stream().map(SalaryDetailDTO::fromDict).collect(Collectors.toList());
+                ApiResponse<SalaryDetailDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Salary history fetched successfully");
+                apiResponse.setData(salaries);
+                return apiResponse;
+            }
+
+            ApiResponse<SalaryDetailDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch salary history");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching salary history", e);
+            ApiResponse<SalaryDetailDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching salary history: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<PayrollSlipDTO> generatePayrollSlip(String id, String month, String year, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "/api/resource/Salary Slip?filters=[[\"employee\",\"=\",\"" + id + "\"],[\"start_date\",\"like\",\"" + year + "-" + month + "%\"]]";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                if (!data.isEmpty()) {
+                    PayrollSlipDTO slip = PayrollSlipDTO.fromDict(data.get(0));
+                    ApiResponse<PayrollSlipDTO> apiResponse = new ApiResponse<>();
+                    apiResponse.setStatus("success");
+                    apiResponse.setMessage("Payroll slip generated successfully");
+                    apiResponse.setData(List.of(slip));
+                    return apiResponse;
+                }
+            }
+
+            ApiResponse<PayrollSlipDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("No payroll slip found for the selected period");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error generating payroll slip", e);
+            ApiResponse<PayrollSlipDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error generating payroll slip: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<String> exportPayrollSlip(String id, String month, String year, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+    
+        try {
+            // Fetch payroll slip data
+            ApiResponse<PayrollSlipDTO> slipResponse = generatePayrollSlip(id, month, year, session);
+            if (!"success".equals(slipResponse.getStatus()) || slipResponse.getData().isEmpty()) {
+                ApiResponse<String> errorResponse = new ApiResponse<>();
+                errorResponse.setStatus("error");
+                errorResponse.setMessage("No payroll slip found for the selected period");
+                return errorResponse;
+            }
+            PayrollSlipDTO slip = slipResponse.getData().get(0);
+    
+            // Generate PDF
+            String pdfPath = generatePdf(slip, month, year);
+            ApiResponse<String> apiResponse = new ApiResponse<>();
+            apiResponse.setStatus("success");
+            apiResponse.setMessage("Payroll slip exported successfully");
+            apiResponse.setData(List.of(pdfPath));
+            return apiResponse;
+        } catch (Exception e) {
+            logger.error("Error exporting payroll slip", e);
+            ApiResponse<String> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error exporting payroll slip: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+    
+    private String generatePdf(PayrollSlipDTO slip, String month, String year) throws Exception {
+        String pdfPath = "Bulletin_Paie_" + slip.getEmployeeId() + "_" + year + "-" + month + ".pdf";
+        PdfWriter writer = new PdfWriter(pdfPath);
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf, PageSize.A4);
+        document.setMargins(56.7f, 56.7f, 56.7f, 56.7f); // 2cm margins
+    
+        // Add watermark (logo)
+        PdfFont font = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+        Image logo = new Image(ImageDataFactory.create("path/to/logo.png")).setOpacity(0.3f);
+        logo.setFixedPosition(200, 400);
+        document.add(logo);
+    
+        // Metadata
+        PdfDocumentInfo info = pdf.getDocumentInfo();
+        info.setTitle("Bulletin_Paie_" + slip.getEmployeeId() + "_" + year + "-" + month);
+        info.setCreator("ERPNext HRMS v14");
+        info.setSubject("Fiche de paie - " + slip.getEmployeeName());
+        info.setKeywords("Payroll, Salary, " + slip.getDepartment());
+    
+        // Header
+        document.add(new Paragraph("ENTREPRISE ABC SARL")
+                .setFont(font).setFontSize(12).setFontColor(new DeviceRgb(46, 134, 171)));
+        document.add(new Paragraph("Adresse: Rue de l'Indépendance, Antananarivo")
+                .setFont(font).setFontSize(10));
+        document.add(new Paragraph("SIRET: 12345678901234 | Code APE: 6201Z")
+                .setFont(font).setFontSize(10));
+        document.add(new Paragraph("Tél: +261 20 22 123 45")
+                .setFont(font).setFontSize(10));
+        document.add(new Paragraph("Bulletin de Paie - " + new SimpleDateFormat("MMMM yyyy").format(slip.getPeriodStart()))
+                .setFont(font).setFontSize(14).setFontColor(new DeviceRgb(46, 134, 171))
+                .setTextAlignment(TextAlignment.CENTER));
+    
+        // Employee Info
+        Table empTable = new Table(UnitValue.createPercentArray(new float[]{30, 70})).useAllAvailableWidth();
+        empTable.setBorder(new SolidBorder(new DeviceRgb(68, 68, 68), 1));
+        empTable.addCell(new Cell().add(new Paragraph("SALARIÉ").setFont(font).setFontSize(10).setBold()));
+        empTable.addCell(new Cell().add(new Paragraph("")));
+        empTable.addCell(new Cell().add(new Paragraph("Nom:").setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph(slip.getEmployeeName()).setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph("Matricule:").setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph(slip.getEmployeeId()).setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph("Poste:").setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph(slip.getDesignation()).setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph("Département:").setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph(slip.getDepartment()).setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph("Ancienneté:").setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph(calculateAnciennete(slip.getDateOfJoining()) + " ans").setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph("Classification:").setFont(font).setFontSize(10)));
+        empTable.addCell(new Cell().add(new Paragraph("Cadre - Coefficient 350").setFont(font).setFontSize(10)));
+        document.add(empTable);
+    
+        // Period and Working Time
+        document.add(new Paragraph("PÉRIODE: Du " + new SimpleDateFormat("dd/MM/yyyy").format(slip.getPeriodStart()) +
+                " au " + new SimpleDateFormat("dd/MM/yyyy").format(slip.getPeriodEnd()) + " (31 jours)")
+                .setFont(font).setFontSize(10));
+        document.add(new Paragraph("TEMPS DE TRAVAIL: " + slip.getWorkingDays() + " jours ouvrés - 176 heures")
+                .setFont(font).setFontSize(10));
+    
+        // Earnings Table
+        document.add(new Paragraph("ÉLÉMENTS DE RÉMUNÉRATION").setFont(font).setFontSize(12).setBold());
+        Table earningsTable = new Table(UnitValue.createPercentArray(new float[]{40, 15, 15, 15, 15})).useAllAvailableWidth();
+        earningsTable.setBorder(new SolidBorder(new DeviceRgb(68, 68, 68), 1));
+        earningsTable.addHeaderCell(new Cell().add(new Paragraph("LIBELLÉ").setFont(font).setFontSize(10).setBold()));
+        earningsTable.addHeaderCell(new Cell().add(new Paragraph("BASE").setFont(font).setFontSize(10).setBold()));
+        earningsTable.addHeaderCell(new Cell().add(new Paragraph("TAUX").setFont(font).setFontSize(10).setBold()));
+        earningsTable.addHeaderCell(new Cell().add(new Paragraph("NOMBRE").setFont(font).setFontSize(10).setBold()));
+        earningsTable.addHeaderCell(new Cell().add(new Paragraph("MONTANT (Ar)").setFont(font).setFontSize(10).setBold()));
+        earningsTable.addCell(new Cell().add(new Paragraph("Salaire de Base").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getBaseSalary())).setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("Prime de Performance").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getPerformanceBonus())).setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("Heures Supplémentaires").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("14,205 Ar").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("125%").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("10.56").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getOvertimePay())).setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("Prime Transport").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getTransportAllowance())).setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("Prime Repas").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("22.00").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getMealAllowance())).setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("Indemnité Logement").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("")));
+        earningsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getHousingAllowance())).setFont(font).setFontSize(10)));
+        earningsTable.addCell(new Cell().add(new Paragraph("TOTAL BRUT").setFont(font).setFontSize(10).setBold())).setBackgroundColor(new DeviceRgb(245, 245, 245));
+        earningsTable.addCell(new Cell().add(new Paragraph("")).setBackgroundColor(new DeviceRgb(245, 245, 245)));
+        earningsTable.addCell(new Cell().add(new Paragraph("")).setBackgroundColor(new DeviceRgb(245, 245, 245)));
+        earningsTable.addCell(new Cell().add(new Paragraph("")).setBackgroundColor(new DeviceRgb(245, 245, 245)));
+        earningsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getTotalGross())).setFont(font).setFontSize(10).setBold())).setBackgroundColor(new DeviceRgb(245, 245, 245));
+        document.add(earningsTable);
+    
+        // Deductions Table
+        document.add(new Paragraph("DÉDUCTIONS").setFont(font).setFontSize(12).setBold());
+        Table deductionsTable = new Table(UnitValue.createPercentArray(new float[]{40, 15, 15, 15, 15})).useAllAvailableWidth();
+        deductionsTable.setBorder(new SolidBorder(new DeviceRgb(68, 68, 68), 1));
+        deductionsTable.addHeaderCell(new Cell().add(new Paragraph("LIBELLÉ").setFont(font).setFontSize(10).setBold()));
+        deductionsTable.addHeaderCell(new Cell().add(new Paragraph("BASE").setFont(font).setFontSize(10).setBold()));
+        deductionsTable.addHeaderCell(new Cell().add(new Paragraph("TAUX").setFont(font).setFontSize(10).setBold()));
+        deductionsTable.addHeaderCell(new Cell().add(new Paragraph("NOMBRE").setFont(font).setFontSize(10).setBold()));
+        deductionsTable.addHeaderCell(new Cell().add(new Paragraph("MONTANT (Ar)").setFont(font).setFontSize(10).setBold()));
+        deductionsTable.addCell(new Cell().add(new Paragraph("Cotisations CNaPS (1%)").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getTotalGross())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("1.00%").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getCnapsDeduction())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("Cotisations OSIE (1%)").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getTotalGross())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("1.00%").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getOsieDeduction())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("SMIE (2%)").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getTotalGross())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("2.00%").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getSmieDeduction())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("IRSA (Impôt sur Salaire)").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getTotalGross())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("15.00%").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getIrsaDeduction())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("Avance sur Salaire").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("")));
+        deductionsTable.addCell(new Cell().add(new Paragraph("")));
+        deductionsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getSalaryAdvance())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("Prêt Personnel (Remb.)").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("")));
+        deductionsTable.addCell(new Cell().add(new Paragraph("")));
+        deductionsTable.addCell(new Cell().add(new Paragraph("1.00").setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getLoanRepayment())).setFont(font).setFontSize(10)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("TOTAL DÉDUCTIONS").setFont(font).setFontSize(10).setBold())).setBackgroundColor(new DeviceRgb(245, 245, 245));
+        deductionsTable.addCell(new Cell().add(new Paragraph("")).setBackgroundColor(new DeviceRgb(245, 245, 245)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("")).setBackgroundColor(new DeviceRgb(245, 245, 245)));
+        deductionsTable.addCell(new Cell().add(new Paragraph("")).setBackgroundColor(new DeviceRgb(245, 245, 245)));
+        deductionsTable.addCell(new Cell().add(new Paragraph(String.format("%,.0f", slip.getTotalDeductions())).setFont(font).setFontSize(10).setBold())).setBackgroundColor(new DeviceRgb(245, 245, 245));
+        document.add(deductionsTable);
+    
+        // Net Pay
+        document.add(new Paragraph("NET À PAYER: " + String.format("%,.0f Ar", slip.getNetPay()))
+                .setFont(font).setFontSize(12).setBold());
+    
+        // Footer with signature placeholder
+        document.add(new Paragraph("Signature Employeur: ____________________  Signature Employé: ____________________")
+                .setFont(font).setFontSize(10).setTextAlignment(TextAlignment.CENTER));
+    
+        document.close();
+        return pdfPath;
+    }
+    
+    private String calculateAnciennete(Date dateOfJoining) {
+        LocalDate start = dateOfJoining.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate now = LocalDate.now();
+        Period period = Period.between(start, now);
+        return String.format("%d", period.getYears());
+    }
+
+    public ApiResponse<SummaryDTO> getMonthlySummary(String month, String year, String department, String status,
+                                                    String contractType, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        StringBuilder filters = new StringBuilder("[");
+        List<String> conditions = new ArrayList<>();
+        conditions.add("[\"start_date\",\"like\",\"" + year + "-" + month + "%\"]");
+        if (department != null && !department.equals("Tous")) {
+            conditions.add("[\"department\",\"=\",\"" + department + "\"]");
+        }
+        if (status != null && !status.equals("Tous")) {
+            conditions.add("[\"status\",\"=\",\"" + status + "\"]");
+        }
+        if (contractType != null && !contractType.equals("Tous")) {
+            conditions.add("[\"contract_type\",\"=\",\"" + contractType + "\"]");
+        }
+        filters.append(String.join(",", conditions)).append("]");
+
+        String url = baseApiUrl + "/api/resource/Salary Slip?filters=" + filters.toString();
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SummaryDTO> summary = data.stream().map(SummaryDTO::fromDict).collect(Collectors.toList());
+                ApiResponse<SummaryDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Monthly summary fetched successfully");
+                apiResponse.setData(summary);
+                return apiResponse;
+            }
+
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch monthly summary");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching monthly summary: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+}
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche Employé - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-box {
+            border: 1px solid #444444;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #444444;
+        }
+        th {
+            background-color: #F5F5F5;
+            font-weight: 600;
+        }
+        .status-green::before { content: "🟢"; }
+        .back-link a {
+            color: #2E86AB;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1 th:text="'👤 Fiche Employé - ' + ${employee.employeeId}"></h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="info-box">
+                <h3>📋 Informations Personnelles</h3>
+                <p><strong>Nom Complet:</strong> <span th:text="${employee.fullName}"></span></p>
+                <p><strong>ID Employé:</strong> <span th:text="${employee.employeeId}"></span></p>
+                <p><strong>Email:</strong> <span th:text="${employee.email}"></span></p>
+                <p><strong>Téléphone:</strong> <span th:text="${employee.phone}"></span></p>
+                <p><strong>Adresse:</strong> <span th:text="${employee.address}"></span></p>
+                <p><strong>Date Naissance:</strong> <span th:text="${#dates.format(employee.dateOfBirth, 'dd/MM/yyyy')} + ' (' + ${#temporals.age(employee.dateOfBirth)} + ' ans)'"></span></p>
+                <p><strong>CIN:</strong> <span th:text="${employee.cin}"></span></p>
+            </div>
+            <div class="info-box">
+                <h3>💼 Informations Professionnelles</h3>
+                <p><strong>Département:</strong> <span th:text="${employee.department}"></span></p>
+                <p><strong>Poste:</strong> <span th:text="${employee.designation}"></span></p>
+                <p><strong>Date Embauche:</strong> <span th:text="${#dates.format(employee.dateOfJoining, 'dd/MM/yyyy')}"></span></p>
+                <p><strong>Ancienneté:</strong> <span th:text="${#temporals.age(employee.dateOfJoining)} + ' ans'"></span></p>
+                <p><strong>Contrat:</strong> <span th:text="${employee.contractType}"></span></p>
+                <p><strong>Manager:</strong> <span th:text="${employee.managerId}"></span></p>
+                <p><strong>Statut:</strong> <span th:classappend="${employee.status == 'Actif' ? 'status-green' : ''}" th:text="${employee.status}"></span></p>
+            </div>
+            <h3>💰 Historique des Salaires</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mois/Année</th>
+                        <th>Salaire Base</th>
+                        <th>Primes</th>
+                        <th>Heures Sup</th>
+                        <th>Total Brut</th>
+                        <th>Net</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="salary : ${salaryHistory}">
+                        <td th:text="${#dates.format(salary.period, 'MM/yyyy')}"></td>
+                        <td th:text="${#numbers.formatCurrency(salary.baseSalary, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(salary.performanceBonus, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(salary.overtimePay, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(salary.totalGross, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(salary.totalNet, 'Ar')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="back-link">
+                <a href="/api/hrms/employees">Retour à la liste des employés</a>
+            </div>
+        </div>
+        <div th:if="${error}" class="message error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Employés - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .search-bar, .filters {
+            margin-bottom: 1rem;
+        }
+        .search-bar input, .filters select, .filters input {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .search-bar button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        .search-bar button:hover {
+            background-color: #2563eb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #444444;
+        }
+        th {
+            background-color: #F5F5F5;
+            font-weight: 600;
+        }
+        .status-green::before { content: "🟢"; }
+        .status-yellow::before { content: "🟡"; }
+        .status-red::before { content: "🔴"; }
+        .actions a {
+            margin-right: 1rem;
+            color: #2E86AB;
+            text-decoration: none;
+        }
+        .actions a:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>👥 Liste des Employés</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="search-bar">
+                <form th:action="@{/api/hrms/employees}" method="get">
+                    <label>🔍 Recherche:</label>
+                    <input type="text" name="search" th:value="${search}"/>
+                    <button type="submit">🔎 Rechercher</button>
+                    <button type="button" onclick="window.location.href='/api/hrms/employees'">🔄 Réinitialiser</button>
+                </form>
+            </div>
+            <div class="filters">
+                <form th:action="@{/api/hrms/employees}" method="get">
+                    <label>🏷️ Filtres:</label><br/>
+                    <label>Département:</label>
+                    <select name="department">
+                        <option value="Tous">Tous</option>
+                        <option value="IT">IT</option>
+                        <option value="RH">RH</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Marketing">Marketing</option>
+                    </select>
+                    <label>Poste:</label>
+                    <select name="designation">
+                        <option value="Tous">Tous</option>
+                        <option value="Développeur">Développeur</option>
+                        <option value="RH Manager">RH Manager</option>
+                        <option value="Comptable">Comptable</option>
+                        <option value="Tech Lead">Tech Lead</option>
+                        <option value="Vendeur">Vendeur</option>
+                        <option value="Chargée Comm">Chargée Comm</option>
+                        <option value="DevOps">DevOps</option>
+                        <option value="Analyste">Analyste</option>
+                        <option value="Chef des Ventes">Chef des Ventes</option>
+                        <option value="Assistant RH">Assistant RH</option>
+                    </select>
+                    <label>Statut:</label>
+                    <select name="status">
+                        <option value="Tous">Tous</option>
+                        <option value="Actif">Actif</option>
+                        <option value="Congé">Congé</option>
+                        <option value="Inactif">Inactif</option>
+                    </select><br/>
+                    <label>Date d'embauche:</label>
+                    <input type="date" name="startDate" th:value="${startDate}"/>
+                    <input type="date" name="endDate" th:value="${endDate}"/>
+                    <button type="submit">Appliquer</button>
+                </form>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom Complet</th>
+                        <th>Département</th>
+                        <th>Poste</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="employee : ${employees}">
+                        <td th:text="${employee.employeeId}"></td>
+                        <td th:text="${employee.fullName}"></td>
+                        <td th:text="${employee.department}"></td>
+                        <td th:text="${employee.designation}"></td>
+                        <td th:classappend="${employee.status == 'Actif' ? 'status-green' : employee.status == 'Congé' ? 'status-yellow' : 'status-red'}" th:text="${employee.status}"></td>
+                        <td class="actions">
+                            <a th:href="@{/api/hrms/employee/{id}(id=${employee.employeeId})}">👁️ Voir Détails</a>
+                            <a th:href="@{/api/hrms/employee/{id}/payroll(id=${employee.employeeId})}">💰 Voir Salaires</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="footer">
+                <span th:text="'Total: ' + ${totalEmployees} + ' employés trouvés | Page 1/1'"></span><br/>
+                <span>🟢 Actif | 🟡 Congé | 🔴 Inactif</span>
+            </div>
+        </div>
+        <div th:if="${error}" class="message error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Récapitulatif Mensuel - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        select, button {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        button {
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #444444;
+        }
+        th {
+            background-color: #F5F5F5;
+            font-weight: 600;
+        }
+        .total {
+            background-color: #F5F5F5;
+            font-weight: bold;
+        }
+        .message.error-message {
+            background-color: #fef2f2;
+            border: 1px solid #f43f5e;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>📊 Tableau Récapitulatif Mensuel</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="filters">
+                <form th:action="@{/api/hrms/summary}" method="get">
+                    <label>📅 Période:</label>
+                    <select name="month">
+                        <option value="01">Janvier</option>
+                        <option value="02">Février</option>
+                        <option value="03">Mars</option>
+                        <option value="04">Avril</option>
+                        <option value="05">Mai</option>
+                        <option value="06">Juin</option>
+                        <option value="07">Juillet</option>
+                        <option value="08">Août</option>
+                        <option value="09">Septembre</option>
+                        <option value="10">Octobre</option>
+                        <option value="11">Novembre</option>
+                        <option value="12">Décembre</option>
+                    </select>
+                    <select name="year">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                    </select>
+                    <button type="submit">🔄 Actualiser</button>
+                    <button type="button">📊 Analyser</button>
+                    <label>🏷️ Filtres:</label>
+                    <select name="department">
+                        <option value="Tous">Tous</option>
+                        <option value="IT">IT</option>
+                        <option value="RH">RH</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Marketing">Marketing</option>
+                    </select>
+                    <select name="status">
+                        <option value="Tous">Tous</option>
+                        <option value="Actif">Actif</option>
+                        <option value="Congé">Congé</option>
+                        <option value="Inactif">Inactif</option>
+                    </select>
+                    <select name="contractType">
+                        <option value="Tous">Tous</option>
+                        <option value="CDI">CDI</option>
+                        <option value="CDD">CDD</option>
+                    </select>
+                </form>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom Employé</th>
+                        <th>Dept.</th>
+                        <th>Sal. Base</th>
+                        <th>Primes</th>
+                        <th>H. Sup</th>
+                        <th>Total Brut</th>
+                        <th>Net Payé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${summary}">
+                        <td th:text="${item.employeeId}"></td>
+                        <td th:text="${item.employeeName}"></td>
+                        <td th:text="${item.department}"></td>
+                        <td th:text="${#numbers.formatCurrency(item.baseSalary, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(item.bonuses, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(item.overtimePay, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(item.totalGross, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(item.netPay, 'Ar')}"></td>
+                    </tr>
+                    <tr class="total">
+                        <td colspan="3">TOTAUX (<span th:text="${totalEmployees}"></span> employés actifs)</td>
+                        <td th:text="${#numbers.formatCurrency(totalBase, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalBonuses, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalOvertime, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalGross, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalNet, 'Ar')}"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">MOYENNE</td>
+                        <td th:text="${#numbers.formatCurrency(totalBase / totalEmployees, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalBonuses / totalEmployees, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalOvertime / totalEmployees, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(averageGross, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalNet / totalEmployees, 'Ar')}"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">MÉDIANE</td>
+                        <td th:text="${#numbers.formatCurrency(totalBase / totalEmployees, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalBonuses / totalEmployees, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalOvertime / totalEmployees, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(medianGross, 'Ar')}"></td>
+                        <td th:text="${#numbers.formatCurrency(totalNet / totalEmployees, 'Ar')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div th:if="${error}" class="message error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exportation Fiche de Paie - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .success {
+            background-color: #ecfdf5;
+            border: 1px solid #10b981;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .error-message {
+            background-color: #fef2f2;
+            border: 1px solid #f43f5e;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        a {
+            color: #2E86AB;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>📄 Exportation Fiche de Paie</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div th:if="${pdfPath}" class="success">
+                <p>Fiche de paie exportée avec succès !</p>
+                <a th:href="@{${pdfPath}}" download>Télécharger le PDF</a>
+            </div>
+            <div th:if="${error}" class="error-message" th:text="${error}"></div>
+            <p><a href="/api/hrms/employees">Retour à la liste des employés</a></p>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Génération Fiche de Paie - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        select, button {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        button {
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>📄 Génération Fiche de Paie</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <form th:action="@{/api/hrms/employee/{id}/payroll/generate(id=${employee.employeeId})}" method="post">
+                <p><strong>👤 Employé:</strong> <span th:text="${employee.fullName} + ' (' + ${employee.employeeId} + ')'"></span></p>
+                <label>📅 Période:</label>
+                <select name="month">
+                    <option value="01">Janvier</option>
+                    <option value="02">Février</option>
+                    <option value="03">Mars</option>
+                    <option value="04">Avril</option>
+                    <option value="05">Mai</option>
+                    <option value="06">Juin</option>
+                    <option value="07">Juillet</option>
+                    <option value="08">Août</option>
+                    <option value="09">Septembre</option>
+                    <option value="10">Octobre</option>
+                    <option value="11">Novembre</option>
+                    <option value="12">Décembre</option>
+                </select>
+                <select name="year">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                </select>
+                <button type="submit">🔄 Générer</button>
+            </form>
+        </div>
+        <div th:if="${error}" class="message error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+
+
+sur le fiche de paie , il doit juste avoir un boutton voir salaire puis il affichera ceci 
+
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Génération Fiche de Paie - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        select, button {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        button {
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>📄 Génération Fiche de Paie</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <form th:action="@{/api/hrms/employee/{id}/payroll/generate(id=${employee.employeeId})}" method="post">
+                <p><strong>👤 Employé:</strong> <span th:text="${employee.fullName} + ' (' + ${employee.employeeId} + ')'"></span></p>
+                <label>📅 Période:</label>
+                <select name="month">
+                    <option value="01">Janvier</option>
+                    <option value="02">Février</option>
+                    <option value="03">Mars</option>
+                    <option value="04">Avril</option>
+                    <option value="05">Mai</option>
+                    <option value="06">Juin</option>
+                    <option value="07">Juillet</option>
+                    <option value="08">Août</option>
+                    <option value="09">Septembre</option>
+                    <option value="10">Octobre</option>
+                    <option value="11">Novembre</option>
+                    <option value="12">Décembre</option>
+                </select>
+                <select name="year">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                </select>
+                <button type="submit">🔄 Générer</button>
+            </form>
+        </div>
+        <div th:if="${error}" class="message error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+
+mais pour le boutton generer il doit affiche le fiche de paie de l employe pour le mois annee selectionner donc par defaut il n affiche rien sur cette page mais c est apres le submit du boutton qu il affiche le fiche de paie de l employe selectionner ,  et lors que le fiche de paie s affiche un boutton exporter apparaise sur cette page  , et n utilise pas fromDict dans le dto il y a pas de csv service sur spring , donner moi juste le corriger des codes , donner moi seleement les fichier modifier pour eviter le gaspillage de requette  , et vous pouvez des api personnaliser sur hrms si besoin merci 

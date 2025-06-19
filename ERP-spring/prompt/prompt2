@@ -1,0 +1,343 @@
+maintenant au tour du purchase order j ai un api  qui liste les purchase order  avec un view , service , controller et model spring qui l affiche , mais la je veux rajouter 2 boutton a chaque ligne de purchase order , un boutton payer et un boutton recu 
+
+cree moi le api qui relise ces 2 actions et analyse le doc pour savoir quelle sont les colonnees et les doctype a modifier ou ligne a inserer pour chque action , et modifier les colonnes du liste a affficher si necessaire , afficher ce qui est necessaire et a besoin  etre afficher : 
+
+
+import frappe
+from frappe import _
+from erpnext.controllers.api.utils import validate_jwt
+
+@frappe.whitelist(allow_guest=False)
+@validate_jwt
+def get_purchase_order_list():
+    """
+    REST API endpoint to fetch a list of Purchase Orders with specific columns.
+    Returns: List of Purchase Orders with Supplier Name, Status, Transaction Date, Grand Total, Per Billed, Per Received, ID, and supplier list in metadata.
+    Example usage:
+    http://erpnext.localhost:8000/api/method/erpnext.controllers.api.page.purchase_order_api.get_purchase_order_list
+    Header: Authorization: Bearer <jwt_token>
+    """
+    try:
+        # Fetch Purchase Order records
+        purchase_orders = frappe.get_all(
+            "Purchase Order",
+            fields=[
+                "supplier_name",
+                "status",
+                "transaction_date",
+                "grand_total",
+                "per_billed",
+                "per_received",
+                "name"
+            ],
+            filters={},
+            order_by="transaction_date desc"
+        )
+
+        # Fetch list of supplier names
+        suppliers = frappe.get_all("Supplier", fields=["name"], order_by="name asc")
+        supplier_names = [supplier["name"] for supplier in suppliers]
+
+        frappe.local.response["status"] = "success"
+        frappe.local.response["data"] = purchase_orders
+        frappe.local.response["metadata"] = {"suppliers": supplier_names}
+
+        return
+
+    except Exception as e:
+        frappe.log_error(f"Error fetching Purchase Order list: {str(e)}", "Purchase Order API")
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = _("An error occurred while fetching the Purchase Order list.")
+        return
+    
+    package mg.itu.model;
+
+public class PurchaseOrder {
+    private String supplier_name;
+    private String status;
+    private String transaction_date;
+    private Double grand_total;
+    private Double per_billed;
+    private Double per_received;
+    private String name;
+
+    
+    public String getSupplier_name() {
+        return supplier_name;
+    }
+
+    public void setSupplier_name(String supplier_name) {
+        this.supplier_name = supplier_name;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getTransaction_date() {
+        return transaction_date;
+    }
+
+    public void setTransaction_date(String transaction_date) {
+        this.transaction_date = transaction_date;
+    }
+
+    public Double getGrand_total() {
+        return grand_total;
+    }
+
+    public void setGrand_total(Double grand_total) {
+        this.grand_total = grand_total;
+    }
+
+    public Double getPer_billed() {
+        return per_billed;
+    }
+
+    public void setPer_billed(Double per_billed) {
+        this.per_billed = per_billed;
+    }
+
+    public Double getPer_received() {
+        return per_received;
+    }
+
+    public void setPer_received(Double per_received) {
+        this.per_received = per_received;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+package mg.itu.model;
+
+public class SimpleApiResponse {
+    private String status;
+    private String message; 
+
+    
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
+
+package mg.itu.controller;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.SupplierMetadataResponse;
+import mg.itu.model.PurchaseOrder;
+import mg.itu.service.PurchaseOrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping("/api/purchase-orders")
+public class PurchaseOrderController {
+
+    @Autowired
+    private PurchaseOrderService purchaseOrderService;
+
+    @GetMapping("/")
+    public String getPurchaseOrders(Model model, HttpSession session) {
+        try {
+            SupplierMetadataResponse<PurchaseOrder> response = purchaseOrderService.getPurchaseOrderList(session);
+            if (response != null && "success".equals(response.getStatus())) {
+                model.addAttribute("purchaseOrders", response.getData());
+                model.addAttribute("suppliers", response.getMetadata() != null ? response.getMetadata().getSuppliers() : null);
+            } else {
+                model.addAttribute("error", "Failed to fetch Purchase Orders");
+            }
+        } catch (IllegalStateException e) {
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "An error occurred while fetching Purchase Orders");
+        }
+        return "views/purchase-orders/purchase-orders";
+    }
+}
+
+
+package mg.itu.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.SupplierMetadataResponse;
+import mg.itu.model.PurchaseOrder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Service
+public class PurchaseOrderService {
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Value("${api.base-url}")
+    private String baseApiUrl;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public SupplierMetadataResponse<PurchaseOrder> getPurchaseOrderList(HttpSession session) throws Exception {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "page.purchase_order_api.get_purchase_order_list";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory()
+                        .constructParametricType(SupplierMetadataResponse.class, PurchaseOrder.class));
+            }
+            SupplierMetadataResponse<PurchaseOrder> errorResponse = new SupplierMetadataResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setData(null);
+            return errorResponse;
+        } catch (Exception e) {
+            e.printStackTrace();
+            SupplierMetadataResponse<PurchaseOrder> errorResponse = new SupplierMetadataResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setData(null);
+            return errorResponse;
+        }
+    }
+}
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Orders - ERPNext</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .filter-container {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+        }
+        .filter-container label {
+            margin-right: 10px;
+            font-weight: 600;
+        }
+        .filter-container select {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+    <script>
+        function filterBySupplier() {
+            var select = document.getElementById("supplierFilter");
+            var selectedSupplier = select.value;
+            var rows = document.querySelectorAll(".projects-table tbody tr");
+            rows.forEach(function(row) {
+                var supplierCell = row.cells[0].textContent;
+                if (selectedSupplier === "" || supplierCell === selectedSupplier) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+
+    <div class="header">
+        <div>
+            <h1>Purchase Orders</h1>
+        </div>
+    </div>
+
+    <!-- Supplier Filter -->
+    <div class="filter-container" th:if="${suppliers}">
+        <label for="supplierFilter">Filter by Supplier:</label>
+        <select id="supplierFilter" onchange="filterBySupplier()">
+            <option value="">All Suppliers</option>
+            <option th:each="supplier : ${suppliers}" th:value="${supplier}" th:text="${supplier}"></option>
+        </select>
+    </div>
+
+    <!-- Liste des Purchase Orders -->
+    <div class="table-container" th:if="${purchaseOrders}">
+        <div class="table-responsive">
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Supplier Name</th>
+                        <th>Status</th>
+                        <th>Transaction Date</th>
+                        <th>Grand Total</th>
+                        <th>Per Billed (%)</th>
+                        <th>Per Received (%)</th>
+                        <th>ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${purchaseOrders}">
+                        <td th:text="${order.supplier_name}"></td>
+                        <td th:text="${order.status}"></td>
+                        <td th:text="${order.transaction_date}"></td>
+                        <td th:text="${order.grand_total}"></td>
+                        <td th:text="${order.per_billed}"></td>
+                        <td th:text="${order.per_received}"></td>
+                        <td th:text="${order.name}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(purchaseOrders)}">
+                        <td colspan="7">No Purchase Orders found</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div th:if="${error}" class="error" th:text="${error}"></div>
+
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

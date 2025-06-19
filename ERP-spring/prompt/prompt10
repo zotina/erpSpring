@@ -1,0 +1,30 @@
+https://docs.frappe.io/erpnext/user/manual/en/introduction
+
+https://docs.frappe.io/hr/introduction
+baser votre reponse a ces documentation 
+
+voici 3 fichier csv a importer : 
+
+
+Ref	Nom	Prenom	genre	"Date embauche"	"date naissance"	company
+1	Rakoto	Alain	Masculin	03/04/2024	01/01/1980	My Company
+2	Rasoa	Jeanne	Feminin	08/06/2024	01/01/1990	My Company
+						
+
+"salary structure"	name	Abbr	type	valeur	Remarque
+gasy1	Salaire Base	SB	earning	100%	
+gasy1	Indemnité	IND	earning	30%	salaire base
+gasy1	Taxe sociale	TS	deduction	20%	salaire base + indemnité
+					
+					
+Mois	"Ref Employe"	"Salaire Base"	Salaire
+01/04/2025	1	1500000	gasy1
+01/04/2025	2	900000	gasy1
+01/03/2025	1	1600000	gasy1
+01/03/2025	2	900000	gasy1
+			
+
+pouvez vous m eclairsire un peu sur type , valeur et remarque de la 2 eme csv 
+
+
+voici le fichier d insertion complet vou pouvez rajouter des arguments si ce necessaie :

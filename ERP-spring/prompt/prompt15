@@ -1,0 +1,1215 @@
+https://docs.frappe.io/erpnext/user/manual/en/introduction
+
+https://docs.frappe.io/hr/introduction
+baser votre reponse a ces documentation 
+
+je veux mettre en place ces fonctionnalites et je vais vous donner en ascci l affichage a attendre :
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                    🏢 SYSTÈME DE GESTION RH                          ║
+║                         ERPNext/Frappe HR                            ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║  [1] 👥 Liste des Employés avec Recherche                           ║
+║  [2] 👤 Fiche Employé & Historique Salaires                        ║
+║           [2-a]- 📄 Fiche de Paie Mensuelle + Export PDF                       ║
+║  [4] 📊 Tableau Récapitulatif Mensuel                               ║
+║  [0] 🚪 Quitter                                                      ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+ne cree pas le - Menu principal  j ai deja un side bar pour la navigation 
+
+## 1️⃣ LISTE DES EMPLOYÉS AVEC FILTRE DE RECHERCHE
+
+```
+╔═══════════════════════════════════════════════════════════════════════╗
+║                        👥 LISTE DES EMPLOYÉS                         ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║ 🔍 Recherche: [________________] [🔎 Rechercher] [🔄 Réinitialiser]   ║
+║                                                                       ║
+║ 🏷️  Filtres:                                                         ║
+║ Département: [Tous ▼] | Poste: [Tous ▼] | Statut: [Actif ▼]        ║
+║ Date d'embauche: [Du: __/__/__] [Au: __/__/__]                      ║
+║                                                                       ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ ID    │ Nom Complet        │ Département  │ Poste           │ Statut ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ EMP001│ RAKOTO Jean        │ IT           │ Développeur     │ 🟢     ║
+║ EMP002│ RANDRIA Marie      │ RH           │ RH Manager      │ 🟢     ║
+║ EMP003│ RABE Paul          │ Finance      │ Comptable       │ 🟢     ║
+║ EMP004│ ANDRY Sophie       │ IT           │ Tech Lead       │ 🟢     ║
+║ EMP005│ RAZAFY Michel      │ Commercial   │ Vendeur         │ 🟡     ║
+║ EMP006│ RAHEFA Anna        │ Marketing    │ Chargée Comm    │ 🟢     ║
+║ EMP007│ RAVELO David       │ IT           │ DevOps          │ 🟢     ║
+║ EMP008│ RASOA Christine    │ Finance      │ Analyste        │ 🟢     ║
+║ EMP009│ RABARY Thomas      │ Commercial   │ Chef des Ventes │ 🟢     ║
+║ EMP010│ RANDRIAMANANA Luc  │ RH           │ Assistant RH    │ 🔴     ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ Total: 10 employés trouvés | Page 1/1                                ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+🟢 Actif | 🟡 Congé | 🔴 Inactif
+
+Actions disponibles:
+[👁️  Voir Détails] : pour le fiche d employe  [💰 Voir Salaires]
+ pour afficher le formulaire de generation de fiche de paie 
+
+si on clique sur  [👁️  Voir Détails] , voici le suite de l affichage 
+
+## 2️⃣ FICHE EMPLOYÉ AVEC HISTORIQUE DES SALAIRES
+
+```
+╔═══════════════════════════════════════════════════════════════════════╗
+║                    👤 FICHE EMPLOYÉ - EMP001                         ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║ 📋 INFORMATIONS PERSONNELLES                                         ║
+║ ┌─────────────────────────────────────────────────────────────────┐   ║
+║ │ Nom Complet    : RAKOTO Jean Baptiste                          │   ║
+║ │ ID Employé     : EMP001                                         │   ║
+║ │ Email          : j.rakoto@entreprise.mg                         │   ║
+║ │ Téléphone      : +261 34 12 345 67                             │   ║
+║ │ Adresse        : Lot 123 Ambohipo, Antananarivo                │   ║
+║ │ Date Naissance : 15/03/1985 (39 ans)                           │   ║
+║ │ CIN            : 101234567890                                   │   ║
+║ └─────────────────────────────────────────────────────────────────┘   ║
+║                                                                       ║
+║ 💼 INFORMATIONS PROFESSIONNELLES                                     ║
+║ ┌─────────────────────────────────────────────────────────────────┐   ║
+║ │ Département    : Technologies de l'Information (IT)             │   ║
+║ │ Poste          : Développeur Senior                             │   ║
+║ │ Date Embauche  : 01/06/2020                                     │   ║
+║ │ Ancienneté     : 4 ans, 11 mois                                 │   ║
+║ │ Contrat        : CDI - Temps Plein                              │   ║
+║ │ Manager        : ANDRY Sophie (EMP004)                          │   ║
+║ │ Statut         : 🟢 Actif                                       │   ║
+║ └─────────────────────────────────────────────────────────────────┘   ║
+║                                                                       ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                   💰 HISTORIQUE DES SALAIRES                         ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ Mois/Année │ Salaire Base │ Primes │ Heures Sup │ Total Brut │ Net   ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ 05/2025    │ 2,500,000 Ar│ 200,000│    150,000 │ 2,850,000  │2,280,000║
+║ 04/2025    │ 2,500,000 Ar│ 150,000│     75,000 │ 2,725,000  │2,180,000║
+║ 03/2025    │ 2,500,000 Ar│ 300,000│    100,000 │ 2,900,000  │2,320,000║
+║ 02/2025    │ 2,500,000 Ar│ 100,000│     50,000 │ 2,650,000  │2,120,000║
+║ 01/2025    │ 2,500,000 Ar│ 250,000│    125,000 │ 2,875,000  │2,300,000║
+║ 12/2024    │ 2,300,000 Ar│ 500,000│    200,000 │ 3,000,000  │2,400,000║
+║ 11/2024    │ 2,300,000 Ar│ 150,000│     80,000 │ 2,530,000  │2,024,000║
+║ 10/2024    │ 2,300,000 Ar│ 100,000│     60,000 │ 2,460,000  │1,968,000║
+║ 09/2024    │ 2,300,000 Ar│ 200,000│    100,000 │ 2,600,000  │2,080,000║
+║ 08/2024    │ 2,300,000 Ar│ 180,000│     90,000 │ 2,570,000  │2,056,000║
+╠═══════════════════════════════════════════════════════════════════════╣
+retour au liste d employe 
+---
+
+si on clique sur voir salaire 
+## 3️⃣ FICHE DE PAIE MENSUELLE + EXPORT PDF
+
+### Interface de Génération
+```
+╔═══════════════════════════════════════════════════════════════════════╗
+║                   📄 GÉNÉRATION FICHE DE PAIE                        ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║ 👤 Employé: RAKOTO Jean Baptiste (EMP001)                            ║
+║ 📅 Période: [Mai ▼] [2025 ▼]     [🔄 Générer]                       ║
+║                                                                       ║
+║    lors qu il selectionne un moi et  cliquer generer   il affichera le fiche de paie de cette mois de l employe selection puis un boutton exporter s affiche pour faire l export                                                              
+║                                                                       ║
+║                                                                       ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+```
+
+### Aperçu de la Fiche de Paie generer 
+```
+╔═══════════════════════════════════════════════════════════════════════╗
+║                        📄 BULLETIN DE PAIE                           ║
+║                           Mai 2025                                   ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║ 🏢 ENTREPRISE ABC SARL                                               ║
+║ Adresse: Rue de l'Indépendance, Antananarivo                         ║
+║ SIRET: 12345678901234 | Code APE: 6201Z                              ║
+║ Tél: +261 20 22 123 45                                               ║
+║                                                                       ║
+║ ┌─────────────────────────────────────────────────────────────────┐   ║
+║ │ 👤 SALARIÉ                                                      │   ║
+║ │ Nom: RAKOTO Jean Baptiste                                       │   ║
+║ │ Matricule: EMP001                                               │   ║
+║ │ Poste: Développeur Senior                                       │   ║
+║ │ Département: IT                                                 │   ║
+║ │ Ancienneté: 4 ans, 11 mois                                     │   ║
+║ │ Classification: Cadre - Coefficient 350                        │   ║
+║ └─────────────────────────────────────────────────────────────────┘   ║
+║                                                                       ║
+║ 📅 PÉRIODE: Du 01/05/2025 au 31/05/2025 (31 jours)                  ║
+║ ⏰ TEMPS DE TRAVAIL: 22 jours ouvrés - 176 heures                    ║
+║                                                                       ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                         💰 ÉLÉMENTS DE RÉMUNÉRATION                  ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ LIBELLÉ                    │ BASE    │ TAUX  │ NOMBRE │ MONTANT (Ar) ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ Salaire de Base            │         │       │   1.00 │  2,500,000   ║
+║ Prime de Performance       │         │       │   1.00 │    200,000   ║
+║ Heures Supplémentaires     │14,205Ar │  125% │  10.56 │    150,000   ║
+║ Prime Transport            │         │       │   1.00 │     50,000   ║
+║ Prime Repas                │         │       │  22.00 │     66,000   ║
+║ Indemnité Logement         │         │       │   1.00 │    100,000   ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ TOTAL BRUT                 │         │       │        │  3,066,000   ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                            💸 DÉDUCTIONS                             ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ Cotisations CNaPS (1%)     │3,066,000│  1.00%│   1.00 │     30,660   ║
+║ Cotisations OSIE (1%)      │3,066,000│  1.00%│   1.00 │     30,660   ║
+║ SMIE (2%)                  │3,066,000│  2.00%│   1.00 │     61,320   ║
+║ IRSA (Impôt sur Salaire)   │3,066,000│ 15.00%│   1.00 │    459,900   ║
+║ Avance sur Salaire         │         │       │   1.00 │    100,000   ║
+║ Prêt Personnel (Remb.)     │         │       │   1.00 │     50,000   ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ TOTAL DÉDUCTIONS           │         │       │        │    732,540   ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ 💰 NET À PAYER             │         │       │        │  2,333,460   ║
+╠═══════════════════════════════════════════════════════════════════════╣
+---
+
+## 4️⃣ TABLEAU RÉCAPITULATIF MENSUEL
+
+```
+╔═══════════════════════════════════════════════════════════════════════╗
+║                    📊 TABLEAU RÉCAPITULATIF MENSUEL                  ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║ 📅 Période: [Mai ▼] [2025 ▼]     [🔄 Actualiser] [📊 Analyser]      ║
+║                                                                       ║
+║ 🏷️  Filtres: Dept: [Tous ▼] | Statut: [Actif ▼] | Contrat: [Tous ▼]║
+║                                                                       ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║ID   │Nom Employé    │Dept.│Sal.Base │Primes │H.Sup│Total Brut│Net Payé║
+╠═══════════════════════════════════════════════════════════════════════╣
+║E001 │RAKOTO Jean    │ IT  │2,500,000│200,000│150k │3,066,000 │2,333,460║
+║E002 │RANDRIA Marie  │ RH  │3,000,000│300,000│ 0   │3,300,000 │2,508,000║
+║E003 │RABE Paul      │FIN  │2,200,000│150,000│100k │2,450,000 │1,863,000║
+║E004 │ANDRY Sophie   │ IT  │3,500,000│400,000│200k │4,100,000 │3,116,000║
+║E005 │RAZAFY Michel  │COM  │1,800,000│500,000│ 50k │2,350,000 │1,786,500║
+║E006 │RAHEFA Anna    │MKT  │2,100,000│180,000│ 80k │2,360,000 │1,794,000║
+║E007 │RAVELO David   │ IT  │2,800,000│250,000│120k │3,170,000 │2,409,200║
+║E008 │RASOA Christ.  │FIN  │2,400,000│200,000│ 90k │2,690,000 │2,043,600║
+║E009 │RABARY Thomas  │COM  │2,600,000│350,000│110k │3,060,000 │2,325,600║
+║E010 │RANDRIAMANANA L│ RH  │1,900,000│100,000│ 40k │2,040,000 │1,550,400║
+╠═══════════════════════════════════════════════════════════════════════╣
+║TOTAUX (10 employés actifs)                                           ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║     │TOTAL GÉNÉRAL  │     │24,800,000│2,630k│940k│28,586,000│21,729,760║
+║     │MOYENNE        │     │ 2,480,000│263,000│94k │ 2,858,600│ 2,172,976║
+║     │MÉDIANE        │     │ 2,450,000│225,000│95k │ 2,690,000│ 2,043,600║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+
+
+
+---
+
+## 📁 FORMAT D'EXPORT PDF
+
+```
+🔖 MÉTADONNÉES PDF:
+━━━━━━━━━━━━━━━━━━━
+• Titre: "Bulletin_Paie_[EMPLOYEE_ID]_[YYYY-MM].pdf"
+• Créateur: "ERPNext HRMS v14"
+• Sujet: "Fiche de paie - [Nom Employé]"
+• Mots-clés: "Payroll, Salary, [Département]"
+• Sécurité: Protection impression/copie (optionnel)
+• Signature numérique: Certificat entreprise
+• Filigrane: Logo entreprise en transparence
+
+📄 STRUCTURE PDF:
+━━━━━━━━━━━━━━━━━━
+Page 1: Bulletin principal (format A4)
+• En-tête entreprise avec logo
+• Informations employé dans cadre
+• Tableau détaillé des éléments
+• Totaux en gras avec bordures
+• Pied de page avec signatures
+
+Page 2: Annexes (si nécessaire)
+• Détail des heures supplémentaires
+• Historique des congés
+• Notes particulières
+
+🎨 STYLE GRAPHIQUE:
+━━━━━━━━━━━━━━━━━━━
+• Police: Arial/Helvetica
+• Couleurs: Bleu entreprise (#2E86AB)
+• Bordures: Gris foncé (#444444)
+• Fond totaux: Gris clair (#F5F5F5)
+• Format: A4 Portrait
+• Marges: 2cm partout
+```
+
+vous aller realiser ces fonctionnalites avec ces exacte affichage :
+
+voici le model de recuperation reponse json de l api de frappe hr (comtroller, service , model , view ) et utiliser cette model pour  comtroller, service , model , view parse json que vous aller faire 
+n utilise pas le css de l import pour ces fonctonalite , cree un utre design mais il faut juste utiliser mon side bar et footer comment sur le formulaire d import le couleur side bar et bleu nuit avec color d ecriture blanc 
+package mg.itu.controller;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.HrmsCsvImportResponse;
+import mg.itu.model.HrmsResetResponse;
+import mg.itu.service.HrmsCsvImportService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+@Controller
+@RequestMapping("/api/hrms-csv-import")
+public class HrmsCsvImportController {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsCsvImportController.class);
+
+    @Autowired
+    private HrmsCsvImportService hrmsCsvImportService;
+
+    @GetMapping("/")
+    public String getImportForm(Model model) {
+        return "views/hrms-csv-import/hrms-csv-import";
+    }
+
+    @PostMapping("/import")
+    public String importCsvFiles(
+            @RequestParam("employeesCsv") MultipartFile employeesCsv,
+            @RequestParam("salaryStructureCsv") MultipartFile salaryStructureCsv,
+            @RequestParam("payrollCsv") MultipartFile payrollCsv,
+            Model model,
+            HttpSession session) {
+        try {
+            HrmsCsvImportResponse response = hrmsCsvImportService.importCsvFiles(
+                    employeesCsv, salaryStructureCsv, payrollCsv, session);
+
+            logger.debug("Response: status={}, success={}, message={}, validation_errors={}",
+                    response.getStatus(), response.isSuccess(), response.getMessage(), response.getValidation_errors());
+            logger.info("Model attributes: error={}, validationErrors={}",
+                    model.getAttribute("error"), model.getAttribute("validationErrors"));
+
+            if ("success".equals(response.getStatus()) || response.isSuccess()) {
+                model.addAttribute("success", response.getMessageAsString());
+                model.addAttribute("insertedRecords", response.getInserted_records());
+            } else {
+                model.addAttribute("error", response.getMessageAsString());
+                model.addAttribute("validationErrors", response.getValidation_errors() != null ? response.getValidation_errors() : new java.util.ArrayList<>());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {  
+            logger.error("Error importing CSV files", e );
+            model.addAttribute("error", "An error occurred while importing CSV files: " + e.getMessage());
+            model.addAttribute("validationErrors", new java.util.ArrayList<>());
+        }
+        return "views/hrms-csv-import/hrms-csv-import";
+    }  
+    
+    @PostMapping("/reset") 
+    public String resetHrmsData(Model model, HttpSession session) {
+        try {
+            HrmsResetResponse response = hrmsCsvImportService.resetHrmsData(session);
+
+            logger.debug("Reset Response: success={}, message={}, errors={}, deleted_records={}",
+                    response.isSuccess(), response.getMessage(), response.getErrors(), response.getDeleted_records());
+
+            if (response.isSuccess()) {
+                model.addAttribute("success", response.getMessageAsString());
+                model.addAttribute("deletedRecords", response.getDeleted_records());
+            } else {
+                model.addAttribute("error", response.getMessageAsString());
+                model.addAttribute("resetErrors", response.getErrors() != null ? response.getErrors() : new java.util.ArrayList<>());
+            }
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error resetting HRMS data", e);
+            model.addAttribute("error", "An error occurred while resetting HRMS data: " + e.getMessage());
+            model.addAttribute("resetErrors", new java.util.ArrayList<>());
+        }
+        return "views/hrms-csv-import/hrms-csv-import";
+    }
+}
+
+
+package mg.itu.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.HrmsCsvImportRequest;
+import mg.itu.model.HrmsCsvImportResponse;
+import mg.itu.model.HrmsResetResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.Base64;
+
+@Service
+public class HrmsCsvImportService {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsCsvImportService.class);
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Value("${api.method}")
+    private String baseApiUrl;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public HrmsCsvImportResponse importCsvFiles(MultipartFile employeesCsv, MultipartFile salaryStructureCsv, 
+                                               MultipartFile payrollCsv, HttpSession session) throws Exception {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        
+        HrmsCsvImportRequest request = new HrmsCsvImportRequest();
+        if (employeesCsv != null && !employeesCsv.isEmpty()) {
+            request.setEmployeesCsv(Base64.getEncoder().encodeToString(employeesCsv.getBytes()));
+            System.out.println("employeesCsv encoded, size: " + employeesCsv.getSize());
+        }
+        if (salaryStructureCsv != null && !salaryStructureCsv.isEmpty()) {
+            request.setSalaryStructureCsv(Base64.getEncoder().encodeToString(salaryStructureCsv.getBytes()));
+            System.out.println("salaryStructureCsv encoded, size: "+ salaryStructureCsv.getSize());
+        }
+        if (payrollCsv != null && !payrollCsv.isEmpty()) {
+            request.setPayrollCsv(Base64.getEncoder().encodeToString(payrollCsv.getBytes()));
+            System.out.println("payrollCsv encoded, size: "+ payrollCsv.getSize());
+        }
+
+        String url = baseApiUrl + "/hrms.controllers.hrms_controller.import_csvs_from_json";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            String requestBody = objectMapper.writeValueAsString(request);
+            System.out.println("Sending request to {} with body: "+ requestBody);
+
+            ResponseEntity<String> response = client.post()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .header("Content-Type", "application/json")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                System.out.println("Received response: " + response.getBody());
+                HrmsCsvImportResponse hrmsResponse = objectMapper.readValue(response.getBody(), HrmsCsvImportResponse.class);
+                return hrmsResponse;
+            }
+
+            System.out.println("Received null or unsuccessful response:"+ response);
+            HrmsCsvImportResponse errorResponse = new HrmsCsvImportResponse();
+            errorResponse.setSuccess(false);
+            errorResponse.setMessage("Failed to import CSV files");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error importing CSV files", e);
+            HrmsCsvImportResponse errorResponse = new HrmsCsvImportResponse();
+            errorResponse.setSuccess(false);
+            errorResponse.setMessage("Error occurred: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+    public HrmsResetResponse resetHrmsData(HttpSession session) throws Exception {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "/hrms.controllers.hrms_reset_controller.reset_hrms_data";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.post()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .header("Content-Type", "application/json")
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                logger.info("Received reset response: {}", response.getBody());
+                return objectMapper.readValue(response.getBody(), HrmsResetResponse.class);
+            }
+
+            logger.warn("Received null or unsuccessful response: {}", response);
+            HrmsResetResponse errorResponse = new HrmsResetResponse();
+            errorResponse.setSuccess(false);
+            errorResponse.setMessage("Failed to reset HRMS data");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error resetting HRMS data", e);
+            HrmsResetResponse errorResponse = new HrmsResetResponse();
+            errorResponse.setSuccess(false);
+            errorResponse.setMessage("Error occurred: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+}
+
+
+package mg.itu.model;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ApiResponse<T> {
+    private String status;
+    private String message; 
+    private List<T> data;
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public List<T> getData() {
+        return data;
+    }
+
+    public void setData(List<T> data) {
+        this.data = data;
+    }
+}
+
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
+import java.util.Map;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class HrmsCsvImportResponse {
+    private boolean success;
+    private String message;
+    private List<Map<String, Object>> validation_errors;
+    private Map<String, List<Object>> inserted_records;
+    private String status;
+
+    // Handle nested message object
+    @JsonProperty("message")
+    private void unpackNestedMessage(Object nestedMessage) {
+        if (nestedMessage instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) nestedMessage;
+            this.success = (Boolean) map.getOrDefault("success", false);
+            this.message = (String) map.getOrDefault("message", "Unknown error");
+            this.validation_errors = (List<Map<String, Object>>) map.get("validation_errors");
+            this.inserted_records = (Map<String, List<Object>>) map.get("inserted_records");
+        } else if (nestedMessage instanceof String) {
+            this.message = (String) nestedMessage;
+        }
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public List<Map<String, Object>> getValidation_errors() {
+        return validation_errors;
+    }
+
+    public void setValidation_errors(List<Map<String, Object>> validation_errors) {
+        this.validation_errors = validation_errors;
+    }
+
+    public Map<String, List<Object>> getInserted_records() {
+        return inserted_records;
+    }
+
+    public void setInserted_records(Map<String, List<Object>> inserted_records) {
+        this.inserted_records = inserted_records;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessageAsString() {
+        return message != null ? message : "Unknown error";
+    }
+}
+
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS CSV Import - DaybyDay</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7fa;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-container, .reset-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-container label, .reset-container label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-container input[type="file"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            font-size: 0.9rem;
+            color: #1e293b;
+            transition: border-color 0.2s ease;
+        }
+
+        .upload-container input[type="file"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .submit-btn, .reset-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .submit-btn {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+
+        .submit-btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .reset-btn {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
+
+        .reset-btn:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .response-container {
+            margin-top: 2rem;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .success {
+            background-color: #ecfdf5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+
+        .error-message {
+            background-color: #fef2f2;
+            border: 1px solid #f43f5e;
+            color: #b91c1c;
+        }
+
+        .error-list, .reset-error-list {
+            background-color: #fff1f2;
+            border: 1px solid #f43f5e;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .error-list ul, .reset-error-list ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        .error-list li, .reset-error-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+
+        .response-container .success {
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .response-container ul {
+            margin: 0.5rem 0 0 1.5rem;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .submit-btn, .reset-btn {
+                width: 100%;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+
+    <div class="header">
+        <div class="container">
+            <h1>HRMS CSV Import</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Success/Error Messages -->
+        <div th:if="${success}" class="message success" th:text="${success}"></div>
+        <div th:if="${error}" class="message error-message">
+            <strong th:text="${error}"></strong>
+            <div th:if="${validationErrors != null and !validationErrors.isEmpty()}" class="error-list">
+                <ul>
+                    <li th:each="error : ${validationErrors}">
+                        <strong>Fichier: </strong><span th:text="${error.file}"></span><br/>
+                        <strong>Ligne: </strong><span th:text="${error.line}"></span><br/>
+                        <strong>Erreur: </strong><span th:text="${error.error_message}"></span><br/>
+                        <strong>Données: </strong><span th:text="${error.data}"></span>
+                    </li>
+                </ul>
+            </div>
+            <div th:if="${resetErrors != null and !resetErrors.isEmpty()}" class="reset-error-list">
+                <ul>
+                    <li th:each="error : ${resetErrors}">
+                        <strong>Doctype: </strong><span th:text="${error.doctype}"></span><br/>
+                        <strong>Name: </strong><span th:text="${error.name}"></span><br/>
+                        <strong>Erreur: </strong><span th:text="${error.error_message}"></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CSV Upload Form -->
+        <div class="card upload-container">
+            <form th:action="@{/api/hrms-csv-import/import}" method="post" enctype="multipart/form-data">
+                <div>
+                    <label for="employeesCsv">Employees CSV</label>
+                    <input type="file" id="employeesCsv" name="employeesCsv" accept=".csv"/>
+                </div>
+                <div>
+                    <label for="salaryStructureCsv">Salary Structure CSV</label>
+                    <input type="file" id="salaryStructureCsv" name="salaryStructureCsv" accept=".csv"/>
+                </div>
+                <div>
+                    <label for="payrollCsv">Payroll CSV</label>
+                    <input type="file" id="payrollCsv" name="payrollCsv" accept=".csv"/>
+                </div>
+                <center>
+                    <div class="button-group">
+                        <button type="submit" class="submit-btn">Import CSVs</button>
+                    </div>
+                </center>
+            </form>
+        </div>
+
+        <!-- Reset Form -->
+        <div class="card reset-container">
+            <center>
+                <form th:action="@{/api/hrms-csv-import/reset}" method="post">
+                    <div class="button-group">
+                        <button type="submit" class="reset-btn">Reset HRMS Data</button>
+                    </div>
+                </form>
+            </center>
+            
+        </div>
+
+        <!-- Response Display for Import -->
+        <div class="response-container" th:if="${insertedRecords}">
+            <h3>Inserted Records</h3>
+            <div th:each="entry : ${insertedRecords}" class="card success">
+                <strong th:text="${entry.key}"></strong>
+                <ul>
+                    <li th:each="record : ${entry.value}" th:text="${record}"></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Response Display for Reset -->
+        <div class="response-container" th:if="${deletedRecords}">
+            <h3>Deleted Records</h3>
+            <div th:each="entry : ${deletedRecords}" class="card success">
+                <strong th:text="${entry.key}"></strong>
+                <ul>
+                    <li th:each="record : ${entry.value}" th:text="${record}"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html> 
+
+
+et pour ces fonctionalite vous pouvez cree de s api rest personnaliser si necessaire sur hrms si  non si il y a deja des api existant vous pouvez les utiliser 
+voici un exmple d api que j ai cree sur sur hrms 
+mettez les api dans controller et service sans un autre fichier service : 
+
+import csv
+import frappe
+from frappe.utils import getdate, get_datetime, get_time
+from datetime import datetime
+from io import StringIO
+from hrms.dto.employee_dto import EmployeeDTO
+from hrms.dto.salary_structure_dto import SalaryStructureDTO
+from hrms.dto.payroll_dto import PayrollDTO
+
+class CsvService:
+    @staticmethod
+    def import_csv(file_content, dto_class):
+        result_list = []
+        error_list = []
+        line_number = 1  # Start from 1 for header row
+
+        print(f"Starting CSV parsing for DTO: {dto_class.__name__}")
+
+        try:
+            print(f"Decoding file content (size: {len(file_content)} bytes)")
+            reader = StringIO(file_content.decode('utf-8') if isinstance(file_content, bytes) else file_content)
+            csv_reader = csv.DictReader(reader)
+            # Trim and normalize headers
+            csv_reader.fieldnames = [field.strip().replace(" ", "_").lower() for field in csv_reader.fieldnames]
+
+            print(f"CSV headers after trimming: {csv_reader.fieldnames}")
+
+            for row in csv_reader:
+                line_number += 1
+                print(f"Processing row {line_number}: {row}")
+                row_errors = []
+                record = None
+
+                # Create DTO instance
+                try:
+                    dto = dto_class.from_dict(row)
+                    # Validate each field using validateAll
+                    for fieldname, value in vars(dto).items():
+                        if value:  # Only validate non-empty values
+                            try:
+                                dto.validateAll(fieldname, value)
+                            except Exception as e:
+                                row_errors.append(f"Field '{fieldname}' validation failed: {str(e)}")
+                                error_list.append({
+                                    "line": line_number,
+                                    "error_message": str(e),
+                                    "data": row
+                                })
+                    # If no validation errors, add DTO to result list
+                    if not row_errors:
+                        record = dto
+                except Exception as e:
+                    error_list.append({
+                        "line": line_number,
+                        "error_message": f"Failed to create DTO: {str(e)}",
+                        "data": row
+                    })
+
+                # Add to result list if no errors
+                if record and not row_errors:
+                    result_list.append(record)
+                    print(f"Added DTO to result list: {record}")
+
+            print(f"CSV parsing completed. Total records parsed: {len(result_list)}, Errors: {len(error_list)}")
+            return error_list, result_list
+
+        except Exception as e:
+            print(f"Error parsing CSV: {str(e)}")
+            error_list.append({
+                "line": 1,
+                "error_message": f"Failed to parse CSV: {str(e)}",
+                "data": {}
+            })
+            return error_list, result_list
+
+    @staticmethod
+    def parse_value(field_type, value):
+        print(f"Parsing value '{value}' for field type: {field_type}")
+        try:
+            if field_type in ['Int', 'Integer']:
+                return int(value)
+            elif field_type in ['Float', 'Currency', 'Percent']:
+                return float(value)
+            elif field_type == 'Check':
+                return 1 if value.lower() in ['true', '1', 'yes'] else 0
+            elif field_type in ['Data', 'Long Text']:
+                return value
+            elif field_type == 'Text':
+                return value
+            elif field_type == 'Date':
+                parsed_date = getdate(value)
+                print(f"Parsed date: {parsed_date}")
+                return parsed_date
+            elif field_type == 'Datetime':
+                return get_datetime(value)
+            elif field_type == 'Time':
+                return get_time(value)
+            elif field_type == 'Link':
+                return value
+            elif field_type == 'Select':
+                return value
+            elif field_type in ['Table', 'Table MultiSelect']:
+                parsed_list = [v.strip() for v in value.split(',')]
+                print(f"Parsed list: {parsed_list}")
+                return parsed_list
+            else:
+                print(f"Unsupported field type: {field_type}")
+                return value
+        except Exception as e:
+            print(f"Error parsing value '{value}' for type '{field_type}': {str(e)}")
+            return None
+
+
+
+import frappe
+from frappe import _
+import base64
+from hrms.services.csv_service import CsvService
+from hrms.services.hrms_insertion import (
+    setup_hrms_data,
+    insert_employees,
+    insert_salary_components,
+    insert_salary_structures,
+    insert_salary_assignments,
+    insert_salary_slips
+)
+from hrms.dto.employee_dto import EmployeeDTO
+from hrms.dto.salary_structure_dto import SalaryStructureDTO
+from hrms.dto.payroll_dto import PayrollDTO
+
+@frappe.whitelist(allow_guest=False)
+def import_csvs_from_json():
+    """
+    API to import three CSV files for HRMS: employees, salary structures, payroll.
+    Endpoint: /api/method/hrms.controllers.hrms_controller.import_csvs_from_json
+    Method: POST
+    Expects: JSON payload with base64-encoded CSV files.
+    """
+    # Permission checks
+    for doctype in ["Employee", "Salary Structure", "Salary Slip", "Salary Component"]:
+        if not frappe.has_permission(doctype, "create"):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _(f"You do not have permission to create {doctype} records.")
+            return
+
+    try:
+        # Get JSON payload
+        data = frappe.request.get_json()
+        if not data:
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = _("No data provided in the request.")
+            return
+
+        csv_configs = [
+            {"file_key": "employeesCsv", "dto_class": EmployeeDTO},
+            {"file_key": "salaryStructureCsv", "dto_class": SalaryStructureDTO},
+            {"file_key": "payrollCsv", "dto_class": PayrollDTO}
+        ]
+
+        all_errors = []
+        all_parsed_data = {}
+        all_inserted_records = {}
+
+        # PHASE 1: Validate CSVs
+        for config in csv_configs:
+            file_key = config["file_key"]
+            dto_class = config["dto_class"]
+            file_content_b64 = data.get(file_key, "")
+
+            if not file_content_b64:
+                all_errors.append({
+                    "line": 0,
+                    "error_message": f"{file_key} est requis",
+                    "data": {},
+                    "file": file_key
+                })
+                continue
+
+            try:
+                file_content = base64.b64decode(file_content_b64).decode('utf-8')
+                print(f"Decoded {file_key} content: {file_content[:100]}...", "CSV Debug")
+            except Exception as e:
+                all_errors.append({
+                    "line": 0,
+                    "error_message": f"Erreur de décodage Base64 pour {file_key}: {str(e)}",
+                    "data": {},
+                    "file": file_key
+                })
+                continue
+
+            error_list, parsed_data = CsvService.import_csv(file_content.encode('utf-8'), dto_class)
+            print(f"{file_key} parsing completed. Records: {len(parsed_data)}, Errors: {len(error_list)}", "CSV Parsing")
+
+            if error_list:
+                for error in error_list:
+                    error["file"] = file_key
+                all_errors.extend(error_list)
+
+            if not parsed_data and not error_list:
+                all_errors.append({
+                    "line": 0,
+                    "error_message": f"Aucune donnée valide trouvée dans {file_key}",
+                    "data": {},
+                    "file": file_key
+                })
+                continue
+
+            all_parsed_data[dto_class.__name__] = parsed_data
+
+        # Split parsed data into separate lists
+        employee_dtos = all_parsed_data.get(EmployeeDTO.__name__, [])
+        salary_structure_dtos = all_parsed_data.get(SalaryStructureDTO.__name__, [])
+        payroll_dtos = all_parsed_data.get(PayrollDTO.__name__, [])
+
+        # Skip payroll if employees fail 
+        if not employee_dtos and any(e["file"] == "payrollCsv" for e in all_errors):
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = "Échec de la validation des employés. Le traitement du payroll a été ignoré."
+            frappe.local.response["validation_errors"] = all_errors
+            frappe.local.response["inserted_records"] = all_inserted_records
+            return
+
+        # PHASE 2: Pre-transaction setup
+        setup_errors = setup_hrms_data(employee_dtos, salary_structure_dtos)
+        if setup_errors:
+            all_errors.extend(setup_errors)
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = "Échec de la configuration initiale."
+            frappe.local.response["validation_errors"] = all_errors
+            frappe.local.response["inserted_records"] = all_inserted_records
+            return
+
+        # PHASE 3: Process CSVs in transaction
+        try:
+            # Essayer de démarrer une transaction
+            try:
+                frappe.db.begin()
+                print("Transaction started", "CSV Transaction")
+            except Exception as tx_error:
+                print(f"Could not start transaction: {str(tx_error)}", "CSV Transaction")
+                # Continuer sans transaction explicite
+
+            # Process Employees
+            if employee_dtos:
+                result = insert_employees(employee_dtos)
+                all_inserted_records["employeesCsv"] = result["created"]
+                all_errors.extend([dict(err, file="employeesCsv") for err in result["errors"]])
+                print(f"Employee insertion: Created={len(result['created'])}, Errors={len(result['errors'])}", "Employee Insertion")
+
+            # Process Salary Structures
+            if salary_structure_dtos:
+                result = insert_salary_components(salary_structure_dtos)
+                all_inserted_records["salaryStructureCsv"] = result["created"]
+                all_errors.extend([dict(err, file="salaryStructureCsv") for err in result["errors"]])
+
+                result = insert_salary_structures(salary_structure_dtos, payroll_dtos)
+                all_inserted_records["salaryStructureCsv"].extend(result["created"])
+                all_errors.extend([dict(err, file="salaryStructureCsv") for err in result["errors"]])
+
+            # Process Payroll
+            if payroll_dtos:
+                result = insert_salary_assignments(payroll_dtos)
+                all_inserted_records["payrollCsv"] = result["created"]
+                all_errors.extend([dict(err, file="payrollCsv") for err in result["errors"]])
+
+                result = insert_salary_slips(payroll_dtos)
+                all_inserted_records["payrollCsv"].extend(result["created"])
+                all_errors.extend([dict(err, file="payrollCsv") for err in result["errors"]])
+
+            # PHASE 4: Commit or rollback
+            if all_errors:
+                try:
+                    frappe.db.rollback()
+                    print("Transaction rolled back due to errors", "CSV Transaction")
+                except Exception as rb_error:
+                    print(f"Could not rollback transaction: {str(rb_error)}", "CSV Transaction")
+                frappe.local.response["status"] = "error"
+                frappe.local.response["message"] = "Certaines insertions ont échoué. Toutes les modifications ont été annulées."
+                frappe.local.response["validation_errors"] = all_errors
+                frappe.local.response["inserted_records"] = all_inserted_records
+            else:
+                try:
+                    frappe.db.commit()
+                    print("Transaction committed successfully", "CSV Transaction")
+                except Exception as commit_error:
+                    print(f"Could not commit transaction: {str(commit_error)}", "CSV Transaction")
+                frappe.local.response["status"] = "success"
+                frappe.local.response["message"] = "Tous les CSV ont été importés avec succès."
+                frappe.local.response["validation_errors"] = []
+                frappe.local.response["inserted_records"] = all_inserted_records
+
+        except Exception as e:
+            try:
+                frappe.db.rollback()
+                print(f"Transaction rolled back due to exception: {str(e)}", "CSV Transaction")
+            except Exception as rb_error:
+                print(f"Could not rollback after exception: {str(rb_error)}", "CSV Transaction")
+            
+            frappe.local.response["status"] = "error"
+            frappe.local.response["message"] = f"Erreur lors de l'insertion: {str(e)}"
+            frappe.local.response["validation_errors"] = all_errors + [{
+                "line": 0,
+                "error_message": f"Erreur lors de l'insertion: {str(e)}",
+                "data": {},
+                "file": "global"
+            }]
+            frappe.local.response["inserted_records"] = all_inserted_records
+            print(f"Insertion error: {str(e)}", "CSV Insertion")
+
+    except Exception as e:
+        frappe.local.response["status"] = "error"
+        frappe.local.response["message"] = f"Erreur inattendue: {str(e)}"
+        frappe.local.response["validation_errors"] = all_errors + [{
+            "line": 0,
+            "error_message": f"Erreur inattendue: {str(e)}",
+            "data": {},
+            "file": "global"
+        }]
+        frappe.local.response["inserted_records"] = all_inserted_records
+        print(f"Unexpected error: {str(e)}", "CSV Error")
+
+    return

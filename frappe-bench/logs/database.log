@@ -1,0 +1,219 @@
+2025-05-30 09:55:30,572 WARNING database DDL Query made to DB:
+create table `tabSalary Withholding Cycle` (
+			name varchar(140) primary key,
+			creation datetime(6),
+			modified datetime(6),
+			modified_by varchar(140),
+			owner varchar(140),
+			docstatus tinyint not null default '0',
+			idx int not null default '0',
+			`from_date` date,
+`to_date` date,
+`is_salary_released` tinyint NOT NULL DEFAULT 0,
+`journal_entry` varchar(140),
+parent varchar(140),
+parentfield varchar(140),
+parenttype varchar(140),
+index parent(parent))
+			ENGINE=InnoDB
+			ROW_FORMAT=DYNAMIC
+			CHARACTER SET=utf8mb4
+			COLLATE=utf8mb4_unicode_ci
+2025-05-30 09:55:30,712 WARNING database DDL Query made to DB:
+create table `tabEmployee Tax Exemption Proof Submission Detail` (
+			name varchar(140) primary key,
+			creation datetime(6),
+			modified datetime(6),
+			modified_by varchar(140),
+			owner varchar(140),
+			docstatus tinyint not null default '0',
+			idx int not null default '0',
+			`exemption_sub_category` varchar(140),
+`exemption_category` varchar(140),
+`max_amount` decimal(21,9) NOT NULL DEFAULT 0.0,
+`amount` decimal(21,9) NOT NULL DEFAULT 0.0,
+`type_of_proof` varchar(140),
+`attach_proof` text,
+parent varchar(140),
+parentfield varchar(140),
+parenttype varchar(140),
+index parent(parent))
+			ENGINE=InnoDB
+			ROW_FORMAT=DYNAMIC
+			CHARACTER SET=utf8mb4
+			COLLATE=utf8mb4_unicode_ci
+2025-05-30 09:55:30,967 WARNING database DDL Query made to DB:
+create table `tabEmployee Benefit Claim` (
+			name varchar(140) primary key,
+			creation datetime(6),
+			modified datetime(6),
+			modified_by varchar(140),
+			owner varchar(140),
+			docstatus tinyint not null default '0',
+			idx int not null default '0',
+			`employee` varchar(140),
+`employee_name` varchar(140),
+`department` varchar(140),
+`claim_date` date,
+`currency` varchar(140),
+`company` varchar(140),
+`amended_from` varchar(140),
+`earning_component` varchar(140),
+`max_amount_eligible` decimal(21,9) NOT NULL DEFAULT 0.0,
+`pay_against_benefit_claim` tinyint NOT NULL DEFAULT 0,
+`claimed_amount` decimal(21,9) NOT NULL DEFAULT 0.0,
+`salary_slip` varchar(140),
+`attachments` text,
+`_user_tags` text,
+`_comments` text,
+`_assign` text,
+`_liked_by` text,
+index creation(creation))
+			ENGINE=InnoDB
+			ROW_FORMAT=DYNAMIC
+			CHARACTER SET=utf8mb4
+			COLLATE=utf8mb4_unicode_ci
+2025-05-30 09:55:31,145 WARNING database DDL Query made to DB:
+create table `tabGratuity Applicable Component` (
+			name varchar(140) primary key,
+			creation datetime(6),
+			modified datetime(6),
+			modified_by varchar(140),
+			owner varchar(140),
+			docstatus tinyint not null default '0',
+			idx int not null default '0',
+			`salary_component` varchar(140),
+parent varchar(140),
+parentfield varchar(140),
+parenttype varchar(140),
+index parent(parent))
+			ENGINE=InnoDB
+			ROW_FORMAT=DYNAMIC
+			CHARACTER SET=utf8mb4
+			COLLATE=utf8mb4_unicode_ci
+2025-05-30 09:55:31,261 WARNING database DDL Query made to DB:
+create table `tabPayroll Period` (
+			name varchar(140) primary key,
+			creation datetime(6),
+			modified datetime(6),
+			modified_by varchar(140),
+			owner varchar(140),
+			docstatus tinyint not null default '0',
+			idx int not null default '0',
+			`company` varchar(140),
+`start_date` date,
+`end_date` date,
+`_user_tags` text,
+`_comments` text,
+`_assign` text,
+`_liked_by` text,
+index creation(creation))
+			ENGINE=InnoDB
+			ROW_FORMAT=DYNAMIC
+			CHARACTER SET=utf8mb4
+			COLLATE=utf8mb4_unicode_ci
+2025-05-30 09:55:31,448 WARNING database DDL Query made to DB:
+create table `tabIncome Tax Slab Other Charges` (
+			name varchar(140) primary key,
+			creation datetime(6),
+			modified datetime(6),
+			modified_by varchar(140),
+			owner varchar(140),
+			docstatus tinyint not null default '0',
+			idx int not null default '0',
+			`description` varchar(140),
+`percent` decimal(21,9) NOT NULL DEFAULT 0.0,
+`min_taxable_income` decimal(21,9) NOT NULL DEFAULT 0.0,
+`max_taxable_income` decimal(21,9) NOT NULL DEFAULT 0.0,
+parent varchar(140),
+parentfield varchar(140),
+parenttype varchar(140),
+index parent(parent))
+			ENGINE=InnoDB
+			ROW_FORMAT=DYNAMIC
+			CHARACTER SET=utf8mb4
+			COLLATE=utf8mb4_unicode_ci
+2025-05-30 09:55:33,490 WARNING database DDL Query made to DB:
+ALTER TABLE `tabTimesheet` ADD COLUMN `salary_slip` varchar(140)
+2025-05-30 09:55:33,506 WARNING database DDL Query made to DB:
+ALTER TABLE `tabTimesheet` MODIFY `exchange_rate` decimal(21,9) NOT NULL DEFAULT 1.0, MODIFY `total_billable_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_hours` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `base_total_billed_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `base_total_costing_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_billed_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_costing_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `per_billed` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_billable_hours` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `base_total_billable_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_billed_hours` decimal(21,9) NOT NULL DEFAULT 0.0
+2025-05-30 09:55:33,598 WARNING database DDL Query made to DB:
+ALTER TABLE `tabProject` ADD COLUMN `total_expense_claim` decimal(21,9) NOT NULL DEFAULT 0.0
+2025-05-30 09:55:33,617 WARNING database DDL Query made to DB:
+ALTER TABLE `tabProject` MODIFY `total_costing_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_sales_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_purchase_cost` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `percent_complete` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `gross_margin` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_billable_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_consumed_material_cost` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `per_gross_margin` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `collect_progress` tinyint NOT NULL DEFAULT 0, MODIFY `estimated_costing` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_billed_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `actual_time` decimal(21,9) NOT NULL DEFAULT 0.0
+2025-05-30 09:55:33,741 WARNING database DDL Query made to DB:
+ALTER TABLE `tabTerms and Conditions` ADD COLUMN `hr` tinyint NOT NULL DEFAULT 1
+2025-05-30 09:55:33,760 WARNING database DDL Query made to DB:
+ALTER TABLE `tabTerms and Conditions` MODIFY `selling` tinyint NOT NULL DEFAULT 1, MODIFY `buying` tinyint NOT NULL DEFAULT 1, MODIFY `disabled` tinyint NOT NULL DEFAULT 0
+2025-05-30 09:55:33,927 WARNING database DDL Query made to DB:
+ALTER TABLE `tabCompany` ADD COLUMN `default_expense_claim_payable_account` varchar(140), ADD COLUMN `default_employee_advance_account` varchar(140), ADD COLUMN `default_payroll_payable_account` varchar(140)
+2025-05-30 09:55:33,943 WARNING database DDL Query made to DB:
+ALTER TABLE `tabCompany` MODIFY `book_advance_payments_in_separate_party_account` tinyint NOT NULL DEFAULT 0, MODIFY `enable_perpetual_inventory` tinyint NOT NULL DEFAULT 1, MODIFY `enable_provisional_accounting_for_non_stock_items` tinyint NOT NULL DEFAULT 0, MODIFY `total_monthly_sales` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `auto_exchange_rate_revaluation` tinyint NOT NULL DEFAULT 0, MODIFY `lft` int NOT NULL DEFAULT 0, MODIFY `monthly_sales_target` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `credit_limit` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `allow_account_creation_against_child_company` tinyint NOT NULL DEFAULT 0, MODIFY `reconcile_on_advance_payment_date` tinyint NOT NULL DEFAULT 0, MODIFY `rgt` int NOT NULL DEFAULT 0, MODIFY `submit_err_jv` tinyint NOT NULL DEFAULT 0, MODIFY `is_group` tinyint NOT NULL DEFAULT 0
+2025-05-30 09:55:34,044 WARNING database DDL Query made to DB:
+ALTER TABLE `tabDesignation` ADD COLUMN `appraisal_template` varchar(140)
+2025-05-30 09:55:34,241 WARNING database DDL Query made to DB:
+ALTER TABLE `tabDepartment` ADD COLUMN `payroll_cost_center` varchar(140), ADD COLUMN `leave_block_list` varchar(140)
+2025-05-30 09:55:34,258 WARNING database DDL Query made to DB:
+ALTER TABLE `tabDepartment` MODIFY `disabled` tinyint NOT NULL DEFAULT 0, MODIFY `rgt` int NOT NULL DEFAULT 0, MODIFY `is_group` tinyint NOT NULL DEFAULT 0, MODIFY `lft` int NOT NULL DEFAULT 0
+2025-05-30 09:55:34,381 WARNING database DDL Query made to DB:
+ALTER TABLE `tabTask` ADD COLUMN `total_expense_claim` decimal(21,9) NOT NULL DEFAULT 0.0
+2025-05-30 09:55:34,400 WARNING database DDL Query made to DB:
+ALTER TABLE `tabTask` MODIFY `is_group` tinyint NOT NULL DEFAULT 0, MODIFY `task_weight` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `progress` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `actual_time` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `lft` int NOT NULL DEFAULT 0, MODIFY `is_template` tinyint NOT NULL DEFAULT 0, MODIFY `duration` int NOT NULL DEFAULT 0, MODIFY `total_costing_amount` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `rgt` int NOT NULL DEFAULT 0, MODIFY `is_milestone` tinyint NOT NULL DEFAULT 0, MODIFY `start` int NOT NULL DEFAULT 0, MODIFY `expected_time` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_billing_amount` decimal(21,9) NOT NULL DEFAULT 0.0
+2025-05-30 09:55:34,698 WARNING database DDL Query made to DB:
+ALTER TABLE `tabEmployee` ADD COLUMN `employment_type` varchar(140), ADD COLUMN `grade` varchar(140), ADD COLUMN `job_applicant` varchar(140), ADD COLUMN `default_shift` varchar(140), ADD COLUMN `expense_approver` varchar(140), ADD COLUMN `leave_approver` varchar(140), ADD COLUMN `shift_request_approver` varchar(140), ADD COLUMN `payroll_cost_center` varchar(140), ADD COLUMN `health_insurance_provider` varchar(140), ADD COLUMN `health_insurance_no` varchar(140)
+2025-05-30 09:55:34,713 WARNING database DDL Query made to DB:
+ALTER TABLE `tabEmployee` MODIFY `notice_number_of_days` int NOT NULL DEFAULT 0, MODIFY `lft` int NOT NULL DEFAULT 0, MODIFY `ctc` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `rgt` int NOT NULL DEFAULT 0, MODIFY `unsubscribed` tinyint NOT NULL DEFAULT 0, MODIFY `create_user_permission` tinyint NOT NULL DEFAULT 1
+2025-05-30 10:02:04,066 WARNING database DDL Query made to DB:
+alter table `tabDocType` add column if not exists migration_hash varchar(140)
+2025-05-30 10:02:07,790 WARNING database DDL Query made to DB:
+ALTER TABLE `tabMaterial Request` MODIFY `per_received` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `per_ordered` decimal(21,9) NOT NULL DEFAULT 0.0
+2025-05-30 10:02:13,211 WARNING database DDL Query made to DB:
+ALTER TABLE `tabAddress` MODIFY `is_shipping_address` tinyint NOT NULL DEFAULT 0, MODIFY `is_primary_address` tinyint NOT NULL DEFAULT 0, MODIFY `disabled` tinyint NOT NULL DEFAULT 0, MODIFY `is_your_company_address` tinyint NOT NULL DEFAULT 0
+2025-05-30 10:02:13,295 WARNING database DDL Query made to DB:
+ALTER TABLE `tabContact` MODIFY `pulled_from_google_contacts` tinyint NOT NULL DEFAULT 0, MODIFY `is_primary_contact` tinyint NOT NULL DEFAULT 0, MODIFY `sync_with_google_contacts` tinyint NOT NULL DEFAULT 0, MODIFY `unsubscribed` tinyint NOT NULL DEFAULT 0, MODIFY `is_billing_contact` tinyint NOT NULL DEFAULT 0
+2025-06-01 00:21:52,558 WARNING database DDL Query made to DB:
+create table `tabemployees_csv` (
+			name varchar(140) primary key,
+			creation datetime(6),
+			modified datetime(6),
+			modified_by varchar(140),
+			owner varchar(140),
+			docstatus tinyint not null default '0',
+			idx int not null default '0',
+			`_user_tags` text,
+`_comments` text,
+`_assign` text,
+`_liked_by` text,
+index creation(creation))
+			ENGINE=InnoDB
+			ROW_FORMAT=DYNAMIC
+			CHARACTER SET=utf8mb4
+			COLLATE=utf8mb4_unicode_ci
+2025-06-01 00:28:00,744 WARNING database DDL Query made to DB:
+ALTER TABLE `tabemployees_csv` ADD COLUMN `ref` longtext, ADD COLUMN `nom` longtext, ADD COLUMN `prenom` longtext, ADD COLUMN `genre` longtext, ADD COLUMN `date_embauche` date, ADD COLUMN `date_naissance` date, ADD COLUMN `company` longtext
+2025-06-01 00:34:25,528 WARNING database DDL Query made to DB:
+create table `tabsalary_structure_csv` (
+			name varchar(140) primary key,
+			creation datetime(6),
+			modified datetime(6),
+			modified_by varchar(140),
+			owner varchar(140),
+			docstatus tinyint not null default '0',
+			idx int not null default '0',
+			`_user_tags` text,
+`_comments` text,
+`_assign` text,
+`_liked_by` text,
+index creation(creation))
+			ENGINE=InnoDB
+			ROW_FORMAT=DYNAMIC
+			CHARACTER SET=utf8mb4
+			COLLATE=utf8mb4_unicode_ci
+2025-06-01 14:01:31,535 WARNING database DDL Query made to DB:
+ALTER TABLE `tabEmployee` ADD COLUMN `ref` longtext
+2025-06-01 14:01:31,551 WARNING database DDL Query made to DB:
+ALTER TABLE `tabEmployee` MODIFY `ctc` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `lft` int NOT NULL DEFAULT 0, MODIFY `notice_number_of_days` int NOT NULL DEFAULT 0, MODIFY `create_user_permission` tinyint NOT NULL DEFAULT 1, MODIFY `unsubscribed` tinyint NOT NULL DEFAULT 0, MODIFY `rgt` int NOT NULL DEFAULT 0
+2025-06-01 14:47:56,009 WARNING database DDL Query made to DB:
+ALTER TABLE `tabSalary Structure` ADD COLUMN `structure_name` longtext
+2025-06-01 14:47:56,024 WARNING database DDL Query made to DB:
+ALTER TABLE `tabSalary Structure` MODIFY `leave_encashment_amount_per_day` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `salary_slip_based_on_timesheet` tinyint NOT NULL DEFAULT 0, MODIFY `hour_rate` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `net_pay` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_deduction` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `max_benefits` decimal(21,9) NOT NULL DEFAULT 0.0, MODIFY `total_earning` decimal(21,9) NOT NULL DEFAULT 0.0

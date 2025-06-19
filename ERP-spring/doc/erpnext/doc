@@ -1,0 +1,24 @@
+ERPNext Dashboard
+├── Resources Humaines
+│   ├── Employé
+│   │   ├── Employé
+│   │   ├── Candidature d'Emploi
+│   │   └── Évaluation des Employés
+│   ├── Congés
+│   │   ├── Type de Congé
+│   │   ├── Demande de Congé
+│   │   └── Allocation de Congés
+│   ├── Paie
+│   │   ├── Composant de Salaire
+│   │   ├── Structure de Salaire
+│   │   ├── Affectation de Structure de Salaire
+│   │   ├── Période de Paie
+│   │   ├── Saisie de Paie
+│   │   ├── Bulletin de Salaire
+│   │   └── Salaire Additionnel
+│   ├── Recrutement
+│   ├── Formation
+│   ├── Évaluation des Performances
+│   ├── Rapports
+│   └── Paramètres
+│       └── Paramètres RH

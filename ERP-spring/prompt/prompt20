@@ -1,0 +1,697 @@
+voici un model de chart line 
+
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphique Linéaire - Données Statiques</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #ffffff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(248, 248, 248, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ff6b9d, #c44569);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(255, 107, 157, 0.3);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .container > * {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .chart-container {
+            animation-delay: 0.2s;
+        }
+        
+        .stats {
+            animation-delay: 0.4s;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="container">
+        <h1>📈 Évolution des Ventes 2024</h1>
+        
+        <div class="chart-container">
+            <canvas id="lineChart"></canvas>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">€125,400</div>
+                <div class="stat-label">Ventes Totales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">+18%</div>
+                <div class="stat-label">Croissance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">12</div>
+                <div class="stat-label">Mois de Données</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">€10,450</div>
+                <div class="stat-label">Moyenne Mensuelle</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Données statiques
+        const salesData = {
+            labels: [
+                'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+            ],
+            datasets: [{
+                label: 'Ventes (€)',
+                data: [8500, 9200, 7800, 10500, 11200, 12100, 13500, 12800, 11900, 10300, 9800, 8100],
+                borderColor: 'rgb(102, 126, 234)',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: 'rgb(102, 126, 234)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: 'rgb(118, 75, 162)',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2
+            }, {
+                label: 'Objectif (€)',
+                data: [9000, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12000, 11500, 11000, 10500],
+                borderColor: 'rgb(255, 107, 157)',
+                backgroundColor: 'rgba(255, 107, 157, 0.05)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.3,
+                borderDash: [5, 5],
+                pointBackgroundColor: 'rgb(255, 107, 157)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        };
+
+        // Configuration du graphique
+        const config = {
+            type: 'line',
+            data: salesData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Évolution Mensuelle des Ventes vs Objectifs',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        color: '#333',
+                        padding: 20
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 12
+                            },
+                            color: '#666',
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(102, 126, 234, 0.5)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString('fr-FR') + ' €';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Mois',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#666'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            color: '#666'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Montant (€)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#666'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            color: '#666',
+                            callback: function(value) {
+                                return value.toLocaleString('fr-FR') + ' €';
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                hover: {
+                    intersect: false
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        };
+
+        // Création du graphique
+        const ctx = document.getElementById('lineChart').getContext('2d');
+        const lineChart = new Chart(ctx, config);
+
+        // Animation des cartes statistiques
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            card.style.animationDelay = `${0.6 + index * 0.1}s`;
+        });
+    </script>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+
+
+
+je veux realiser ceci : 
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║ 📈 GRAPHIQUE D'ÉVOLUTION DES SALAIRES - 2024                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ ÉVOLUTION MENSUELLE: TOTAL ET ÉLÉMENTS DE SALAIRE ──────────────────────────┐
+│                                                                              │
+│ 190,000€ ┤     ◆═══◆═══◆═══◆═══◆═══◆═══◆═══◆═══◆═══◆═══◆   TOTAL NET      │
+│          │    ╱                                                             │
+│ 180,000€ ┤   ╱                                                              │
+│          │  ◆                                                               │
+│ 175,000€ ┤ ╱                                                                │
+│          │◆                                                                 │
+│ 160,000€ ┤ ●═══●═══●═══●═══●═══●═══●═══●═══●═══●═══●═══●   Salaire de Base │
+│          │                                                                  │
+│ 150,000€ ┤                                                                  │
+│          │                                                                  │
+│  20,000€ ┤ ■───■───■───■───■───■───■───■───■───■───■───■   Prime Ancienneté│
+│          │                                                                  │
+│  15,000€ ┤ ▲┅┅┅▲┅┅┅▲┅┅┅▲┅┅┅▲┅┅┅▲┅┅┅▲┅┅┅▲┅┅┅▲┅┅┅▲┅┅┅▲┅┅┅▲  Prime Performance│
+│          │                                                                  │
+│  10,000€ ┤ ×····×····×····×····×····×····×····×····×····×····×····×  H.Supp │
+│          │                                                                  │
+│   5,000€ ┤ ◐━━━◐━━━◐━━━◐━━━◐━━━◐━━━◐━━━◐━━━◐━━━◐━━━◐━━━◐  Ind.Transport   │
+│          │                                                                  │
+│       0€ ┤                                                                  │
+│          └─┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┤
+│           Jan  Fév  Mar  Avr  Mai  Jun  Jul  Aoû  Sep  Oct  Nov  Déc      │
+
+
+│                                                                              │
+│ 📋 Légende:                                                                 │
+│    ◆═══  TOTAL NET (évolution globale)                                     │
+│    ●═══  Salaire de Base (150,000€ - stable)                               │
+│    ■───  Prime Ancienneté (15,000€ - progression)                          │
+│    ▲┅┅┅  Prime Performance (10,000€ - variable)                            │
+│    ×····  Heures Supplémentaires (5,000€ - variable)                       │
+│    ◐━━━  Indemnité Transport (2,500€ - fixe)     
+                              │
+│                                                                              │
+│ 📊 Analyse:                                                                 │
+│    • Évolution totale: +4.5% (175,500€ → 183,375€)                    │
+└──────────────────────────────────────────────────────────────────────────────┘ 
+
+
+
+voici le donnees json de cette chart : 
+
+
+
+
+{
+    "message": {
+        "monthly_data": [
+            {
+                "month": "Janvier",
+                "month_short": "Jan",
+                "total_net": 0.0,
+                "earnings": {},
+                "deductions": {}
+            },
+            {
+                "month": "Février",
+                "month_short": "Fév",
+                "total_net": 0.0,
+                "earnings": {},
+                "deductions": {}
+            },
+            {
+                "month": "Mars",
+                "month_short": "Mar",
+                "total_net": 2600000.0,
+                "earnings": {
+                    "Indemnité": 187320659.4,
+                    "Salaire Base": 2120402198.0,
+                    "Bonus mensuel": 55144000.0,
+                    "Indemnité repas": 40320000.0,
+                    "Prime de qualité": 90240000.0,
+                    "Prime de risque": 54000000.0,
+                    "Indemnité logement": 84000000.0,
+                    "Prime de rendement": 126000000.0,
+                    "Frais médicaux": 26880000.0,
+                    "Allocation familiale": 33600000.0,
+                    "Prime ancienneté": 36240000.0,
+                    "Indemnité transport": 50400000.0,
+                    "Prime de performance": 78000000.0,
+                    "Salaire de base": 8600000.0,
+                    "Logement": 1330000.0,
+                    "Base Salary": 3800000.0,
+                    "Paiement fixe": 5000000.0,
+                    "Transport": 1040000.0
+                },
+                "deductions": {
+                    "Taxe sociale": 162344571.48,
+                    "Impôt direct": 89026560.0,
+                    "Charge sociale": 120821760.0,
+                    "Retenue fiscale": 99840000.0,
+                    "Cotisation sociale": 137280000.0,
+                    "Taxe professionnelle": 36729600.0,
+                    "Sécurité sociale": 55094400.0,
+                    "Impôt sur revenu": 79272000.0,
+                    "Cotisation retraite": 66060000.0,
+                    "Santé": 615600.0,
+                    "Prélèvement": 600000.0,
+                    "Impôt": 1716000.0
+                }
+            },
+            {
+                "month": "Avril",
+                "month_short": "Avr",
+                "total_net": 2496000.0,
+                "earnings": {
+                    "Indemnité": 187320659.4,
+                    "Salaire Base": 2120402198.0,
+                    "Bonus mensuel": 55144000.0,
+                    "Indemnité repas": 40320000.0,
+                    "Prime de qualité": 90240000.0,
+                    "Prime de risque": 54000000.0,
+                    "Indemnité logement": 84000000.0,
+                    "Prime de rendement": 126000000.0,
+                    "Frais médicaux": 26880000.0,
+                    "Allocation familiale": 33600000.0,
+                    "Prime ancienneté": 36240000.0,
+                    "Indemnité transport": 50400000.0,
+                    "Prime de performance": 78000000.0,
+                    "Salaire de base": 8600000.0,
+                    "Logement": 1330000.0,
+                    "Base Salary": 3800000.0,
+                    "Paiement fixe": 5000000.0,
+                    "Transport": 1040000.0
+                },
+                "deductions": {
+                    "Taxe sociale": 162344571.48,
+                    "Impôt direct": 89026560.0,
+                    "Charge sociale": 120821760.0,
+                    "Retenue fiscale": 99840000.0,
+                    "Cotisation sociale": 137280000.0,
+                    "Taxe professionnelle": 36729600.0,
+                    "Sécurité sociale": 55094400.0,
+                    "Impôt sur revenu": 79272000.0,
+                    "Cotisation retraite": 66060000.0,
+                    "Santé": 615600.0,
+                    "Prélèvement": 600000.0,
+                    "Impôt": 1716000.0
+                }
+            },
+            {
+                "month": "Mai",
+                "month_short": "Mai",
+                "total_net": 0.0,
+                "earnings": {},
+                "deductions": {}
+            },
+            {
+                "month": "Juin",
+                "month_short": "Jui",
+                "total_net": 0.0,
+                "earnings": {},
+                "deductions": {}
+            },
+            {
+                "month": "Juillet",
+                "month_short": "Jui",
+                "total_net": 0.0,
+                "earnings": {},
+                "deductions": {}
+            },
+            {
+                "month": "Août",
+                "month_short": "Aoû",
+                "total_net": 0.0,
+                "earnings": {},
+                "deductions": {}
+            },
+            {
+                "month": "Septembre",
+                "month_short": "Sep",
+                "total_net": 0.0,
+                "earnings": {},
+                "deductions": {}
+            },
+            {
+                "month": "Octobre",
+                "month_short": "Oct",
+                "total_net": 0.0,
+                "earnings": {},
+                "deductions": {}
+            },
+            {
+                "month": "Novembre",
+                "month_short": "Nov",
+                "total_net": 0.0,
+                "earnings": {},
+                "deductions": {}
+            },
+            {
+                "month": "Décembre",
+                "month_short": "Déc",
+                "total_net": 0.0,
+                "earnings": {}, 
+                "deductions": {}
+            }
+        ]
+    }
+}
+
+
+
+
+voici le model , qui mapp ces donnnees json et voici le controller qui les load ces donnees 
+
+
+
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Map;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SalaryEvolutionDTO {
+    
+    @JsonProperty("month")
+    private String month;
+    
+    @JsonProperty("month_short")
+    private String monthShort;
+    
+    @JsonProperty("total_net")
+    private double totalNet;
+    
+    @JsonProperty("earnings")
+    private Map<String, Double> earnings;
+    
+    @JsonProperty("deductions")
+    private Map<String, Double> deductions;
+
+    
+    public SalaryEvolutionDTO() {}
+
+    public SalaryEvolutionDTO(String month, String monthShort, double totalNet, 
+                            Map<String, Double> earnings, Map<String, Double> deductions) {
+        this.month = month;
+        this.monthShort = monthShort;
+        this.totalNet = totalNet;
+        this.earnings = earnings;
+        this.deductions = deductions;
+    }
+
+    
+    public String getMonth() {
+        return month;
+    }
+
+    public void setMonth(String month) {
+        this.month = month;
+    }
+
+    public String getMonthShort() {
+        return monthShort;
+    }
+
+    public void setMonthShort(String monthShort) {
+        this.monthShort = monthShort;
+    }
+
+    public double getTotalNet() {
+        return totalNet;
+    }
+
+    public void setTotalNet(double totalNet) {
+        this.totalNet = totalNet;
+    }
+
+    public Map<String, Double> getEarnings() {
+        return earnings;
+    }
+
+    public void setEarnings(Map<String, Double> earnings) {
+        this.earnings = earnings;
+    }
+
+    public Map<String, Double> getDeductions() {
+        return deductions;
+    }
+
+    public void setDeductions(Map<String, Double> deductions) {
+        this.deductions = deductions;
+    }
+}
+
+
+package mg.itu.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SalaryEvolutionResponse {
+    
+    @JsonProperty("monthly_data")
+    private List<SalaryEvolutionDTO> monthlyData;
+
+    
+    public SalaryEvolutionResponse() {} 
+
+    public SalaryEvolutionResponse(List<SalaryEvolutionDTO> monthlyData) {
+        this.monthlyData = monthlyData;
+    }
+
+    
+    public List<SalaryEvolutionDTO> getMonthlyData() {
+        return monthlyData;
+    }
+
+    public void setMonthlyData(List<SalaryEvolutionDTO> monthlyData) {
+        this.monthlyData = monthlyData;
+    }
+}
+
+
+
+@GetMapping("/salary-evolution") 
+public String getSalaryEvolution(
+        @RequestParam(value = "year", required = false) String year,
+        Model model, HttpSession session) {
+    try {
+        
+        if (year == null || year.isEmpty()) {
+            year = String.valueOf(java.time.Year.now().getValue());
+        } 
+        
+        ApiResponse<SalaryEvolutionDTO> response = hrmsService.getSalaryEvolutionData(year, session);
+        
+        if ("success".equals(response.getStatus())) {
+            List<SalaryEvolutionDTO> evolutionData = response.getData();
+            
+            
+            model.addAttribute("evolutionData", evolutionData);
+            model.addAttribute("selectedYear", year);
+            
+            
+            double totalNetSum = evolutionData.stream()
+                    .mapToDouble(SalaryEvolutionDTO::getTotalNet)
+                    .sum();
+            
+            
+            Set<String> allEarningsComponents = new HashSet<>();
+            Set<String> allDeductionsComponents = new HashSet<>();
+            
+            for (SalaryEvolutionDTO data : evolutionData) {
+                if (data.getEarnings() != null) {
+                    allEarningsComponents.addAll(data.getEarnings().keySet());
+                }
+                if (data.getDeductions() != null) {
+                    allDeductionsComponents.addAll(data.getDeductions().keySet());
+                }
+            }
+            
+            model.addAttribute("earningsComponents", allEarningsComponents);
+            model.addAttribute("deductionsComponents", allDeductionsComponents);
+            model.addAttribute("totalNetSum", totalNetSum);
+            
+            
+            if (evolutionData.size() >= 2) {
+                double firstMonth = evolutionData.get(0).getTotalNet();
+                double lastMonth = evolutionData.get(evolutionData.size() - 1).getTotalNet();
+                double evolutionPercent = firstMonth > 0 ? ((lastMonth - firstMonth) / firstMonth) * 100 : 0;
+                model.addAttribute("evolutionPercent", Math.round(evolutionPercent * 100.0) / 100.0);
+                model.addAttribute("evolutionAmount", lastMonth - firstMonth);
+            }
+            
+        } else {
+            model.addAttribute("error", response.getMessage());
+        }
+        
+    } catch (IllegalStateException e) {
+        logger.warn("Authentication error: {}", e.getMessage());
+        return "redirect:/api/auth/";
+    } catch (Exception e) {
+        logger.error("Erreur lors de la récupération des données d'évolution des salaires", e);
+        model.addAttribute("error", "Erreur lors de la récupération des données: " + e.getMessage());
+    }
+    
+    return "views/hrms/salary-evolution";
+} 
+
+
+
+
+modifier cette model de chart pour l affichage de cette chart que je vous ai donnee en ascii 
+
+
+
+donc il aura 1 line de salaire net , des line de deduction et arning selon la donnees recuperer en json 
+
+metter le line du  salaire  en bleu sur la chart , les deduction en chart line rouge  et les earnings en chart line vert

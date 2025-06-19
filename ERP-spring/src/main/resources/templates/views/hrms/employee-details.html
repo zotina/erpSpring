@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche Employé - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-box {
+            border: 1px solid #444444;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #444444;
+        }
+        th {
+            background-color: #F5F5F5;
+            font-weight: 600;
+        }
+        .status-green::before { content: "🟢"; }
+        .status-submitted { color: #059669; font-weight: 600; }
+        .currency-symbol { color: #6B7280; font-size: 0.9em; }
+        .back-link a {
+            color: #2E86AB;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        .highlight-row {
+            background-color: #F0F9FF;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-right {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1 th:text="'👤 Fiche Employé - ' + ${employee.employeeId}"></h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="info-box">
+                <h3>📋 Informations Personnelles</h3>
+                <p><strong>Nom Complet:</strong> <span th:text="${employee.fullName}"></span></p>
+                <p><strong>ID Employé:</strong> <span th:text="${employee.employeeId}"></span></p>
+                <p><strong>Email:</strong> 
+                    <span th:if="${employee.email != null}" th:text="${employee.email}"></span>
+                    <span th:if="${employee.email == null}">Non renseigné</span>
+                </p>
+                <p><strong>Téléphone:</strong> 
+                    <span th:if="${employee.phone != null}" th:text="${employee.phone}"></span>
+                    <span th:if="${employee.phone == null}">Non renseigné</span>
+                </p>
+                <p><strong>Adresse:</strong> 
+                    <span th:if="${employee.address != null}" th:text="${employee.address}"></span>
+                    <span th:if="${employee.address == null}">Non renseignée</span>
+                </p>
+                <p><strong>Date Naissance:</strong> 
+                    <span th:if="${employee.dateOfBirth != null}" 
+                          th:text="${#dates.format(employee.dateOfBirth, 'dd/MM/yyyy')}"></span>
+                    <span th:if="${employee.dateOfBirth == null}">Non renseigné</span>
+                </p>
+            </div>
+            <div class="info-box">
+                <h3>💼 Informations Professionnelles</h3>
+                <p><strong>Département:</strong> <span th:text="${employee.department}"></span></p>
+                <p><strong>Poste:</strong> <span th:text="${employee.designation}"></span></p>
+                <p><strong>Date Embauche:</strong> 
+                    <span th:if="${employee.dateOfJoining != null}" 
+                          th:text="${#dates.format(employee.dateOfJoining, 'dd/MM/yyyy')}"></span>
+                    <span th:if="${employee.dateOfJoining == null}">Non renseigné</span>
+                </p>
+                <p><strong>Ancienneté:</strong>
+                    <span th:text="${T(mg.itu.util.SeniorityUtil).calculateDetailedSeniority(employee.dateOfJoining)}"></span>
+                </p>
+                <p><strong>Contrat:</strong> 
+                    <span th:if="${employee.contractType != null}" th:text="${employee.contractType}"></span>
+                    <span th:if="${employee.contractType == null}">Non spécifié</span>
+                </p>
+                <p><strong>Manager:</strong> 
+                    <span th:if="${employee.managerId != null}" th:text="${employee.managerId}"></span>
+                    <span th:if="${employee.managerId == null}">Aucun</span>
+                </p>
+                <p><strong>Statut:</strong> 
+                    <span th:classappend="${employee.status == 'Active' ? 'status-green' : ''}" 
+                          th:text="${employee.status}"></span>
+                </p>
+            </div>
+            
+            <h3>💰 Historique des Salaires</h3>
+            <div th:if="${salaryHistory != null and !salaryHistory.isEmpty()}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Période</th>
+                            <th>Jours Travaillés</th>
+                            <th>Jours Payés</th>
+                            <th>Salaire Brut</th>
+                            <th>Déductions</th>
+                            <th>Salaire Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="salary : ${salaryHistory}" th:classappend="${salary.status == 'Submitted' ? 'highlight-row' : ''}">
+                            <td th:text="${#dates.format(salary.startDate, 'MM/yyyy')}"></td>
+                            <td class="text-center" th:text="${salary.totalWorkingDays}"></td>
+                            <td class="text-center" th:text="${salary.paymentDays}"></td>
+                            <td class="text-right">
+                                <span class="currency-symbol" th:text="${salary.currency}"></span>
+                                <span th:text="${#numbers.formatDecimal(salary.grossPay, 0, 'COMMA', 0, 'POINT')}"></span>
+                            </td>
+                            <td class="text-right">
+                                <span class="currency-symbol" th:text="${salary.currency}"></span>
+                                <span th:text="${#numbers.formatDecimal(salary.totalDeduction, 0, 'COMMA', 0, 'POINT')}"></span>
+                            </td>
+                            <td class="text-right">
+                                <span class="currency-symbol" th:text="${salary.currency}"></span>
+                                <strong th:text="${#numbers.formatDecimal(salary.netPay, 0, 'COMMA', 0, 'POINT')}"></strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${salaryHistory == null or salaryHistory.isEmpty()}">
+                <p><em>Aucun historique de salaire disponible pour cet employé.</em></p>
+            </div>
+            
+            <!-- Résumé des statistiques -->
+            <div class="info-box" style="margin-top: 2rem;">
+                <h3>📊 Résumé Statistiques</h3>
+                <div th:if="${salaryHistory != null and !salaryHistory.isEmpty()}">
+                    <p><strong>Nombre de fiches de paie:</strong> <span th:text="${#lists.size(salaryHistory)}"></span></p>
+                    <p><strong>Structure salariale:</strong> <span th:text="${salaryHistory[0].salaryStructure}"></span></p>
+                    <p><strong>Entreprise:</strong> <span th:text="${salaryHistory[0].company}"></span></p>
+                    <p><strong>Département:</strong> <span th:text="${salaryHistory[0].department}"></span></p>
+                </div>
+                <div th:if="${salaryHistory == null or salaryHistory.isEmpty()}">
+                    <p><em>Aucun historique de salaire disponible pour cet employé.</em></p>
+                </div>
+            </div>
+            
+            <div class="back-link">
+                <a href="/api/hrms/employees">← Retour à la liste des employés</a>
+            </div>
+        </div>
+        <div th:if="${error}" class="message error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

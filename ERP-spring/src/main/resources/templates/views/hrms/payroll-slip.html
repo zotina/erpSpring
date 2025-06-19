@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulletin de Paie - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-box {
+            border: 1px solid #444444;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #444444;
+        }
+        th {
+            background-color: #F5F5F5;
+            font-weight: 600;
+        }
+        .total {
+            background-color: #F5F5F5;
+            font-weight: bold;
+        }
+        .export-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        .export-btn:hover {
+            background-color: #2563eb;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .statistical {
+            font-style: italic;
+            color: #6B7280;
+        }
+        .no-total {
+            color: #9CA3AF;
+        }
+        .summary-section {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            border: 2px solid #2E86AB;
+        }
+        .summary-table {
+            margin: 0;
+        }
+        .summary-table td {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .net-pay {
+            background-color: #2E86AB;
+            color: white;
+            font-size: 1.2rem;
+        }
+        .loan-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #e5e7eb;
+        }
+        .back-link {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .back-link a {
+            color: #2E86AB;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        .actions {
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <!-- ✅ Correction : Vérification de nullité et format de date correct -->
+            <h1 th:text="'📄 Bulletin de Paie - ' + ${payrollSlip?.startDate != null ? #dates.format(payrollSlip.startDate, 'MMMM yyyy', #locale) : 'N/A'}"></h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="info-box">
+                <p><strong><span th:text="${payrollSlip?.company ?: 'ENTREPRISE'}">ENTREPRISE</span></strong></p>
+                <p>Adresse: Rue de l'Indépendance, Antananarivo</p>
+                <p>SIRET: 12345678901234 | Code APE: 6201Z</p>
+                <p>Tél: +261 20 22 123 45</p>
+            </div>
+            <div class="info-box">
+                <p><strong> SALARIÉ</strong></p>
+                <p><strong>Nom:</strong> <span th:text="${payrollSlip?.employeeName ?: 'N/A'}"></span></p>
+                <p><strong>Matricule:</strong> <span th:text="${payrollSlip?.employee ?: 'N/A'}"></span></p>
+                <p><strong>Poste:</strong> <span th:text="${payrollSlip?.designation ?: 'N/A'}"></span></p>
+                <p><strong>Département:</strong> <span th:text="${payrollSlip?.department ?: 'N/A'}"></span></p>
+                <p><strong>Fréquence de Paie:</strong> <span th:text="${payrollSlip?.payrollFrequency ?: 'N/A'}"></span></p>
+                <p><strong>Devise:</strong> <span th:text="${payrollSlip?.currency ?: 'N/A'}"></span></p>
+            </div>
+            
+            <!-- ✅ Correction : Vérification de nullité pour les dates -->
+            <p><strong> PÉRIODE:</strong> 
+                <span th:text="'Du ' + 
+                    ${payrollSlip?.startDate != null ? #dates.format(payrollSlip.startDate, 'dd/MM/yyyy') : 'N/A'} + 
+                    ' au ' + 
+                    ${payrollSlip?.endDate != null ? #dates.format(payrollSlip.endDate, 'dd/MM/yyyy') : 'N/A'}"></span>
+            </p>
+            <p><strong> TEMPS DE TRAVAIL:</strong> 
+                <span th:text="${payrollSlip?.paymentDays ?: 0} + ' jours payés sur ' + ${payrollSlip?.totalWorkingDays ?: 0} + ' jours ouvrés'"></span>
+                <span th:if="${payrollSlip != null && payrollSlip.totalWorkingHours > 0}" 
+                      th:text="' - ' + ${payrollSlip.totalWorkingHours} + ' heures'"></span>
+            </p>
+            
+            <!-- Section Earnings -->
+            <h3> Éléments de Rémunération</h3>
+            <div th:if="${payrollSlip != null && payrollSlip.earnings != null && !payrollSlip.earnings.isEmpty()}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>LIBELLÉ</th>
+                            <th>ABRÉVIATION</th>
+                            <th>FORMULE/CONDITION</th>
+                            <th>MONTANT</th>
+                            <th>STATUT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="earning : ${payrollSlip.earnings}" 
+                            th:class="${(earning.statisticalComponent ? 'statistical' : '') + (earning.doNotIncludeInTotal ? ' no-total' : '')}">
+                            <td th:text="${earning.salaryComponent ?: 'N/A'}"></td>
+                            <td th:text="${earning.abbr ?: ''}"></td>
+                            <td>
+                                <!-- ✅ Correction : Vérification de nullité et d'emptiness -->
+                                <span th:if="${earning.formula != null && !#strings.isEmpty(earning.formula)}" 
+                                      th:text="'F: ' + ${earning.formula}"></span>
+                                <span th:if="${earning.condition != null && !#strings.isEmpty(earning.condition)}" 
+                                      th:text="'C: ' + ${earning.condition}"></span>
+                            </td>
+                            <td class="text-right">
+                                <!-- ✅ Correction : Format de devise avec vérification -->
+                                <span th:text="${#numbers.formatCurrency(earning.amount ?: 0, payrollSlip?.currency ?: 'MGA')}"></span>
+                            </td>
+                            <td>
+                                <span th:if="${earning.statisticalComponent}" class="statistical">Statistique</span>
+                                <span th:if="${earning.doNotIncludeInTotal && !earning.statisticalComponent}" class="no-total">🚫 Hors Total</span>
+                                <span th:if="${earning.exemptFromPayrollTax}"> Exonéré Taxe</span>
+                                <span th:if="${earning.dependsOnPaymentDays}"> Dépend Jours</span>
+                            </td>
+                        </tr>
+                        <tr class="total">
+                            <td colspan="3"><strong>TOTAL BRUT</strong></td>
+                            <td class="text-right">
+                                <strong th:text="${#numbers.formatCurrency(payrollSlip?.grossPay ?: 0, payrollSlip?.currency ?: 'MGA')}"></strong>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:unless="${payrollSlip != null && payrollSlip.earnings != null && !payrollSlip.earnings.isEmpty()}">
+                <p><em>Aucun élément de rémunération trouvé.</em></p>
+            </div>
+
+            <!-- Section Deductions -->
+            <h3>💸 Déductions</h3>
+            <div th:if="${payrollSlip != null && payrollSlip.deductions != null && !payrollSlip.deductions.isEmpty()}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>LIBELLÉ</th>
+                            <th>ABRÉVIATION</th>
+                            <th>FORMULE/CONDITION</th>
+                            <th>MONTANT</th>
+                            <th>STATUT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="deduction : ${payrollSlip.deductions}"
+                            th:class="${(deduction.statisticalComponent ? 'statistical' : '') + (deduction.doNotIncludeInTotal ? ' no-total' : '')}">
+                            <td th:text="${deduction.salaryComponent ?: 'N/A'}"></td>
+                            <td th:text="${deduction.abbr ?: ''}"></td>
+                            <td>
+                                <span th:if="${deduction.formula != null && !#strings.isEmpty(deduction.formula)}" 
+                                      th:text="'F: ' + ${deduction.formula}"></span>
+                                <span th:if="${deduction.condition != null && !#strings.isEmpty(deduction.condition)}" 
+                                      th:text="'C: ' + ${deduction.condition}"></span>
+                            </td>
+                            <td class="text-right">
+                                <span th:text="${#numbers.formatCurrency(deduction.amount ?: 0, payrollSlip?.currency ?: 'MGA')}"></span>
+                            </td>
+                            <td>
+                                <span th:if="${deduction.statisticalComponent}" class="statistical"> Statistique</span>
+                                <span th:if="${deduction.doNotIncludeInTotal && !deduction.statisticalComponent}" class="no-total">🚫 Hors Total</span>
+                                <span th:if="${deduction.exemptFromPayrollTax}"> Exonéré Taxe</span>
+                                <span th:if="${deduction.dependsOnPaymentDays}"> Dépend Jours</span>
+                            </td>
+                        </tr>
+                        <tr class="total">
+                            <td colspan="3"><strong>TOTAL DÉDUCTIONS</strong></td>
+                            <td class="text-right">
+                                <strong th:text="${#numbers.formatCurrency(payrollSlip?.totalDeduction ?: 0, payrollSlip?.currency ?: 'MGA')}"></strong>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:unless="${payrollSlip != null && payrollSlip.deductions != null && !payrollSlip.deductions.isEmpty()}">
+                <p><em>Aucune déduction trouvée.</em></p>
+            </div>
+
+            <!-- Résumé Final -->
+            <div class="summary-section">
+                <h3> RÉSUMÉ</h3>
+                <table class="summary-table">
+                    <tr>
+                        <td><strong> Total Brut:</strong></td>
+                        <td class="text-right">
+                            <strong th:text="${#numbers.formatCurrency(payrollSlip?.grossPay ?: 0, payrollSlip?.currency ?: 'MGA')}"></strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong> Total Déductions:</strong></td>
+                        <td class="text-right">
+                            <strong th:text="${#numbers.formatCurrency(payrollSlip?.totalDeduction ?: 0, payrollSlip?.currency ?: 'MGA')}"></strong>
+                        </td>
+                    </tr>
+                    <!-- ✅ Correction : Vérification logique pour l'arrondi -->
+                    <tr th:if="${payrollSlip != null && payrollSlip.roundedTotal != payrollSlip.netPay && payrollSlip.roundedTotal > 0}">
+                        <td><strong>Arrondi:</strong></td>
+                        <td class="text-right">
+                            <strong th:text="${#numbers.formatCurrency(payrollSlip.roundedTotal - payrollSlip.netPay, payrollSlip.currency)}"></strong>
+                        </td>
+                    </tr>
+                    <tr class="net-pay">
+                        <td><strong>NET À PAYER:</strong></td>
+                        <td class="text-right">
+                            <strong th:text="${#numbers.formatCurrency(payrollSlip?.netPay ?: 0, payrollSlip?.currency ?: 'MGA')}"></strong>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+                <!-- ✅ Correction : Vérification de nullité pour les paramètres d'URL -->
+                <a th:if="${payrollSlip != null && payrollSlip.employee != null && payrollSlip.startDate != null}"
+                   th:href="@{/api/hrms/employee/{id}/payroll/export(id=${payrollSlip.employee},monthYear=${#dates.format(payrollSlip.startDate, 'yyyy-MM')})}" 
+                   class="export-btn"> Exporter PDF</a>
+            </div>
+
+            <!-- Informations légales et signature -->
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; font-size: 0.9rem; color: #6b7280;">
+                <p><strong> Date d'édition:</strong> 
+                    <span th:text="${payrollSlip?.postingDate != null ? #dates.format(payrollSlip.postingDate, 'dd/MM/yyyy') : #dates.format(#dates.createNow(), 'dd/MM/yyyy')}"></span>
+                </p>
+                <p><strong>ℹ Note:</strong> Ce bulletin de paie est généré automatiquement par le système HRMS.</p>
+                <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+                    <div>
+                        <p><strong>Signature Employeur</strong></p>
+                        <div style="height: 60px; border-bottom: 1px solid #000; width: 200px; margin-top: 1rem;"></div>
+                    </div>
+                    <div>
+                        <p><strong>Signature Employé</strong></p>
+                        <div style="height: 60px; border-bottom: 1px solid #000; width: 200px; margin-top: 1rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lien de retour -->
+            <div class="back-link">
+                <a href="/api/hrms/employees">← Retour à la liste des employés</a>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

@@ -1,0 +1,883 @@
+https://docs.frappe.io/erpnext/user/manual/en/introduction https://docs.frappe.io/hr/introduction baser votre reponse a ces documentation , j ai 2 application erpnext et spring , il se communique en api et le spring n a que l api comme accees au donnees de erpnext c est le principe , et j ai appeler quelque liste sur spring comment liste employe , salaire mensuel d employe , salaire mensuel , mensuel total , pour le liste d employe j ai utilise l api existant de resource : /api/resource/Employee?fields=[""]&filters=[]&limit_page_length=500 pour le liste d employe /api/resource/Salary%20Slip?fields=[""]&limit_page_length=500 pour le salaire mensuel par employe suivi d un total de salaire mensuel par employe avec un filtre mois-annee , je ve que vous realiser un pagination sur le liste d employe et le salaire mensuel par employe , pour ne pas changer utilise double api l autre pour la pagination , et lecode actuel pour les total , voici mes services et controllers et pour la liste actuel , modifier mon code pour la realiser 
+
+
+voici le service que gerer les 2 liste paginer :
+
+
+
+package mg.itu.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.EmployeeDTO;
+import mg.itu.model.MonthlyPayrollSummary;
+import mg.itu.model.PayrollComponents;
+import mg.itu.model.PayrollSlipDTO;
+import mg.itu.model.SalaryComponent;
+import mg.itu.model.SalaryDetailDTO;
+import mg.itu.model.SummaryDTO;
+import mg.itu.util.DateUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class HrmsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsService.class);
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Value("${api.base-url-hr}")
+    private String baseApiUrl;
+
+    @Value("${api.method}")
+    private String apiMethod;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public ApiResponse<EmployeeDTO> getEmployeeList(String search, String department, String designation, String startDate, String endDate, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+ 
+        StringBuilder filters = new StringBuilder("[");
+        List<String> conditions = new ArrayList<>(); 
+        if (search != null && search != "" && !search.isEmpty()) {
+            conditions.add("[\"employee_name\",\"like\",\"%" + search + "%\"]");
+        }
+        if (department != null && department != "" && !department.equals("Tous")) {
+            conditions.add("[\"department\",\"=\",\"" + department + "\"]");
+        }
+        if (designation != null && designation != "" && !designation.equals("Tous")) {
+            conditions.add("[\"designation\",\"=\",\"" + designation + "\"]");
+        }
+        if (startDate != null && startDate != "" && !startDate.isEmpty()) {
+            conditions.add("[\"date_of_joining\",\">=\",\"" + startDate + "\"]");
+        }
+        if (endDate != null && endDate != "" && !endDate.isEmpty()) {
+            conditions.add("[\"date_of_joining\",\"<=\",\"" + endDate + "\"]");
+        }
+        filters.append(String.join(",", conditions)).append("]");
+
+        String url = baseApiUrl + "/Employee?fields=[\"*\"]&filters=" + filters.toString() + "&limit_page_length=500";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+   
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<EmployeeDTO> employees = new ArrayList<>();
+                for (Map<String, Object> item : data) {
+                    EmployeeDTO employee = objectMapper.convertValue(item, EmployeeDTO.class);
+                    employees.add(employee);
+                }
+                ApiResponse<EmployeeDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Employees fetched successfully");
+                apiResponse.setData(employees);
+                return apiResponse;
+            }
+
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch employees");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching employees", e);
+            ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching employees: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<SummaryDTO> getMonthlySummary(String start, String end, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+        String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]"; 
+
+        if(start != null && start != "" && end != null && end != ""){
+            url+="&filters=[[\"posting_date\",\">=\",\"" + start + "\"],[\"posting_date\",\"<=\",\"" + end + "\"]]";
+        }
+        url+= "&limit_page_length=500";
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+        System.out.println("summary url "+ url);
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SummaryDTO> summary = new ArrayList<>();
+                for (Map<String, Object> item : data) {
+                    SummaryDTO itemSummary = objectMapper.convertValue(item, SummaryDTO.class);
+                    System.out.println("posting date " + itemSummary.getPostingDate());
+                    System.out.println("month year" + itemSummary.getMonthYear());
+                    itemSummary.setMonthYear(itemSummary.getPostingDate());
+                    summary.add(itemSummary);
+                }
+                ApiResponse<SummaryDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Monthly summary fetched successfully");
+                apiResponse.setData(summary);
+                return apiResponse;
+            }
+
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch monthly summary");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching monthly summary: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    
+}
+
+
+et voici le controller de ces 2 listes les services 
+
+
+package mg.itu.controller;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.EmployeeDTO;
+import mg.itu.model.MonthlyPayrollSummary;
+import mg.itu.model.PayrollComponents;
+import mg.itu.model.PayrollSlipDTO;
+import mg.itu.model.SalaryDetailDTO;
+import mg.itu.model.SummaryDTO;
+import mg.itu.service.HrmsService;
+import mg.itu.service.PdfExportService;
+import mg.itu.util.DateUtil;
+import mg.itu.util.SalaryUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+  
+@Controller
+@RequestMapping("/api/hrms")
+public class HrmsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsController.class);
+
+    @Autowired
+    private HrmsService hrmsService;
+
+    @Autowired
+    private PdfExportService pdfExportService;
+
+    @Autowired
+    private HrmsService salaryEvolutionService;
+    
+    @GetMapping("/employees")
+    public String getEmployeeList(
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "department", required = false) String department,
+            @RequestParam(value = "designation", required = false) String designation,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate,
+            Model model, HttpSession session) {
+        
+        try {
+            
+            ApiResponse<EmployeeDTO> response = hrmsService.getEmployeeList(
+                    search, department, designation, startDate, endDate, session);
+            
+            if ("success".equals(response.getStatus())) {
+                model.addAttribute("employees", response.getData());
+                model.addAttribute("totalEmployees", response.getData().size());
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+            
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching employee list", e);
+            model.addAttribute("error", "Error fetching employee list: " + e.getMessage());
+        }
+        
+        
+        model.addAttribute("availableDepartments", mg.itu.data.Init.getDepartments());
+        model.addAttribute("availableDesignations", mg.itu.data.Init.getDesignations());
+        
+        
+        model.addAttribute("search", search);
+        model.addAttribute("selectedDepartment", department);
+        model.addAttribute("selectedDesignation", designation);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        
+        return "views/hrms/employee-list";
+    }
+
+    
+    @GetMapping("/summary")
+    public String getMonthlySummary(
+            @RequestParam(value = "monthYear", required = false) String monthYear,
+            Model model, HttpSession session) {
+        
+        try {
+            
+            model.addAttribute("monthYear", monthYear);
+            
+            
+            String startDate = DateUtil.getFirstDayOfMonth(monthYear);
+            String endDate = DateUtil.getLastDayOfMonth(monthYear);
+            
+            
+            ApiResponse<SummaryDTO> response = hrmsService.getMonthlySummary(startDate, endDate, session);
+            
+            if ("success".equals(response.getStatus())) {
+                
+                model.addAttribute("summary", response.getData());
+                
+                
+                SalaryUtil.SalarySummaryCalculation calculations = 
+                    SalaryUtil.calculateSummaryStatistics(response.getData());
+                
+                
+                model.addAllAttributes(calculations.toModelAttributes());
+                
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+            
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid date format: {}", e.getMessage());
+            model.addAttribute("error", "Format de date invalide: " + e.getMessage());
+            
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+            
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            model.addAttribute("error", "Erreur lors de la récupération du récapitulatif mensuel: " + e.getMessage());
+        }
+        
+        return "views/hrms/monthly-summary";
+    }
+    
+
+}
+voici salary utilise pour calculer les total a partir de la liste 
+
+
+package mg.itu.util;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class SalaryUtil {
+    
+    public static class SalarySummaryCalculation {
+        private double totalGross;
+        private double totalNet;
+        private double totalDeduction;
+        private double averageGross;
+        private double medianGross;
+        private int totalEmployees;
+        private String currency;
+        
+        public SalarySummaryCalculation() {}
+        
+        public SalarySummaryCalculation(double totalGross, double totalNet, double totalDeduction, 
+                                      double averageGross, double medianGross, int totalEmployees, String currency) {
+            this.totalGross = totalGross;
+            this.totalNet = totalNet;
+            this.totalDeduction = totalDeduction;
+            this.averageGross = averageGross;
+            this.medianGross = medianGross;
+            this.totalEmployees = totalEmployees;
+            this.currency = currency;
+        }
+        
+        public double getTotalGross() { return totalGross; }
+        public void setTotalGross(double totalGross) { this.totalGross = totalGross; }
+        
+        public double getTotalNet() { return totalNet; }
+        public void setTotalNet(double totalNet) { this.totalNet = totalNet; }
+        
+        public double getTotalDeduction() { return totalDeduction; }
+        public void setTotalDeduction(double totalDeduction) { this.totalDeduction = totalDeduction; }
+        
+        public double getAverageGross() { return averageGross; }
+        public void setAverageGross(double averageGross) { this.averageGross = averageGross; }
+        
+        public double getMedianGross() { return medianGross; }
+        public void setMedianGross(double medianGross) { this.medianGross = medianGross; }
+        
+        public int getTotalEmployees() { return totalEmployees; }
+        public void setTotalEmployees(int totalEmployees) { this.totalEmployees = totalEmployees; }
+        
+        public String getCurrency() { return currency; }
+        public void setCurrency(String currency) { this.currency = currency; }
+        
+        public Map<String, Object> toModelAttributes() {
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("totalGross", this.totalGross);
+            attributes.put("totalNet", this.totalNet);
+            attributes.put("totalDeduction", this.totalDeduction);
+            attributes.put("averageGross", this.averageGross);
+            attributes.put("medianGross", this.medianGross);
+            attributes.put("totalEmployees", this.totalEmployees);
+            attributes.put("currency", this.currency);
+            return attributes;
+        }
+    }
+    
+    
+    public interface SalaryExtractor<T> {
+        double getTotalGross(T item);
+        default double getNetPay(T item) { return 0.0; }
+        default double getTotalDeduction(T item) { return 0.0; }
+        default String getCurrency(T item) { return "EUR"; }
+    }
+    
+    public static <T> SalarySummaryCalculation calculateSalarySummary(List<T> dataList, SalaryExtractor<T> extractor) {
+        if (dataList == null || dataList.isEmpty()) {
+            return new SalarySummaryCalculation(0.0, 0.0, 0.0, 0.0, 0.0, 0, "EUR");
+        }
+        
+        double totalGross = 0.0;
+        double totalNet = 0.0;
+        double totalDeduction = 0.0;
+        List<Double> grossList = new ArrayList<>();
+        
+        String currency = extractor.getCurrency(dataList.get(0));
+        
+        for (T item : dataList) {
+            double gross = extractor.getTotalGross(item);
+            totalGross += gross;
+            totalNet += extractor.getNetPay(item);
+            totalDeduction += extractor.getTotalDeduction(item);
+            grossList.add(gross);
+        }
+        
+        double averageGross = totalGross / dataList.size();
+        double medianGross = calculateMedian(grossList);
+        
+        return new SalarySummaryCalculation(
+            totalGross, totalNet, totalDeduction, 
+            averageGross, medianGross, dataList.size(), currency
+        );
+    }
+    
+    
+    public static SalarySummaryCalculation calculateSummaryStatistics(List<?> summaryList) {
+        if (summaryList == null || summaryList.isEmpty()) {
+            return new SalarySummaryCalculation(0.0, 0.0, 0.0, 0.0, 0.0, 0, "EUR");
+        }
+        
+        
+        @SuppressWarnings("unchecked")
+        List<Object> objectList = (List<Object>) summaryList;
+        
+        return calculateSalarySummary(objectList, new SalaryExtractor<Object>() {
+            @Override
+            public double getTotalGross(Object item) {
+                try {
+                    return (Double) item.getClass().getMethod("getTotalGross").invoke(item);
+                } catch (Exception e) {
+                    return 0.0;
+                }
+            }
+            
+            @Override
+            public double getNetPay(Object item) {
+                try {
+                    return (Double) item.getClass().getMethod("getNetPay").invoke(item);
+                } catch (Exception e) {
+                    return 0.0;
+                }
+            }
+            
+            @Override
+            public double getTotalDeduction(Object item) {
+                try {
+                    return (Double) item.getClass().getMethod("getTotal_deduction").invoke(item);
+                } catch (Exception e) {
+                    return 0.0;
+                }
+            }
+            
+            @Override
+            public String getCurrency(Object item) {
+                try {
+                    String curr = (String) item.getClass().getMethod("getCurrency").invoke(item);
+                    return curr != null ? curr : "EUR";
+                } catch (Exception e) {
+                    return "EUR";
+                }
+            }
+        });
+    }
+    
+    public static double calculateMedian(List<Double> values) {
+        if (values == null || values.isEmpty()) {
+            return 0.0;
+        }
+        
+        List<Double> sortedValues = new ArrayList<>(values);
+        Collections.sort(sortedValues);
+        
+        int size = sortedValues.size();
+        if (size % 2 == 0) {
+            return (sortedValues.get(size / 2 - 1) + sortedValues.get(size / 2)) / 2.0;
+        } else {
+            return sortedValues.get(size / 2);
+        }
+    }
+    
+    public static double calculateAverage(List<Double> values) {
+        if (values == null || values.isEmpty()) {
+            return 0.0;
+        }
+        
+        double sum = values.stream().mapToDouble(Double::doubleValue).sum();
+        return sum / values.size();
+    }
+    
+    public static String formatAmount(double amount, String currency) {
+        return String.format("%.2f %s", amount, currency != null ? currency : "EUR");
+    }
+    
+    public static double roundToTwoDecimals(double amount) {
+        return Math.round(amount * 100.0) / 100.0;
+    }
+}
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Employés - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .search-bar, .filters {
+            margin-bottom: 1rem;
+        }
+        .search-bar input, .filters select, .filters input {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+        }
+        .search-bar button, .filters button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+        .search-bar button:hover, .filters button:hover {
+            background-color: #2563eb;
+        }
+        .filters label {
+            margin-right: 0.5rem;
+            font-weight: 500;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #444444;
+        }
+        th {
+            background-color: #F5F5F5;
+            font-weight: 600;
+        }
+        .status-green::before { content: "🟢"; }
+        .status-yellow::before { content: "🟡"; }
+        .status-red::before { content: "🔴"; }
+        .actions a {
+            margin-right: 1rem;
+            color: #2E86AB;
+            text-decoration: none;
+        }
+        .actions a:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>👥 Liste des Employés</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="search-bar">
+                <form th:action="@{/api/hrms/employees}" method="get">
+                    <label>🔍 Recherche:</label>
+                    <input type="text" name="search" th:value="${search}" placeholder="Rechercher un employé..."/>
+                    <button type="submit">🔎 Rechercher</button>
+                    <button type="button" onclick="window.location.href='/api/hrms/employees'">🔄 Réinitialiser</button>
+                </form>
+            </div>
+            
+            <div class="filters">
+                <form th:action="@{/api/hrms/employees}" method="get">
+                    <input type="hidden" name="search" th:value="${search}"/>
+                    <label>🏷️ Filtres:</label>
+                    
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Département:</label>
+                            <select name="department">
+                                <option value="">Tous</option>
+                                <option th:each="dept : ${availableDepartments}" 
+                                        th:value="${dept}" 
+                                        th:text="${dept}"
+                                        th:selected="${dept == selectedDepartment}">
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Poste:</label>
+                            <select name="designation">
+                                <option value="">Tous</option>
+                                <option th:each="desig : ${availableDesignations}" 
+                                        th:value="${desig}" 
+                                        th:text="${desig}"
+                                        th:selected="${desig == selectedDesignation}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Date d'embauche:</label>
+                            <input type="date" name="startDate" th:value="${startDate}" placeholder="Du"/>
+                            <input type="date" name="endDate" th:value="${endDate}" placeholder="Au"/>
+                        </div>
+                        <button type="submit">Appliquer</button>
+                    </div>
+                </form>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom Complet</th>
+                        <th>Département</th>
+                        <th>Poste</th>
+                        <th>Date d'embauche</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="employee : ${employees}">
+                        <td th:text="${employee.employeeId}"></td>
+                        <td th:text="${employee.fullName}"></td>
+                        <td th:text="${employee.department}"></td>
+                        <td th:text="${employee.designation}"></td>
+                        <td th:text="${T(mg.itu.util.DateUtil).parseToddMMyyyy(employee.dateOfJoining)}"></td>
+                        <td th:classappend="${employee.status == 'Active' ? 'status-green' : employee.status == 'Inactive' ? 'status-red' : 'status-yellow'}" 
+                            th:text="${employee.status}"></td>
+                        <td class="actions">
+                            <a th:href="@{/api/hrms/employee/{id}(id=${employee.employeeId})}"> Voir Détails</a>
+                            <a th:href="@{/api/hrms/employee/{id}/payroll(id=${employee.employeeId})}"> Voir Salaire</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(employees)}">
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: #64748b;">
+                            Aucun employé trouvé avec les critères de recherche actuels.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="footer">
+                <span th:text="'Total: ' + ${totalEmployees} + ' employé(s) trouvé(s)'"></span><br/>
+                <span>🟢 Actif | 🟡 Congé/Autre | 🔴 Inactif</span>
+            </div>
+        </div>
+        
+        <div th:if="${error}" class="message error-message" 
+             style="background-color: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 1rem; border-radius: 4px;" 
+             th:text="${error}">
+        </div>
+    </div>
+    
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Récapitulatif Mensuel - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E86AB;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        select, button {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        button {
+            background-color: #2E86AB;
+            color: #ffffff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #444444;
+        }
+        th {
+            background-color: #F5F5F5;
+            font-weight: 600;
+        }
+        .total {
+            background-color: #F5F5F5;
+            font-weight: bold;
+        }
+        .message.error-message {
+            background-color: #fef2f2;
+            border: 1px solid #f43f5e;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>📊 Tableau Récapitulatif Mensuel</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="filters">
+                <form th:action="@{/api/hrms/summary}" method="get">
+                    <label>📅 Période:</label>
+                    <input type="month" 
+                           name="monthYear" 
+                           th:value="${monthYear != null ? monthYear : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
+                           required>
+                    <button type="submit">🔄 Actualiser</button>
+                </form>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom Employé</th>
+                        <th>Dept.</th>
+                        <th>date de publication</th>
+                        <th>Total Deduction</th>
+                        <th>Total Brut</th>
+                        <th>Net Payé</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${summary}">
+                        <td th:text="${item.employeeId}"></td>
+                        <td th:text="${item.employeeName}"></td>
+                        <td th:text="${item.department}"></td>
+                        <td th:text="${item.postingDate}"></td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(item.total_deduction, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(item.totalGross, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(item.netPay, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td>
+                            <a th:href="@{/api/hrms/payroll-components(monthYear=${item.monthYear}, employeeId=${item.employeeId} , empname=${item.employeeName})}">voir élément</a>
+                        </td>
+                    </tr>
+                    <tr class="total">
+                        <td colspan="4">TOTAUX (<span th:text="${totalEmployees}"></span> employés actifs)</td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(totalDeduction, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(totalGross, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(totalNet, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div th:if="${error}" class="message error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
