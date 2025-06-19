@@ -1,0 +1,24 @@
+source ~/.venvs/frappe-bench-env/bin/activate
+
+bench init .
+bench start
+
+bench new-site erpnexteval.localhost
+bench --site erpnexteval.localhost add-to-hosts 
+
+mysql credentials
+root
+root
+
+admin password:
+admin
+
+bench get-app erpnext
+bench --site erpnexteval.localhost install-app erpnext
+
+bench get-app hrms
+bench --site erpnexteval.localhost install-app hrms
+
+-> if installation failed: 
+    - bench drop-site erpnexteval.localhost
+    - bench new-site erpnexteval.localhost
