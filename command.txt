@@ -22,3 +22,46 @@ bench --site erpnexteval.localhost install-app hrms
 -> if installation failed: 
     - bench drop-site erpnexteval.localhost
     - bench new-site erpnexteval.localhost
+
+
+
+/* ========================================================================= */
+
+in application.properties in Spring Boot App, modify : 
+
+- your mysql credentials
+spring.datasource.username=root
+spring.datasource.password=root
+
+- to match your sites name
+api.base-url=http://erpnexteval.localhost:8000/api/method/erpnext.controllers.api.
+api.method=http://erpnexteval.localhost:8000/api/method
+api.base-url-hr=http://erpnexteval.localhost:8000/api/resource
+
+/* ========================================================================= */
+
+add this : 
+
+"redis_cache": "redis://127.0.0.1:13000",
+"redis_queue": "redis://127.0.0.1:11000",
+"redis_socketio": "redis://127.0.0.1:13000",
+"jwt_algorithm": "HS256",
+"jwt_expiry": 3600,
+"jwt_secret": "H7d5FDsq9LmAkP3TzR8WbE2xYvN6jC1oI4gU0pQnXyJZcVfBhM5SlO7iKaGu3wDtE9r2sF0qL8mN6bV4xZ7yHpW1jI3oA2cK5dR9eS",
+"log_level": "DEBUG",
+"developer_mode": 1
+
+in /home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/erpSpring/ERP-Next/erp_next/sites/erpnexteval.localhost/site_config.json
+
+/* ========================================================================= */
+
+in /home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/erpSpring/ERP-Next/erp_next/apps/hrms/hrms/services/hrms_insertion.py
+
+
+change ref_company = "ITU", line 48 into your company name
+
+
+/* ========================================================================= */
+
+
+DocTypes
