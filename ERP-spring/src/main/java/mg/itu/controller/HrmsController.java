@@ -8,8 +8,10 @@ import mg.itu.model.PaginatedResponse;
 import mg.itu.model.PayrollComponents;
 import mg.itu.model.PayrollDTO;
 import mg.itu.model.PayrollSlipDTO;
+import mg.itu.model.SalaryComponentDTO;
 import mg.itu.model.SalaryDetailDTO;
 import mg.itu.model.SummaryDTO;
+import mg.itu.model.UpdateBaseAssignmentDTO;
 import mg.itu.service.HrmsService;
 import mg.itu.service.PdfExportService;
 import mg.itu.util.DateUtil;
@@ -607,6 +609,126 @@ public class HrmsController {
             redirectAttributes.addFlashAttribute("montant", montant);
             redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
             return "redirect:/api/hrms/insert";
+        } 
+    }
+    @GetMapping("/update-base-assignment")
+    public String updateBaseAssignmentForm(Model model, HttpSession session, 
+            @ModelAttribute("selectedSalaryComponent") String selectedSalaryComponent) {
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            model.addAttribute("error", "Please log in to access the dashboard");
+            return "views/auth/login";
+        }
+ 
+        try {
+            
+            ApiResponse<SalaryComponentDTO> componentsResponse = hrmsService.getAllSalaryComponents(session);
+            if ("success".equals(componentsResponse.getStatus())) {
+                model.addAttribute("salaryComponents", componentsResponse.getData());
+            } else {
+                model.addAttribute("error", "Erreur lors du chargement des composants de salaire: " + componentsResponse.getMessage());
+                model.addAttribute("salaryComponents", new ArrayList<>());
+            }
+
+            
+            if (!model.containsAttribute("montant")) {
+                model.addAttribute("montant", 0.0);
+            }
+            if (!model.containsAttribute("taux")) {
+                model.addAttribute("taux", 0.0);
+            }
+            if (!model.containsAttribute("infOrSup")) {
+                model.addAttribute("infOrSup", 0);
+            }
+            if (!model.containsAttribute("minusOrPlus")) {
+                model.addAttribute("minusOrPlus", 0);
+            }
+
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching update base assignment form", e);
+            model.addAttribute("error", "Erreur lors du chargement du formulaire: " + e.getMessage());
+            model.addAttribute("salaryComponents", new ArrayList<>());
+        }
+
+        return "views/hrms/update_base_assignment_form";
+    }
+
+    @PostMapping("/update-base-assignment")
+    public String updateBaseAssignmentSubmit(
+            @RequestParam("salaryComponent") String salaryComponent,
+            @RequestParam("montant") Double montant,
+            @RequestParam("infOrSup") Integer infOrSup,
+            @RequestParam("minusOrPlus") Integer minusOrPlus,
+            @RequestParam("taux") Double taux,
+            Model model,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            redirectAttributes.addFlashAttribute("error", "Please log in to access the dashboard");
+            return "redirect:/api/auth/login";
+        }
+
+        try { 
+            
+            if (salaryComponent == null || salaryComponent.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Le composant de salaire est obligatoire");
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("infOrSup", infOrSup);
+                redirectAttributes.addFlashAttribute("minusOrPlus", minusOrPlus);
+                redirectAttributes.addFlashAttribute("taux", taux);
+                redirectAttributes.addFlashAttribute("selectedSalaryComponent", salaryComponent);
+                return "redirect:/api/hrms/update-base-assignment";
+            }
+
+            if (taux < 0) {
+                redirectAttributes.addFlashAttribute("error", "Le taux ne peut pas être négatif");
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("infOrSup", infOrSup);
+                redirectAttributes.addFlashAttribute("minusOrPlus", minusOrPlus);
+                redirectAttributes.addFlashAttribute("taux", taux);
+                redirectAttributes.addFlashAttribute("selectedSalaryComponent", salaryComponent);
+                return "redirect:/api/hrms/update-base-assignment";
+            }
+
+            
+            ApiResponse<UpdateBaseAssignmentDTO> response = hrmsService.updateBaseAssignment(
+                    salaryComponent, montant, infOrSup, minusOrPlus, taux, session);
+
+            
+            if ("success".equals(response.getStatus())) {
+                redirectAttributes.addFlashAttribute("success", response.getMessage());
+                redirectAttributes.addFlashAttribute("updatedStructures", response.getData());
+            } else {
+                redirectAttributes.addFlashAttribute("error", response.getMessage());
+            }
+
+            
+            redirectAttributes.addFlashAttribute("montant", montant);
+            redirectAttributes.addFlashAttribute("infOrSup", infOrSup);
+            redirectAttributes.addFlashAttribute("minusOrPlus", minusOrPlus);
+            redirectAttributes.addFlashAttribute("taux", taux);
+            redirectAttributes.addFlashAttribute("selectedSalaryComponent", salaryComponent);
+
+            return "redirect:/api/hrms/update-base-assignment";
+
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Authentication error: " + e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error updating base assignment", e);
+            redirectAttributes.addFlashAttribute("error", "Erreur lors de la mise à jour: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("montant", montant);
+            redirectAttributes.addFlashAttribute("infOrSup", infOrSup);
+            redirectAttributes.addFlashAttribute("minusOrPlus", minusOrPlus);
+            redirectAttributes.addFlashAttribute("taux", taux);
+            redirectAttributes.addFlashAttribute("selectedSalaryComponent", salaryComponent);
+            return "redirect:/api/hrms/update-base-assignment";
         }
     }
 }

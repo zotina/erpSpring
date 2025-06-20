@@ -10,9 +10,12 @@ import mg.itu.model.PayrollComponents;
 import mg.itu.model.PayrollDTO;
 import mg.itu.model.PayrollSlipDTO;
 import mg.itu.model.SalaryComponent;
+import mg.itu.model.SalaryComponentDTO;
 import mg.itu.model.SalaryDetailDTO;
 import mg.itu.model.SummaryDTO;
+import mg.itu.model.UpdateBaseAssignmentDTO;
 import mg.itu.util.DateUtil;
+import reactor.core.publisher.Mono;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -957,6 +960,131 @@ public class HrmsService {
             ApiResponse<PayrollDTO> errorResponse = new ApiResponse<>();
             errorResponse.setStatus("error");
             errorResponse.setMessage("Error creating salary slip: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+
+    public ApiResponse<SalaryComponentDTO> getAllSalaryComponents(HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "/Salary Component?fields=[\"name\",\"salary_component\"]&limit_page_length=0";
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            Mono<String> responseMono = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .bodyToMono(String.class);
+            
+            String response = responseMono.block();
+            System.out.println("response " + response);
+            if (response != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SalaryComponentDTO> components = new ArrayList<>();
+
+                for (Map<String, Object> item : data) {
+                    SalaryComponentDTO component = objectMapper.convertValue(item, SalaryComponentDTO.class);
+                    components.add(component);
+                }
+
+                ApiResponse<SalaryComponentDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Salary components fetched successfully");
+                apiResponse.setData(components);
+                return apiResponse;
+            }
+
+            ApiResponse<SalaryComponentDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch salary components");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error fetching salary components", e);
+            ApiResponse<SalaryComponentDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching salary components: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<UpdateBaseAssignmentDTO> updateBaseAssignment(
+            String salaryComponent, Double montant, Integer infOrSup, Integer minusOrPlus, Double taux, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = apiMethod + "/hrms.controllers.generator_controller.updateBaseAssignement";
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("salary_component", salaryComponent);
+        payload.put("montant", montant != null ? montant : 0.0);
+        payload.put("infOrSup", infOrSup);
+        payload.put("minusOrPlus", minusOrPlus);
+        payload.put("taux", taux != null ? taux : 0.0);
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            Mono<String> responseMono = client.post()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(payload)
+                    .retrieve()
+                    .bodyToMono(String.class);
+
+            String response = responseMono.block();
+            System.out.println("reponse" + response);
+            if (response != null) {
+                Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
+                Map<String, Object> messageMap = (Map<String, Object>) responseMap.get("message");
+
+                if (messageMap == null) {
+                    ApiResponse<UpdateBaseAssignmentDTO> errorResponse = new ApiResponse<>();
+                    errorResponse.setStatus("error");
+                    errorResponse.setMessage("Invalid response format: 'message' object missing");
+                    return errorResponse;
+                }
+
+                String status = (String) messageMap.get("status");
+                String message = (String) messageMap.get("message");
+                List<Map<String, Object>> updatedStructuresData = (List<Map<String, Object>>) messageMap.get("updated_structures");
+                List<String> errors = (List<String>) messageMap.get("errors");
+
+                List<UpdateBaseAssignmentDTO> updatedStructures = new ArrayList<>();
+                for (Map<String, Object> structureData : updatedStructuresData) {
+                    UpdateBaseAssignmentDTO structure = objectMapper.convertValue(structureData, UpdateBaseAssignmentDTO.class);
+                    updatedStructures.add(structure);
+                }
+
+                ApiResponse<UpdateBaseAssignmentDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus(status);
+                apiResponse.setMessage(message);
+                apiResponse.setData(updatedStructures);
+                return apiResponse;
+            }
+
+            ApiResponse<UpdateBaseAssignmentDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to update base assignment");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error updating base assignment", e);
+            ApiResponse<UpdateBaseAssignmentDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error updating base assignment: " + e.getMessage());
             return errorResponse;
         }
     }
