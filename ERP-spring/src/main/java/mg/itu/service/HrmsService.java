@@ -1017,7 +1017,7 @@ public class HrmsService {
     }
 
     public ApiResponse<UpdateBaseAssignmentDTO> updateBaseAssignment(
-            String salaryComponent, Double montant, Integer infOrSup, Integer minusOrPlus, Double taux, HttpSession session) {
+        String salaryComponent, Double montant, Integer infOrSup, Integer minusOrPlus, Double taux, HttpSession session) {
         String accessToken = (String) session.getAttribute("access_token");
         String sid = (String) session.getAttribute("sid");
         if (accessToken == null || sid == null) {
@@ -1045,7 +1045,6 @@ public class HrmsService {
                     .bodyToMono(String.class);
 
             String response = responseMono.block();
-            System.out.println("reponse" + response);
             if (response != null) {
                 Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
                 Map<String, Object> messageMap = (Map<String, Object>) responseMap.get("message");
@@ -1059,19 +1058,18 @@ public class HrmsService {
 
                 String status = (String) messageMap.get("status");
                 String message = (String) messageMap.get("message");
-                List<Map<String, Object>> updatedStructuresData = (List<Map<String, Object>>) messageMap.get("updated_structures");
-                List<String> errors = (List<String>) messageMap.get("errors");
+                List<Map<String, Object>> updatedSlipsData = (List<Map<String, Object>>) messageMap.get("updated_slips");
 
-                List<UpdateBaseAssignmentDTO> updatedStructures = new ArrayList<>();
-                for (Map<String, Object> structureData : updatedStructuresData) {
-                    UpdateBaseAssignmentDTO structure = objectMapper.convertValue(structureData, UpdateBaseAssignmentDTO.class);
-                    updatedStructures.add(structure);
+                List<UpdateBaseAssignmentDTO> updatedSlips = new ArrayList<>();
+                for (Map<String, Object> slipData : updatedSlipsData) {
+                    UpdateBaseAssignmentDTO slip = objectMapper.convertValue(slipData, UpdateBaseAssignmentDTO.class);
+                    updatedSlips.add(slip);
                 }
 
                 ApiResponse<UpdateBaseAssignmentDTO> apiResponse = new ApiResponse<>();
                 apiResponse.setStatus(status);
                 apiResponse.setMessage(message);
-                apiResponse.setData(updatedStructures);
+                apiResponse.setData(updatedSlips);
                 return apiResponse;
             }
 

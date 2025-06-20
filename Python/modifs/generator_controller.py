@@ -324,13 +324,13 @@ def updateDetailBase(slip_name, newBase):
             "message": str(e)
         }
         
+
 @frappe.whitelist(allow_guest=False)
 def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux):
     """
-    Met à jour les structures de salaire en modifiant directement le salaire de base et ajuste
-    les autres composants qui dépendent du salaire de base (SB/sb). Annule, supprime et recrée les salary slips associés.
-    Restaure la Salary Structure à son état original après la création des slips.
-
+    Met à jour le salaire de base pour chaque salary slip individuellement en modifiant la structure de salaire associée,
+    recalcule le slip avec le nouveau salaire de base, et restaure la structure à son état original après chaque slip.
+    
     Args:
         salary_component (str): Composant de salaire à filtrer
         montant (float): Montant de référence pour le filtre
@@ -338,7 +338,7 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
         minusOrPlus (int): 0 pour augmenter, 1 pour diminuer
         taux (str/float): Pourcentage de modification
     """
-    updated_structures = []
+    updated_slips = []
     errors = []
 
     try:
@@ -349,49 +349,50 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
 
         # Convertir montant en float
         montant = float(montant) if isinstance(montant, (str, int, float)) else 0.0
-
         minusOrPlus = int(minusOrPlus)
+
         # Récupérer les salary slips filtrés
         salary_slips = getFiltredSalary(salary_component, montant, infOrSup)
 
-        # Grouper par structure de salaire
-        structures_to_update = {}
-        for slip_data in salary_slips:
-            if slip_data.salary_structure not in structures_to_update:
-                structures_to_update[slip_data.salary_structure] = {
-                    'current_base': float(slip_data.amount),
-                    'slips': []
-                }
-            structures_to_update[slip_data.salary_structure]['slips'].append(slip_data.parent)
+        if not salary_slips:
+            return {
+                "status": "success",
+                "updated_slips": [],
+                "errors": [],
+                "total_processed": 0,
+                "message": "Aucun salary slip trouvé pour les critères donnés."
+            }
 
-        for structure_name, structure_data in structures_to_update.items():
+        # Traiter chaque salary slip individuellement
+        for slip_data in salary_slips:
             try:
-                # Annuler et supprimer les salary slips liés
-                cancelled_slips = []
-                for slip_name in structure_data['slips']:
-                    try:
-                        salary_slip = frappe.get_doc("Salary Slip", slip_name)
-                        if salary_slip.docstatus == 1:  # Submitted
-                            salary_slip.cancel()
-                            cancelled_slips.append({
-                                'name': slip_name,
-                                'employee': salary_slip.employee,
-                                'start_date': salary_slip.start_date,
-                                'end_date': salary_slip.end_date,
-                                'posting_date': salary_slip.posting_date,
-                                'company': salary_slip.company
-                            })
-                            # Supprimer le slip annulé
-                            frappe.delete_doc("Salary Slip", slip_name, ignore_permissions=False)
-                            print(f"Cancelled and deleted salary slip {slip_name}")
-                    except Exception as slip_error:
-                        error_msg = f"Erreur lors de l'annulation ou suppression du slip {slip_name}: {str(slip_error)}"
-                        errors.append(error_msg)
-                        frappe.log_error(error_msg, "Salary Slip Cancellation/Deletion Error")
-                        continue
+                slip_name = slip_data.parent
+                current_base = float(slip_data.amount)
+                structure_name = slip_data.salary_structure
+
+                # Annuler et supprimer le salary slip
+                try:
+                    salary_slip = frappe.get_doc("Salary Slip", slip_name)
+                    if salary_slip.docstatus == 1:  # Submitted
+                        salary_slip.cancel()
+                    slip_info = {
+                        'name': slip_name,
+                        'employee': salary_slip.employee,
+                        'employee_name': salary_slip.employee_name,
+                        'start_date': salary_slip.start_date,
+                        'end_date': salary_slip.end_date,
+                        'posting_date': salary_slip.posting_date,
+                        'company': salary_slip.company
+                    }
+                    frappe.delete_doc("Salary Slip", slip_name, ignore_permissions=False)
+                    print(f"Cancelled and deleted salary slip {slip_name}")
+                except Exception as slip_error:
+                    error_msg = f"Erreur lors de l'annulation ou suppression du slip {slip_name}: {str(slip_error)}"
+                    errors.append(error_msg)
+                    frappe.log_error(error_msg, "Salary Slip Cancellation/Deletion Error")
+                    continue
 
                 # Calculer le nouveau salaire de base
-                current_base = structure_data['current_base']
                 if minusOrPlus == 0:  # Augmenter
                     new_base = current_base + (current_base * (taux / 100))
                     base_adjusted_expr = f"(SB - (SB * {taux / 100}))"
@@ -399,7 +400,7 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
                     new_base = current_base - (current_base * (taux / 100))
                     base_adjusted_expr = f"(SB + (SB * {taux / 100}))"
 
-                # Charger la structure de salaire existante et sauvegarder son état initial
+                # Charger la structure de salaire et sauvegarder son état initial
                 salary_structure = frappe.get_doc("Salary Structure", structure_name)
                 original_structure = {
                     'earnings': copy.deepcopy(salary_structure.earnings),
@@ -410,13 +411,13 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
                 base_component_updated = False
                 for earning in salary_structure.earnings:
                     if earning.salary_component == "Salaire Base" or earning.abbr in ["SB", "sb"]:
-                        earning.formula = str(new_base)
+                        earning.formula = str(new_base)  # Clear formula to use fixed amount
                         base_component_updated = True
-                        print(f"Updated base salary to {new_base} for {earning.salary_component}")
+                        print(f"Updated base salary to {new_base} for {earning.salary_component} in structure {structure_name}")
                         break
 
                 if not base_component_updated:
-                    errors.append(f"Composant Salaire Base non trouvé dans la structure {structure_name}")
+                    errors.append(f"Composant Salaire Base non trouvé dans la structure {structure_name} pour le slip {slip_name}")
                     continue
 
                 # Ajuster les formules des autres composants dépendant du salaire de base
@@ -425,7 +426,7 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
                         formula = earning.formula.lower()
                         if 'sb' in formula or 'base' in formula:
                             try:
-                                new_formula = earning.formula.replace('SB', base_adjusted_expr).replace('base', base_adjusted_expr)
+                                new_formula = earning.formula.replace('SB', str(new_base)).replace('base', str(new_base))
                                 earning.formula = new_formula
                                 print(f"Adjusted formula for {earning.salary_component}: {earning.formula}")
                             except Exception as formula_error:
@@ -437,7 +438,7 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
                         formula = deduction.formula.lower()
                         if 'sb' in formula or 'base' in formula:
                             try:
-                                new_formula = deduction.formula.replace('SB', base_adjusted_expr).replace('base', base_adjusted_expr)
+                                new_formula = deduction.formula.replace('SB', str(new_base)).replace('base', str(new_base))
                                 deduction.formula = new_formula
                                 print(f"Adjusted deduction formula for {deduction.salary_component}: {deduction.formula}")
                             except Exception as formula_error:
@@ -447,61 +448,66 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
                 try:
                     salary_structure.save()
                     salary_structure.submit()
-                    print(f"Updated and submitted salary structure {structure_name}")
+                    print(f"Updated and submitted salary structure {structure_name} for slip {slip_name}")
                 except Exception as save_error:
-                    error_msg = f"Erreur lors de la sauvegarde de la structure {structure_name}: {str(save_error)}"
+                    error_msg = f"Erreur lors de la sauvegarde de la structure {structure_name} pour le slip {slip_name}: {str(save_error)}"
                     errors.append(error_msg)
                     frappe.log_error(error_msg, "Salary Structure Save Error")
                     continue
 
-                # Recréer les salary slips avec la structure modifiée
-                updated_slips = []
-                for slip_info in cancelled_slips:
-                    try:
-                        salary_slip_data = {
-                            "doctype": "Salary Slip",
-                            "employee": slip_info['employee'],
-                            "salary_structure": structure_name,
-                            "start_date": slip_info['start_date'],
-                            "end_date": slip_info['end_date'],
-                            "posting_date": slip_info['posting_date'],
-                            "company": slip_info['company']
-                        }
+                # Recréer le salary slip avec la structure modifiée
+                try:
+                    salary_slip_data = {
+                        "doctype": "Salary Slip",
+                        "employee": slip_info['employee'],
+                        "employee_name": slip_info['employee_name'],
+                        "salary_structure": structure_name,
+                        "start_date": slip_info['start_date'],
+                        "end_date": slip_info['end_date'],
+                        "posting_date": slip_info['posting_date'],
+                        "company": slip_info['company']
+                    }
 
-                        print(f"Inserting salary slip: {salary_slip_data}", "Salary Slip Debug")
-                        slip_doc = frappe.get_doc(salary_slip_data)
-                        slip_doc.insert()
+                    print(f"Inserting salary slip: {salary_slip_data}", "Salary Slip Debug")
+                    slip_doc = frappe.get_doc(salary_slip_data)
+                    slip_doc.insert()
 
-                        # Vérifier si le Salaire Base existe dans les Salary Detail
-                        salary_detail_exists = frappe.db.exists({
-                            "doctype": "Salary Detail",
-                            "parenttype": "Salary Slip",
-                            "parent": slip_doc.name,
-                            "salary_component": "Salaire Base"
+                    # Vérifier si le Salaire Base existe dans les Salary Detail
+                    salary_detail_exists = frappe.db.exists({
+                        "doctype": "Salary Detail",
+                        "parenttype": "Salary Slip",
+                        "parent": slip_doc.name,
+                        "salary_component": "Salaire Base"
+                    })
+
+                    if not salary_detail_exists:
+                        # Ajouter manuellement le composant Salaire Base si absent
+                        slip_doc.append("earnings", {
+                            "salary_component": "Salaire Base",
+                            "amount": new_base,
+                            "abbr": "SB"
                         })
+                        slip_doc.save()
+                        print(f"Manually added Salaire Base to Salary Slip {slip_doc.name}")
 
-                        if not salary_detail_exists:
-                            # Ajouter manuellement le composant Salaire Base si absent
-                            slip_doc.append("earnings", {
-                                "salary_component": "Salaire Base",
-                                "amount": new_base,
-                                "abbr": "SB"
-                            })
-                            slip_doc.save()
-                            print(f"Manually added Salaire Base to Salary Slip {slip_doc.name}")
-
-                        slip_doc.submit()
-                        updated_slips.append({
-                            "old_slip": slip_info['name'],
-                            "new_slip": slip_doc.name,
-                            "employee": slip_info['employee'],
-                            "period": f"{slip_info['start_date']} - {slip_info['end_date']}"
-                        })
-                        print(f"Created new salary slip {slip_doc.name} for employee {slip_info['employee']}")
-                    except Exception as slip_creation_error:
-                        error_msg = f"Erreur lors de la création du nouveau slip pour l'employé {slip_info['employee']}: {str(slip_creation_error)}"
-                        errors.append(error_msg)
-                        frappe.log_error(error_msg, "New Salary Slip Creation Error")
+                    slip_doc.submit()
+                    updated_slips.append({
+                        "old_slip": slip_info['name'],
+                        "new_slip": slip_doc.name,
+                        "employee": slip_info['employee_name'],
+                        "period": f"{slip_info['start_date']} - {slip_info['end_date']}",
+                        "structure_name": structure_name,
+                        "old_base": current_base,
+                        "new_base": new_base,
+                        "adjustment_percentage": taux,
+                        "adjustment_type": "increase" if minusOrPlus == 0 else "decrease"
+                    })
+                    print(f"Created new salary slip {slip_doc.name} for employee {slip_info['employee']}")
+                except Exception as slip_creation_error:
+                    error_msg = f"Erreur lors de la création du nouveau slip pour l'employé {slip_info['employee']}: {str(slip_creation_error)}"
+                    errors.append(error_msg)
+                    frappe.log_error(error_msg, "New Salary Slip Creation Error")
+                    continue
 
                 # Restaurer la Salary Structure à son état original
                 try:
@@ -509,45 +515,34 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
                     salary_structure.deductions = original_structure['deductions']
                     salary_structure.save()
                     salary_structure.submit()
-                    print(f"Restored original salary structure {structure_name}")
+                    print(f"Restored original salary structure {structure_name} after processing slip {slip_name}")
                 except Exception as restore_error:
-                    error_msg = f"Erreur lors de la restauration de la structure {structure_name}: {str(restore_error)}"
+                    error_msg = f"Erreur lors de la restauration de la structure {structure_name} après le slip {slip_name}: {str(restore_error)}"
                     errors.append(error_msg)
                     frappe.log_error(error_msg, "Salary Structure Restore Error")
 
-                updated_structures.append({
-                    "structure_name": structure_name,
-                    "old_base": current_base,
-                    "new_base": new_base,
-                    "adjustment_percentage": taux,
-                    "adjustment_type": "increase" if minusOrPlus == 0 else "decrease",
-                    "updated_slips": updated_slips,
-                    "slips_processed": len(updated_slips),
-                    "structure_modified": True
-                })
-
-            except Exception as structure_error:
-                error_msg = f"Erreur lors de la mise à jour de la structure {structure_name}: {str(structure_error)}"
+            except Exception as slip_processing_error:
+                error_msg = f"Erreur lors du traitement du slip {slip_name}: {str(slip_processing_error)}"
                 errors.append(error_msg)
-                frappe.log_error(error_msg, "Salary Structure Update Error")
+                frappe.log_error(error_msg, "Salary Slip Processing Error")
 
         # Commit les changements
         frappe.db.commit()
 
         return {
             "status": "success" if not errors else "partial_success",
-            "updated_structures": updated_structures,
+            "updated_slips": updated_slips,
             "errors": errors,
-            "total_processed": len(structures_to_update),
-            "message": f"Traitement terminé. {len(updated_structures)} structure(s) modifiée(s) avec slips recréés."
+            "total_processed": len(salary_slips),
+            "message": f"Traitement terminé. {len(updated_slips)} slip(s) modifié(s) avec nouveau salaire de base."
         }
 
     except Exception as e:
         frappe.db.rollback()
-        frappe.log_error(f"Erreur générale lors de la mise à jour des structures : {str(e)}", "Base Assignment Update Error")
+        frappe.log_error(f"Erreur générale lors de la mise à jour des slips : {str(e)}", "Base Assignment Update Error")
         return {
             "status": "error",
-            "updated_structures": [],
+            "updated_slips": [],
             "errors": [f"Erreur générale: {str(e)}"],
             "total_processed": 0,
             "message": "Échec du traitement - rollback effectué"

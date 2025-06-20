@@ -142,17 +142,18 @@
         </div>
     </div>
     <div class="container">
-        
+        <!-- Error Message -->
         <div th:if="${error}" class="error-message">
             <span th:text="${error}"></span>
         </div>
 
-        
+        <!-- Success Message -->
         <div th:if="${success}" class="summary-section">
             <h3>✅ Succès</h3>
+            <span th:text="${success}"></span>
         </div>
 
-        
+        <!-- Form -->
         <div class="card">
             <h3>Mettre à jour le salaire de base</h3>
             <form th:action="@{/api/hrms/update-base-assignment}" method="post">
@@ -212,17 +213,31 @@
             </form>
         </div>
 
-        
-        <div th:if="${updatedStructures}" class="card">
-            <h3>📋 Salaire mises à jour</h3>
-            <div th:each="structure : ${updatedStructures}" class="structure-item">
-                <div class="structure-header">
-                    <h4 th:text="'Structure: ' + ${structure.structureName}"></h4>
-                </div>
-                <p><strong>Type d'ajustement:</strong> <span th:text="${structure.adjustmentType == 'increase' ? 'Augmentation' : 'Diminution'}"></span></p>
-                <p><strong>Pourcentage:</strong> <span th:text="${structure.adjustmentPercentage} + '%'"></span></p>
-                <p><strong>Fiches traitées:</strong> <span th:text="${structure.slipsProcessed}"></span></p>
-            </div>
+        <!-- Updated Slips Table -->
+        <div th:if="${updatedSlips}" class="card">
+            <h3 th:text="'📋 Fiches de paie mises à jour (' + (${updatedSlips[0].adjustmentType == 'increase' ? 'Augmentation' : 'Diminution'}) + ' de ' + ${updatedSlips[0].adjustmentPercentage} + '%)'"></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fiche</th>
+                        <th>Employé</th>
+                        <th>Période</th>
+                        <th>Structure</th>
+                        <th>Ancien Salaire de Base (Ar)</th>
+                        <th>Nouveau Salaire de Base (Ar)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="slip : ${updatedSlips}">
+                        <td th:text="${slip.newSlip}"></td>
+                        <td th:text="${slip.employee}"></td>
+                        <td th:text="${slip.period}"></td>
+                        <td th:text="${slip.structureName}"></td>
+                        <td th:text="${slip.oldBase}"></td>
+                        <td th:text="${slip.newBase}"></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
     <div th:replace="~{fragments/footer}"></div>

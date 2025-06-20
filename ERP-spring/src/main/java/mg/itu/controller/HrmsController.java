@@ -702,7 +702,7 @@ public class HrmsController {
             
             if ("success".equals(response.getStatus())) {
                 redirectAttributes.addFlashAttribute("success", response.getMessage());
-                redirectAttributes.addFlashAttribute("updatedStructures", response.getData());
+                redirectAttributes.addFlashAttribute("updatedSlips", response.getData());
             } else {
                 redirectAttributes.addFlashAttribute("error", response.getMessage());
             }
