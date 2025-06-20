@@ -152,25 +152,3 @@ def delete_fiscal_years_range(anneeMin, anneeMax, confirm=False):
             "message": str(e),
             "data": None
         }
-
-
-# hooks.py - Ajouter ces endpoints aux hooks
-"""
-Dans le fichier hooks.py de votre application HRMS, ajoutez :
-
-# API Endpoints
-api_endpoints = {
-    "hrms.api.fiscal_year.create_fiscal_years": {
-        "methods": ["POST"],
-        "allow_guest": False
-    },
-    "hrms.api.fiscal_year.get_fiscal_years_range": {
-        "methods": ["GET"],  
-        "allow_guest": False
-    },
-    "hrms.api.fiscal_year.delete_fiscal_years_range": {
-        "methods": ["DELETE"],
-        "allow_guest": False
-    }
-}
-"""

@@ -271,9 +271,6 @@ def insert_employees(dto_list: list[EmployeeDTO]):
         "errors": errors
     }
 
-
-
-
 def insert_salary_components(dto_list: list[SalaryStructureDTO]):
     """
     Insert Salary Component records from SalaryStructureDTO list.
@@ -380,8 +377,6 @@ def insert_salary_components(dto_list: list[SalaryStructureDTO]):
         "created": created,
         "errors": errors
     }
-
-
 
 def insert_salary_structures(dto_list: list[SalaryStructureDTO], payroll_dtos: list[PayrollDTO]):
     """
@@ -524,9 +519,6 @@ def insert_salary_structures(dto_list: list[SalaryStructureDTO], payroll_dtos: l
         "errors": errors
     }
 
-
-
-
 def insert_salary_assignments(dto_list: list[PayrollDTO]):
     """
     Insert Salary Structure Assignment records from PayrollDTO list.
@@ -636,8 +628,6 @@ def insert_salary_assignments(dto_list: list[PayrollDTO]):
         "errors": errors
     }
 
-
-
 def insert_salary_slips(dto_list: list[PayrollDTO]):
     """
     Insert Salary Slip records from PayrollDTO list.
@@ -734,8 +724,6 @@ def insert_salary_slips(dto_list: list[PayrollDTO]):
         "errors": errors
     }
 
-
-
 def convert_gender(genre):
     """Convert gender to ERPNext format."""
     genre_lower = genre.lower() if genre else ""
@@ -802,8 +790,7 @@ def convert_date_format(date_str):
             return date_str
         except ValueError:
             raise ValueError(f"Invalid date format: {date_str}. Expected DD/MM/YYYY or YYYY-MM-DD.")
-        
-        
+         
 def get_or_create_holiday_list(company, year=None):
     """
     Get or create a default Holiday List for the given company and year.
@@ -864,9 +851,6 @@ def fix_component_payment_days(component_name):
     except Exception as e:
         print(f"Error fixing component {component_name}: {str(e)}")
         return False
-    
-
-
 
 def _process_employee_batch(batch: list, holiday_lists_cache: dict, 
                           designation: str, start_idx: int) -> Dict[str, Any]:
@@ -973,7 +957,6 @@ def _bulk_insert_employees(valid_employees: list) -> list:
     
     return created
 
-
 @frappe.whitelist()
 def get_or_create_designation_cached(designation_name: str) -> str:
     """Version mise en cache de get_or_create_designation."""
@@ -1044,7 +1027,6 @@ def convert_gender(genre: str) -> str:
         return 'Female'
     return 'Male'
 
-
 def bulk_insert_employees_raw(dto_list: list) -> Dict[str, Any]:
     """
     Version ultra-optimisée utilisant des requêtes SQL directes.
@@ -1098,7 +1080,6 @@ def bulk_insert_employees_raw(dto_list: list) -> Dict[str, Any]:
             "errors": [{"error": str(e)}]
         }
 
-
 def get_or_create_designation(designation_name: str) -> str:
     """Version optimisée."""
     return get_or_create_designation_cached(designation_name)
@@ -1106,7 +1087,6 @@ def get_or_create_designation(designation_name: str) -> str:
 def get_or_create_holiday_list(company: str, year: int = None) -> str:
     """Version optimisée."""
     return get_or_create_holiday_list_cached(company, year)
-
 
 def insert_employees_optimized(dto_list: list) -> Dict[str, Any]:
     """
@@ -1248,8 +1228,6 @@ def _process_employee_batch(batch: list, holiday_lists_cache: dict,
     
     return {"created": batch_created, "errors": batch_errors}
 
-
-
 def get_random_designation():
     """
     Récupère une désignation aléatoire depuis la base de données.
@@ -1287,10 +1265,6 @@ def get_random_department():
     except Exception as e:
         frappe.log_error(f"Erreur lors de la récupération des départements: {str(e)}", "Random Department Error")
         return None
-    
-    
-    
-    
     
 def get_salary_component_type(component_type_input):
     """

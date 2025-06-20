@@ -1,6 +1,8 @@
 import frappe
 from frappe import _
 from frappe.utils import get_last_day
+
+
 @frappe.whitelist(allow_guest=False)
 def get_monthly_payroll_summary(year):
     """
