@@ -3,8 +3,10 @@ package mg.itu.model;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ApiResponse<T> {
+    
     private String status;
     private String message; 
     private List<T> data;

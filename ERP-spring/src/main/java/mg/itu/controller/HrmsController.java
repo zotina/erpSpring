@@ -17,6 +17,7 @@ import mg.itu.model.ApiResponse;
 import mg.itu.model.EmployeeDTO;
 import mg.itu.model.PaginatedResponse;
 import mg.itu.model.SummaryDTO;
+import mg.itu.service.EmployeeService;
 import mg.itu.service.HrmsService;
 import mg.itu.util.DateUtil;
 import mg.itu.util.SalaryUtil;
@@ -33,6 +34,9 @@ public class HrmsController {
 
     @Autowired
     private HrmsService salaryEvolutionService;
+
+    @Autowired
+    private EmployeeService employeeService;
     
     @GetMapping("/summary")
     public String getMonthlySummary(
@@ -112,7 +116,6 @@ public class HrmsController {
         return "views/hrms/monthly-summary";
     }
     
-    
     @GetMapping("/salary-evolution-data")
     public ResponseEntity<String> getSalaryEvolutionData(
         @RequestParam(value = "year", required = false)
@@ -158,7 +161,7 @@ public class HrmsController {
                 return "views/auth/login";
             }
 
-            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(empId, session);
+            ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(empId, session);
             if ("success".equals(empResponse.getStatus())) {
                 model.addAttribute("employee", empResponse.getData().get(0));
             } else {
@@ -196,7 +199,7 @@ public class HrmsController {
             }
 
             
-            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(empId, session);
+            ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(empId, session);
             if (!"success".equals(empResponse.getStatus())) {
                 model.addAttribute("error", empResponse.getMessage());
                 return "views/hrms/payroll-form";

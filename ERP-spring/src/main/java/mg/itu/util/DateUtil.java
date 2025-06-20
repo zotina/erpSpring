@@ -1,13 +1,13 @@
 package mg.itu.util;
 
-import java.util.Date;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Date;
 import java.util.Locale;
-import java.text.ParseException;
 
 public class DateUtil {
     
@@ -110,19 +110,6 @@ public class DateUtil {
         } catch (ParseException e) {
             System.out.println("Erreur lors du parsing de la date: " + dateString + " - " + e.getMessage());
             return null;
-        }
-    }
-
-
-    public static double getDoubleValue(Object value) {
-        if (value == null) return 0.0;
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
-        }
-        try {
-            return Double.parseDouble(value.toString());
-        } catch (NumberFormatException e) {
-            return 0.0;
         }
     }
 
