@@ -193,7 +193,7 @@ def get_salary_evolution_data(year):
         print(start_date)
         print(end_date)
         slips = frappe.get_all("Salary Slip",
-            fields=["posting_date", "net_pay", "total_deduction", "employee", "currency", "gross_pay"],
+            fields=["name", "posting_date", "net_pay", "total_deduction", "employee", "currency", "gross_pay"],
             filters={"posting_date": ["between", [start_date, end_date]]},
             order_by="posting_date"
         )
