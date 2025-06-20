@@ -6,6 +6,7 @@ import mg.itu.model.EmployeeDTO;
 import mg.itu.model.MonthlyPayrollSummary;
 import mg.itu.model.PaginatedResponse;
 import mg.itu.model.PayrollComponents;
+import mg.itu.model.PayrollDTO;
 import mg.itu.model.PayrollSlipDTO;
 import mg.itu.model.SalaryDetailDTO;
 import mg.itu.model.SummaryDTO;
@@ -14,6 +15,11 @@ import mg.itu.service.PdfExportService;
 import mg.itu.util.DateUtil;
 import mg.itu.util.SalaryUtil;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -27,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
   
 @Controller
@@ -451,81 +458,155 @@ public class HrmsController {
     }
 
     @GetMapping("/insert")
-    public String insertSlipForm(Model model, HttpSession session) {
+    public String insertSlipForm(Model model, HttpSession session, @ModelAttribute("selectedEmployeeId") String selectedEmployeeId) {
         String accessToken = (String) session.getAttribute("sid");
-
         if (accessToken == null) {
             model.addAttribute("error", "Please log in to access the dashboard");
             return "views/auth/login";
         }
 
         try {
-            String empId = (String) session.getAttribute("employeID");
-            if (empId == null) {
-                model.addAttribute("error", "Employee ID not found in session");
-                return "views/auth/login";
+            
+            ApiResponse<EmployeeDTO> employeesResponse = hrmsService.getAllEmployees(session);
+            if ("success".equals(employeesResponse.getStatus())) {
+                model.addAttribute("employees", employeesResponse.getData());
+            } else {
+                model.addAttribute("error", "Erreur lors du chargement des employés: " + employeesResponse.getMessage());
+                model.addAttribute("employees", new ArrayList<>());
             }
 
-            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(empId, session);
-            if ("success".equals(empResponse.getStatus())) {
-                model.addAttribute("employee", empResponse.getData().get(0));
-            } else {
-                model.addAttribute("error", empResponse.getMessage());
+            
+            String empId = selectedEmployeeId != null && !selectedEmployeeId.isEmpty() ? selectedEmployeeId : (String) session.getAttribute("employeID");
+            if (empId != null && !empId.isEmpty()) {
+                try {
+                    ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(empId, session);
+                    if ("success".equals(empResponse.getStatus())) {
+                        model.addAttribute("selectedEmployee", empResponse.getData().get(0));
+                        model.addAttribute("selectedEmployeeId", empId);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Employee from session or redirect not found: {}", empId);
+                }
             }
+
+            
+            if (!model.containsAttribute("monthYearStart")) {
+                model.addAttribute("monthYearStart", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            }
+            if (!model.containsAttribute("monthYearEnd")) {
+                model.addAttribute("monthYearEnd", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            }
+            if (!model.containsAttribute("montant")) {
+                model.addAttribute("montant", 0.0);
+            }
+
         } catch (IllegalStateException e) {
             logger.warn("Authentication error: {}", e.getMessage());
             return "redirect:/api/auth/";
         } catch (Exception e) {
             logger.error("Error fetching payroll form", e);
-            model.addAttribute("error", "Error fetching payroll form: " + e.getMessage());
+            model.addAttribute("error", "Erreur lors du chargement du formulaire: " + e.getMessage());
+            model.addAttribute("employees", new ArrayList<>());
         }
-        return "views/hrms/payroll-form";
-    }
 
+        return "views/hrms/salary_form";
+    }
+    
     @PostMapping("/insert")
     public String insertSlipFormSubmit(
             @RequestParam("monthYearStart") String monthDebut,
             @RequestParam("monthYearEnd") String monthFin,
-            @RequestParam("emp") String emp,
+            @RequestParam("emp") String empId,
+            @RequestParam(value = "montant", defaultValue = "0") Double montant,
             Model model,
-            HttpSession session) {
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
         String accessToken = (String) session.getAttribute("sid");
 
         if (accessToken == null) {
-            model.addAttribute("error", "Please log in to access the dashboard");
-            return "views/auth/login";
+            redirectAttributes.addFlashAttribute("error", "Please log in to access the dashboard");
+            return "redirect:/api/auth/login";
         }
 
         try {
-            String empId = (String) session.getAttribute("employeID");
-            if (empId == null) {
-                empId = emp; 
-                session.setAttribute("employeID", empId);
+            
+            if (monthDebut == null || monthFin == null || monthDebut.isEmpty() || monthFin.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Les dates de début et de fin sont obligatoires");
+                redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+                redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                return "redirect:/api/hrms/insert";
+            }
+
+            
+            try {
+                YearMonth startMonth = YearMonth.parse(monthDebut);
+                YearMonth endMonth = YearMonth.parse(monthFin);
+                if (startMonth.isAfter(endMonth)) {
+                    redirectAttributes.addFlashAttribute("error", "La date de début ne peut pas être postérieure à la date de fin");
+                    redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+                    redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+                    redirectAttributes.addFlashAttribute("montant", montant);
+                    redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                    return "redirect:/api/hrms/insert";
+                }
+            } catch (DateTimeParseException e) {
+                redirectAttributes.addFlashAttribute("error", "Format de date invalide");
+                redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+                redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                return "redirect:/api/hrms/insert";
             }
 
             
             ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(empId, session);
             if (!"success".equals(empResponse.getStatus())) {
-                model.addAttribute("error", empResponse.getMessage());
-                return "views/hrms/payroll-form";
+                redirectAttributes.addFlashAttribute("error", empResponse.getMessage());
+                redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+                redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                return "redirect:/api/hrms/insert";
             }
-            model.addAttribute("employee", empResponse.getData().get(0));
 
             
-            ApiResponse<SummaryDTO> insertResponse = hrmsService.insertSalarySlip(empId, monthDebut, monthFin, session);
+            ApiResponse<PayrollDTO> insertResponse = hrmsService.insertSalarySlip(empId, monthDebut, monthFin, montant, session);
+
+            
             if ("success".equals(insertResponse.getStatus())) {
-                model.addAttribute("success", "Salary slip created successfully");
-                model.addAttribute("salarySlip", insertResponse.getData().get(0));
+                redirectAttributes.addFlashAttribute("success", insertResponse.getMessage());
+                redirectAttributes.addFlashAttribute("salarySlips", insertResponse.getData());
+                redirectAttributes.addFlashAttribute("employee", empResponse.getData().get(0));
+            } else if ("warning".equals(insertResponse.getStatus())) {
+                redirectAttributes.addFlashAttribute("warning", insertResponse.getMessage());
             } else {
-                model.addAttribute("error", insertResponse.getMessage());
+                redirectAttributes.addFlashAttribute("error", insertResponse.getMessage());
             }
+
+            
+            redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+            redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+            redirectAttributes.addFlashAttribute("montant", montant);
+            redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+
+            
+            return "redirect:/api/hrms/insert";
+
         } catch (IllegalStateException e) {
             logger.warn("Authentication error: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Authentication error: " + e.getMessage());
             return "redirect:/api/auth/";
         } catch (Exception e) {
             logger.error("Error creating salary slip", e);
-            model.addAttribute("error", "Error creating salary slip: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Erreur lors de la création des fiches de paie: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+            redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+            redirectAttributes.addFlashAttribute("montant", montant);
+            redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+            return "redirect:/api/hrms/insert";
         }
-        return "views/hrms/payroll-form";
     }
 }

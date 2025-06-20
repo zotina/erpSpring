@@ -41,7 +41,8 @@
             background-color: #f8f9fa;
         }
         form {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto;
             gap: 1rem;
             align-items: center;
             margin-bottom: 2rem;
@@ -49,19 +50,31 @@
             background-color: #f8f9fa;
             border-radius: 8px;
         }
-        select, button, input[type="month"] {
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+        }
+        select, button, input[type="month"], input[type="number"] {
             padding: 0.5rem;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
             font-size: 0.9rem;
         }
-        input[type="month"] {
+        input[type="month"], input[type="number"], select {
             min-width: 150px;
         }
         button {
             background-color: #2E86AB;
             color: #ffffff;
             cursor: pointer;
+            height: fit-content;
+            align-self: end;
         }
         button:hover {
             background-color: #2563eb;
@@ -100,6 +113,11 @@
             margin: 1.5rem 0;
             border-radius: 8px;
             border: 2px solid #2E86AB;
+        }
+        .warning-section {
+            background-color: #fef3cd;
+            border: 2px solid #fbbf24;
+            color: #92400e;
         }
         .summary-table {
             margin: 0;
@@ -152,6 +170,39 @@
             margin: 1.5rem 0;
             text-align: center;
         }
+        .salary-slip-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #fafafa;
+        }
+        .salary-slip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .salary-slip-header h4 {
+            margin: 0;
+            color: #2E86AB;
+        }
+        @media (max-width: 768px) {
+            form {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .form-group {
+                width: 100%;
+            }
+        }
+        .employee-info {
+            background-color: #e0f2fe;
+            border: 1px solid #0277bd;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -162,31 +213,92 @@
         </div>
     </div>
     <div class="container">
+        
         <div th:if="${error}" class="error-message">
             <span th:text="${error}"></span>
         </div>
+        
+        
         <div th:if="${success}" class="summary-section">
+            <h3>✅ Succès</h3>
             <span th:text="${success}"></span>
-            <div th:if="${salarySlip}">
-                <p><strong>Fiche de paie créée pour:</strong> <span th:text="${employee.fullName}"></span></p>
-                <p><strong>Période:</strong> <span th:text="${salarySlip.monthYear}"></span></p>
+            <div th:if="${employee}">
+                <div class="employee-info">
+                    <p><strong>Employé sélectionné:</strong> <span th:text="${employee.fullName}"></span></p>
+                    <p><strong>Période:</strong> 
+                        <span th:text="${monthYearStart}"></span> 
+                        <span th:if="${monthYearStart != monthYearEnd}"> au <span th:text="${monthYearEnd}"></span></span>
+                    </p>
+                </div>
             </div>
         </div>
+        
+        
+        <div th:if="${warning}" class="summary-section warning-section">
+            <h3>⚠️ Avertissement</h3>
+            <span th:text="${warning}"></span>
+        </div>
 
+        
         <div class="card">
-            <form th:action="@{/api/hrms/salary/insert}" method="post">
-                <p><strong>👤 Employé:</strong> <span th:text="${employee.fullName} + ' (' + ${employee.employeeId} + ')'"></span></p>
-                <input type="hidden" name="emp" th:value="${employee.employeeId}" />
-                <input type="month" 
-                       name="monthYearStart" 
-                       th:value="${monthYearStart != null ? monthYearStart : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
-                       required>
-                <input type="month" 
-                       name="monthYearEnd" 
-                       th:value="${monthYearEnd != null ? monthYearEnd : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
-                       required>
-                <button type="submit">🔄 Créer</button>
+            <h3>Création de fiches de paie</h3>
+            <form th:action="@{/api/hrms/insert}" method="post">
+                <div class="form-group">
+                    <label for="emp">👤 Sélectionner un employé:</label>
+                    <select id="emp" name="emp" required>
+                        <option value="">-- Choisir un employé --</option>
+                        <option th:each="employee : ${employees}" 
+                                th:value="${employee.employeeId}" 
+                                th:text="${employee.fullName + ' (' + employee.employeeId + ')'}"
+                                th:selected="${selectedEmployeeId != null && selectedEmployeeId == employee.employeeId}">
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="monthYearStart">📅 Mois de début:</label>
+                    <input type="month" 
+                           id="monthYearStart"
+                           name="monthYearStart" 
+                           th:value="${monthYearStart != null ? monthYearStart : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="monthYearEnd">📅 Mois de fin:</label>
+                    <input type="month" 
+                           id="monthYearEnd"
+                           name="monthYearEnd" 
+                           th:value="${monthYearEnd != null ? monthYearEnd : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="montant">💰 Montant:</label>
+                    <input type="number" 
+                           id="montant"
+                           name="montant" 
+                           step="0.01"
+                           min="0"
+                           th:value="${montant != null ? montant : 0}" 
+                           placeholder="0.00">
+                </div>
+                
+                <button type="submit">🔄 Créer les fiches de paie</button>
             </form>
+        </div>
+
+        
+        <div th:if="${salarySlips}" class="card">
+            <h3>📋 Fiches de paie créées</h3>
+            <div th:each="slip : ${salarySlips}" class="salary-slip-item">
+                <div class="salary-slip-header">
+                    <h4 th:text="'Mois: ' + ${slip.mois}"></h4>
+                    <span class="total" th:text="'Salaire: ' + ${slip.salaire} + ' Ar'"></span>
+                </div>
+                <p><strong>Référence employé:</strong> <span th:text="${slip.ref_employe}"></span></p>
+                <p><strong>Salaire de base:</strong> <span th:text="${slip.salaire_base} + ' Ar'"></span></p>
+            </div>
         </div>
     </div>
     <div th:replace="~{fragments/footer}"></div>

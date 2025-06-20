@@ -7,6 +7,7 @@ import mg.itu.model.EmployeeDTO;
 import mg.itu.model.MonthlyPayrollSummary;
 import mg.itu.model.PaginatedResponse;
 import mg.itu.model.PayrollComponents;
+import mg.itu.model.PayrollDTO;
 import mg.itu.model.PayrollSlipDTO;
 import mg.itu.model.SalaryComponent;
 import mg.itu.model.SalaryDetailDTO;
@@ -24,7 +25,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,29 +51,39 @@ public class HrmsService {
         if (accessToken == null || sid == null) {
             throw new IllegalStateException("User is not authenticated");
         }
- 
+    
         StringBuilder filters = new StringBuilder("[");
-        List<String> conditions = new ArrayList<>(); 
-        if (search != null && search != "" && !search.isEmpty()) {
-            conditions.add("[\"employee_name\",\"like\",\"%" + search + "%\"]");
+        List<String> conditions = new ArrayList<>();
+        
+        
+        if (search != null && !search.trim().isEmpty()) {
+            conditions.add("[\"employee_name\",\"like\",\"%" + search.trim() + "%\"]");
         }
-        if (department != null && department != "" && !department.equals("Tous")) {
+        if (department != null && !department.trim().isEmpty() && !department.equals("Tous")) {
             conditions.add("[\"department\",\"=\",\"" + department + "\"]");
         }
-        if (designation != null && designation != "" && !designation.equals("Tous")) {
+        if (designation != null && !designation.trim().isEmpty() && !designation.equals("Tous")) {
             conditions.add("[\"designation\",\"=\",\"" + designation + "\"]");
         }
-        if (startDate != null && startDate != "" && !startDate.isEmpty()) {
+        if (startDate != null && !startDate.trim().isEmpty()) {
             conditions.add("[\"date_of_joining\",\">=\",\"" + startDate + "\"]");
         }
-        if (endDate != null && endDate != "" && !endDate.isEmpty()) {
+        if (endDate != null && !endDate.trim().isEmpty()) {
             conditions.add("[\"date_of_joining\",\"<=\",\"" + endDate + "\"]");
         }
+        
         filters.append(String.join(",", conditions)).append("]");
-
-        String url = baseApiUrl + "/Employee?fields=[\"*\"]&filters=" + filters.toString() + "&limit_page_length=500";
+        
+        
+        String url;
+        if (conditions.isEmpty()) {
+            url = baseApiUrl + "/Employee?fields=[\"name\",\"employee_name\",\"department\",\"designation\",\"date_of_joining\",\"status\"]&limit_page_length=0";
+        } else {
+            url = baseApiUrl + "/Employee?fields=[\"name\",\"employee_name\",\"department\",\"designation\",\"date_of_joining\",\"status\"]&filters=" + filters.toString() + "&limit_page_length=0";
+        }
+        
         WebClient client = webClientBuilder.baseUrl(url).build();
-   
+    
         try {
             ResponseEntity<String> response = client.get()
                     .header("Authorization", "Bearer " + accessToken)
@@ -81,26 +91,29 @@ public class HrmsService {
                     .retrieve()
                     .toEntity(String.class)
                     .block();
-
+            System.out.println("response "+response);
             if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
                 List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
                 List<EmployeeDTO> employees = new ArrayList<>();
+                
                 for (Map<String, Object> item : data) {
                     EmployeeDTO employee = objectMapper.convertValue(item, EmployeeDTO.class);
                     employees.add(employee);
                 }
+    
                 ApiResponse<EmployeeDTO> apiResponse = new ApiResponse<>();
                 apiResponse.setStatus("success");
                 apiResponse.setMessage("Employees fetched successfully");
                 apiResponse.setData(employees);
                 return apiResponse;
             }
-
+    
             ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
             errorResponse.setStatus("error");
             errorResponse.setMessage("Failed to fetch employees");
             return errorResponse;
+            
         } catch (Exception e) {
             logger.error("Error fetching employees", e);
             ApiResponse<EmployeeDTO> errorResponse = new ApiResponse<>();
@@ -108,6 +121,11 @@ public class HrmsService {
             errorResponse.setMessage("Error fetching employees: " + e.getMessage());
             return errorResponse;
         }
+    }
+    
+    
+    public ApiResponse<EmployeeDTO> getAllEmployees(HttpSession session) {
+        return getEmployeeList(null, null, null, null, null, session);
     }
 
     public ApiResponse<EmployeeDTO> getEmployeeDetails(String id, HttpSession session) {
@@ -864,55 +882,82 @@ public class HrmsService {
         }
     }   
 
-    public ApiResponse<SummaryDTO> insertSalarySlip(String employeeId, String start, String end, HttpSession session) {
-    String accessToken = (String) session.getAttribute("access_token");
-    String sid = (String) session.getAttribute("sid");
-    if (accessToken == null || sid == null) {
-        throw new IllegalStateException("User is not authenticated");
-    }
-
-    String url = baseApiUrl + "/hrms.controllers.generator_controller.insert_salary_slip?emp=HR-EMP-00961&monthYear=2025-06";
-
-    
-    Map<String, Object> payload = new HashMap<>();
-    payload.put("employee", employeeId);
-    payload.put("start_date", start);
-    payload.put("end_date", end);
-    
-    WebClient client = webClientBuilder.baseUrl(url).build();
-
-    try {
-        ResponseEntity<String> response = client.post()
-                .header("Authorization", "Bearer " + accessToken)
-                .cookie("sid", sid)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(payload)
-                .retrieve()
-                .toEntity(String.class)
-                .block();
-
-        if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
-            Map<String, Object> data = (Map<String, Object>) responseMap.get("data");
-            SummaryDTO salarySlip = objectMapper.convertValue(data, SummaryDTO.class);
-
-            ApiResponse<SummaryDTO> apiResponse = new ApiResponse<>();
-            apiResponse.setStatus("success");
-            apiResponse.setMessage("Salary slip created successfully");
-            apiResponse.setData(Collections.singletonList(salarySlip));
-            return apiResponse;
+    public ApiResponse<PayrollDTO> insertSalarySlip(String employeeId, String monthDebut, String monthFin, Double montant, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
         }
 
-        ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
-        errorResponse.setStatus("error");
-        errorResponse.setMessage("Failed to create salary slip");
-        return errorResponse;
-    } catch (Exception e) {
-        logger.error("Error creating salary slip", e);
-        ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
-        errorResponse.setStatus("error");
-        errorResponse.setMessage("Error creating salary slip: " + e.getMessage());
-        return errorResponse;
+        String url = apiMethod + "/hrms.controllers.generator_controller.insert_slip_period";
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("emp", employeeId);
+        payload.put("monthDebut", monthDebut);
+        payload.put("monthFin", monthFin);
+        payload.put("montant", montant != null ? montant : 0.0);
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.post()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(payload)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                
+                Map<String, Object> messageMap = (Map<String, Object>) responseMap.get("message");
+
+                if (messageMap == null) {
+                    ApiResponse<PayrollDTO> errorResponse = new ApiResponse<>();
+                    errorResponse.setStatus("error");
+                    errorResponse.setMessage("Invalid response format: 'message' object missing");
+                    return errorResponse;
+                }
+
+                String status = (String) messageMap.get("status");
+                String message = (String) messageMap.get("message");
+
+                if ("success".equals(status)) {
+                    List<Map<String, Object>> dataList = (List<Map<String, Object>>) messageMap.get("data");
+                    List<PayrollDTO> payrollList = new ArrayList<>();
+
+                    for (Map<String, Object> data : dataList) {
+                        PayrollDTO payroll = objectMapper.convertValue(data, PayrollDTO.class);
+                        payrollList.add(payroll);
+                    }
+
+                    ApiResponse<PayrollDTO> apiResponse = new ApiResponse<>();
+                    apiResponse.setStatus("success");
+                    apiResponse.setMessage(message);
+                    apiResponse.setData(payrollList);
+                    return apiResponse;
+                } else {
+                    ApiResponse<PayrollDTO> errorResponse = new ApiResponse<>();
+                    errorResponse.setStatus(status);
+                    errorResponse.setMessage(message);
+                    return errorResponse;
+                }
+            }
+
+            ApiResponse<PayrollDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to create salary slip");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error creating salary slip", e);
+            ApiResponse<PayrollDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error creating salary slip: " + e.getMessage());
+            return errorResponse;
+        }
     }
-}
 }
