@@ -418,29 +418,29 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
                     errors.append(f"Composant Salaire Base non trouvé dans la structure {structure_name} pour le slip {slip_name}")
                     continue
 
-                # Ajuster les formules des autres composants dépendant du salaire de base
-                for earning in salary_structure.earnings:
-                    if earning.salary_component != "Salaire Base" and earning.formula:
-                        formula = earning.formula.lower()
-                        if 'sb' in formula or 'base' in formula:
-                            try:
-                                new_formula = earning.formula.replace('SB', str(new_base)).replace('base', str(new_base))
-                                earning.formula = new_formula
-                                print(f"Adjusted formula for {earning.salary_component}: {earning.formula}")
-                            except Exception as formula_error:
-                                print(f"Error adjusting formula for {earning.salary_component}: {str(formula_error)}")
+                # # Ajuster les formules des autres composants dépendant du salaire de base
+                # for earning in salary_structure.earnings:
+                #     if earning.salary_component != "Salaire Base" and earning.formula:
+                #         formula = earning.formula.lower()
+                #         if 'sb' in formula or 'base' in formula:
+                #             try:
+                #                 new_formula = earning.formula.replace('SB', str(new_base)).replace('base', str(new_base))
+                #                 earning.formula = new_formula
+                #                 print(f"Adjusted formula for {earning.salary_component}: {earning.formula}")
+                #             except Exception as formula_error:
+                #                 print(f"Error adjusting formula for {earning.salary_component}: {str(formula_error)}")
 
-                # Ajuster les déductions
-                for deduction in salary_structure.deductions:
-                    if deduction.formula:
-                        formula = deduction.formula.lower()
-                        if 'sb' in formula or 'base' in formula:
-                            try:
-                                new_formula = deduction.formula.replace('SB', str(new_base)).replace('base', str(new_base))
-                                deduction.formula = new_formula
-                                print(f"Adjusted deduction formula for {deduction.salary_component}: {deduction.formula}")
-                            except Exception as formula_error:
-                                print(f"Error adjusting deduction formula for {deduction.salary_component}: {str(formula_error)}")
+                # # Ajuster les déductions
+                # for deduction in salary_structure.deductions:
+                #     if deduction.formula:
+                #         formula = deduction.formula.lower()
+                #         if 'sb' in formula or 'base' in formula:
+                #             try:
+                #                 new_formula = deduction.formula.replace('SB', str(new_base)).replace('base', str(new_base))
+                #                 deduction.formula = new_formula
+                #                 print(f"Adjusted deduction formula for {deduction.salary_component}: {deduction.formula}")
+                #             except Exception as formula_error:
+                #                 print(f"Error adjusting deduction formula for {deduction.salary_component}: {str(formula_error)}")
 
                 # Sauvegarder et soumettre la structure modifiée
                 try:
