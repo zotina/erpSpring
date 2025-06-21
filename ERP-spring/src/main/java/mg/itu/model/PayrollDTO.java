@@ -1,12 +1,17 @@
 package mg.itu.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PayrollDTO {
+    @JsonProperty("mois")
     private String mois;
+    @JsonProperty("ref_employe")
     private String refEmploye;
+    @JsonProperty("salaire_base")
     private Double salaireBase;
+    @JsonProperty("salaire")
     private String salaire;
 
     

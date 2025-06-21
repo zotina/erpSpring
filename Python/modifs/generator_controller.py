@@ -53,8 +53,6 @@ def getLastBaseSalaryEmpFromDate(emp, monthYear):
                 'posting_date': salary_slips[0].posting_date,
                 'salary_structure': salary_slips[0].salary_structure 
             }
-        else:
-            frappe.throw(f"Aucun salaire de base trouvé pour l'employé {emp} avant {target_date}")
     
     except Exception as e:
         frappe.log_error(f"Erreur lors de la recherche de salaire de base : {str(e)}", "API Error")
@@ -96,15 +94,15 @@ def generatePayrollDTO(emp, monthDebut, monthFin,montant):
                     current_date += relativedelta(months=1)
                     continue
                 
-                if not last_baseSalaryInfo:
-                    if montant : 
-                        last_baseSalaryInfo = {
+                if montant > 0:
+                    last_baseSalaryInfo = {
                             'amount': montant,
-                            'salary_structure': getMaxStructureSalary    
+                            'salary_structure': getMaxStructureSalary()['name']    
                         }
-                    else :
-                        frappe.throw(f"Aucun salaire de base trouvé et aucun montant suggeré")
-                    
+                else :
+                    if not last_baseSalaryInfo:
+                            frappe.throw(f"Aucun salaire de base trouvé et aucun montant suggeré")
+                print(emp)
                 employee_ref = frappe.db.get_value("Employee", {"name": emp}, ["ref"])
                 existing_slip = frappe.db.exists("Salary Slip", {
                     "employee": emp,
@@ -132,7 +130,6 @@ def generatePayrollDTO(emp, monthDebut, monthFin,montant):
                 frappe.log_error(f"Erreur lors de la génération du DTO pour {current_date.strftime('%Y-%m')}: {str(e)}", "Payroll Generation")
                 current_date += relativedelta(months=1)
                 continue
-        
         return {
             "status": "success",
             "message": f"Génération réussie de {len(result_list)} DTO(s) de paie",
@@ -157,14 +154,15 @@ def insert_slip_period(emp, monthDebut, monthFin,montant):
         print("Transaction started for payroll insertion", "Payroll Transaction")
 
         dto_result = generatePayrollDTO(emp, monthDebut, monthFin,montant)
-        
+         
         if dto_result.get("status") == "error":
             frappe.db.rollback()
             return dto_result
         
         dto_list = dto_result.get("data", [])
-        
+        print("payroll")
         print(dto_list)
+        
         if not dto_list:
             frappe.db.rollback()
             return {

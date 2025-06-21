@@ -290,14 +290,14 @@
 
         
         <div th:if="${salarySlips}" class="card">
-            <h3>📋 Fiches de paie créées</h3>
-            <div th:each="slip : ${salarySlips}" class="salary-slip-item">
+            <h3>📋 Fiche de paie créée</h3>
+            <div th:if="${!salarySlips.empty}" class="salary-slip-item">
                 <div class="salary-slip-header">
-                    <h4 th:text="'Mois: ' + ${slip.mois}"></h4>
-                    <span class="total" th:text="'Salaire: ' + ${slip.salaire} + ' Ar'"></span>
+                    <h4>Fiche de paie</h4>
+                    <span class="total" th:text="'Salaire: ' + ${salarySlips[0].salaire} + ' Ar'"></span>
                 </div>
-                <p><strong>Référence employé:</strong> <span th:text="${slip.ref_employe}"></span></p>
-                <p><strong>Salaire de base:</strong> <span th:text="${slip.salaire_base} + ' Ar'"></span></p>
+                <p><strong>Référence employé:</strong> <span th:text="${salarySlips[0].refEmploye}"></span></p>
+                <p><strong>Salaire de base:</strong> <span th:text="${salarySlips[0].salaireBase} + ' Ar'"></span></p>
             </div>
         </div>
     </div>
