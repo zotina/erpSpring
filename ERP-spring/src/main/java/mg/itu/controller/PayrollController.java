@@ -13,14 +13,14 @@ import jakarta.servlet.http.HttpSession;
 import mg.itu.model.ApiResponse;
 import mg.itu.model.MonthlyPayrollSummary;
 import mg.itu.model.PayrollComponents;
-import mg.itu.service.HrmsService;
+import mg.itu.service.PayrollService;
 
 @Controller
 @RequestMapping("/api/hrms")
 public class PayrollController {
-    
+
     @Autowired
-    private HrmsService hrmsService;
+    private PayrollService payrollService;
 
     @GetMapping("/payroll-summary")
     public String getPayrollSummary(@RequestParam(value = "year", required = false) String year, Model model, HttpSession session) {
@@ -35,7 +35,7 @@ public class PayrollController {
         }
         
         try {
-            ApiResponse<MonthlyPayrollSummary> response = hrmsService.getMonthlyPayrollSummary(year, session);
+            ApiResponse<MonthlyPayrollSummary> response = payrollService.getMonthlyPayrollSummary(year, session);
             if ("success".equals(response.getStatus())) {
                 List<MonthlyPayrollSummary> summaries = response.getData();
                 model.addAttribute("summaries", summaries);
@@ -78,7 +78,7 @@ public class PayrollController {
             return "views/auth/login";
         } 
         try {
-            ApiResponse<PayrollComponents> response = hrmsService.getPayrollComponents(monthYear,employeeId, session);
+            ApiResponse<PayrollComponents> response = payrollService.getPayrollComponents(monthYear,employeeId, session);
             if ("success".equals(response.getStatus())) {
                 model.addAttribute("components", response.getData().get(0));
                 model.addAttribute("empname", employeeName);

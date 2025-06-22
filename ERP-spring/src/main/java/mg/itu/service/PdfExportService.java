@@ -1,5 +1,18 @@
 package mg.itu.service;
 
+import java.io.ByteArrayOutputStream;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import com.itextpdf.kernel.colors.Color;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
@@ -19,19 +32,6 @@ import com.itextpdf.layout.properties.UnitValue;
 import mg.itu.model.EmployeeDTO;
 import mg.itu.model.PayrollSlipDTO;
 import mg.itu.util.DateUtil;
-
-import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
 
 @Service
 public class PdfExportService {
@@ -341,26 +341,6 @@ public class PdfExportService {
     
     private String formatCurrency(double amount, String currency) {
         String formattedAmount = currencyFormatter.format(amount);
-        return (currency != null ? currency : "Ar") + " " + formattedAmount;
-    }
-    
-    
-    private String formatAmount(double amount) {
-        return currencyFormatter.format(amount);
-    }
-    
-    
-    private String formatCurrencyCustom(double amount, String currency, boolean showDecimals) {
-        DecimalFormat formatter;
-        if (showDecimals) {
-            formatter = currencyFormatter;
-        } else {
-            DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
-            symbols.setGroupingSeparator(',');
-            formatter = new DecimalFormat("#,##0", symbols);
-        }
-        
-        String formattedAmount = formatter.format(amount);
         return (currency != null ? currency : "Ar") + " " + formattedAmount;
     }
     

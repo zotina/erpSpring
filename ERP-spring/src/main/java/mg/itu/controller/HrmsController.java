@@ -24,6 +24,7 @@ import mg.itu.model.EmployeeDTO;
 import mg.itu.model.PayrollDTO;
 import mg.itu.model.SalaryComponentDTO;
 import mg.itu.model.UpdateBaseAssignmentDTO;
+import mg.itu.service.EmployeeService;
 import mg.itu.service.HrmsService;
 
   
@@ -35,6 +36,9 @@ public class HrmsController {
 
     @Autowired
     private HrmsService hrmsService;
+
+    @Autowired
+    private EmployeeService employeeService;
     
     @GetMapping("/insert")
     public String insertSlipForm(Model model, HttpSession session, @ModelAttribute("selectedEmployeeId") String selectedEmployeeId) {
@@ -46,7 +50,7 @@ public class HrmsController {
 
         try {
             
-            ApiResponse<EmployeeDTO> employeesResponse = hrmsService.getAllEmployees(session);
+            ApiResponse<EmployeeDTO> employeesResponse = employeeService.getAllEmployees(session);
             if ("success".equals(employeesResponse.getStatus())) {
                 model.addAttribute("employees", employeesResponse.getData());
             } else {
@@ -58,7 +62,7 @@ public class HrmsController {
             String empId = selectedEmployeeId != null && !selectedEmployeeId.isEmpty() ? selectedEmployeeId : (String) session.getAttribute("employeID");
             if (empId != null && !empId.isEmpty()) {
                 try {
-                    ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(empId, session);
+                    ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(empId, session);
                     if ("success".equals(empResponse.getStatus())) {
                         model.addAttribute("selectedEmployee", empResponse.getData().get(0));
                         model.addAttribute("selectedEmployeeId", empId);
@@ -141,7 +145,7 @@ public class HrmsController {
             }
 
             
-            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(empId, session);
+            ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(empId, session);
             if (!"success".equals(empResponse.getStatus())) {
                 redirectAttributes.addFlashAttribute("error", empResponse.getMessage());
                 redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);

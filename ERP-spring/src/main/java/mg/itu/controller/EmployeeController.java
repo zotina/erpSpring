@@ -22,7 +22,9 @@ import mg.itu.model.EmployeeDTO;
 import mg.itu.model.PaginatedResponse;
 import mg.itu.model.PayrollSlipDTO;
 import mg.itu.model.SalaryDetailDTO;
+import mg.itu.service.EmployeeService;
 import mg.itu.service.HrmsService;
+import mg.itu.service.PayrollService;
 import mg.itu.service.PdfExportService;
 import mg.itu.util.DateUtil;
 
@@ -37,6 +39,12 @@ public class EmployeeController {
 
     @Autowired
     private PdfExportService pdfExportService;
+
+    @Autowired
+    private EmployeeService employeeService;
+
+    @Autowired
+    private PayrollService payrollService;
 
     @GetMapping("/employees")
     public String getEmployeeList(
@@ -62,7 +70,7 @@ public class EmployeeController {
             if (size < 1) size = 20;
             if (size > 100) size = 100; 
             
-            PaginatedResponse<EmployeeDTO> response = hrmsService.getEmployeeListPaginated(
+            PaginatedResponse<EmployeeDTO> response = employeeService.getEmployeeListPaginated(
                     search, department, designation, startDate, endDate, page, size, session);
 
             model.addAttribute("employees", response.getData());
@@ -117,7 +125,7 @@ public class EmployeeController {
         } 
 
         try {
-            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(id, session);
+            ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(id, session);
             ApiResponse<SalaryDetailDTO> salaryResponse = hrmsService.getSalaryHistory(id, session);
             session.setAttribute("employeID", id); 
             if ("success".equals(empResponse.getStatus()) && "success".equals(salaryResponse.getStatus())) {
@@ -154,7 +162,7 @@ public class EmployeeController {
                 session.setAttribute("employeID", empId); 
             }
             
-            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(empId, session);
+            ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(empId, session);
             if ("success".equals(empResponse.getStatus())) {
                 model.addAttribute("employee", empResponse.getData().get(0));
             } else {
@@ -186,12 +194,12 @@ public class EmployeeController {
             String emp = (String) session.getAttribute("employeID");
             System.out.println("employe ID "+ emp);
 
-            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(emp, session);
+            ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(emp, session);
             
             String startDate = DateUtil.getFirstDayOfMonth(monthYear);
             String endDate = DateUtil.getLastDayOfMonth(monthYear);
             
-            ApiResponse<PayrollSlipDTO> response = hrmsService.generatePayrollSlip(emp, startDate,endDate, session);
+            ApiResponse<PayrollSlipDTO> response = payrollService.generatePayrollSlip(emp, startDate,endDate, session);
             model.addAttribute("employee", empResponse.getData().get(0));
             
             if ("success".equals(empResponse.getStatus()) && "success".equals(response.getStatus())) {
@@ -222,10 +230,10 @@ public class EmployeeController {
         try {
             String emp = (String) session.getAttribute("employeID");
             String month = (String) session.getAttribute("monthYear");
-            ApiResponse<EmployeeDTO> empResponse = hrmsService.getEmployeeDetails(emp, session);
+            ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(emp, session);
             String startDate = DateUtil.getFirstDayOfMonth(month);
             String endDate = DateUtil.getLastDayOfMonth(month);
-            ApiResponse<PayrollSlipDTO> response = hrmsService.generatePayrollSlip(emp, startDate, endDate, session);
+            ApiResponse<PayrollSlipDTO> response = payrollService.generatePayrollSlip(emp, startDate, endDate, session);
             
             if (!"success".equals(empResponse.getStatus()) || !"success".equals(response.getStatus())) {
                 logger.error("Error retrieving data for PDF export: {}", response.getMessage());
