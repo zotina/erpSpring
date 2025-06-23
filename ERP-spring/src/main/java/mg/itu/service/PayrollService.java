@@ -49,7 +49,6 @@ public class PayrollService {
         
         String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]&filters=[[\"employee\",\"=\",\"" + employeeId + "\"],[\"posting_date\",\">=\",\"" + startDate + "\"],[\"posting_date\",\"<=\",\"" + endDate + "\"]]" + "&limit_page_length=500";
         
-        System.out.println("URL Salary Slip: " + url);
         
         WebClient client = webClientBuilder.baseUrl(url).build();
         
@@ -236,7 +235,6 @@ public class PayrollService {
 
         String url = apiMethod + "/hrms.controllers.payroll_controller.get_monthly_payroll_summary?year=" + year;
         WebClient client = webClientBuilder.baseUrl(url).build();
-        System.out.println("url = "+ url);
 
         try {
             ResponseEntity<String> response = client.get()
@@ -246,7 +244,6 @@ public class PayrollService {
                     .toEntity(String.class)
                     .block();
 
-            System.out.println("payrol = " + response);
 
             if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 @SuppressWarnings("unchecked")
@@ -295,7 +292,6 @@ public class PayrollService {
             url+="&employee_id=" + employeeId; 
         }
         WebClient client = webClientBuilder.baseUrl(url).build();
-        System.out.println("url " + url);
         try {
             ResponseEntity<String> response = client.get()
                     .header("Authorization", "Bearer " + accessToken)
@@ -303,7 +299,6 @@ public class PayrollService {
                     .retrieve()
                     .toEntity(String.class)
                     .block();
-            System.out.println("componnent reponse " + response);
     
             if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
@@ -319,7 +314,6 @@ public class PayrollService {
                     components.setCurrency((String) data.get("currency"));
                     components.setEmployeeCount(getIntValue(data.get("employee_count")));
     
-                    System.out.println("component = " + components.toString());
                     
                     List<Map<String, Object>> earningsData = (List<Map<String, Object>>) data.get("earnings");
                     List<SalaryComponent> earnings = new ArrayList<>();
@@ -333,7 +327,6 @@ public class PayrollService {
                     }
                     components.setEarnings(earnings);
     
-                    System.out.println("component = " + components.toString());
                     
                     List<Map<String, Object>> deductionsData = (List<Map<String, Object>>) data.get("deductions");
                     List<SalaryComponent> deductions = new ArrayList<>();
@@ -347,7 +340,6 @@ public class PayrollService {
                     }
                     components.setDeductions(deductions);
     
-                    System.out.println("component = " + components.toString());
                     
                     ApiResponse<PayrollComponents> apiResponse = new ApiResponse<>();
                     apiResponse.setStatus("success");
