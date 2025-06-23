@@ -10,13 +10,13 @@
     <div th:replace="~{fragments/side-bar}"></div>
     <div class="header">
         <div class="container">
-            <h1 th:text="'👤 Fiche Employé - ' + ${employee.employeeId}"></h1>
+            <h1 th:text="' Fiche Employé - ' + ${employee.employeeId}"></h1>
         </div>
     </div>
     <div class="container">
         <div class="card">
             <div class="info-box">
-                <h3>📋 Informations Personnelles</h3>
+                <h3> Informations Personnelles</h3>
                 <p><strong>Nom Complet:</strong> <span th:text="${employee.fullName}"></span></p>
                 <p><strong>ID Employé:</strong> <span th:text="${employee.employeeId}"></span></p>
                 <p><strong>Email:</strong> 
@@ -38,7 +38,7 @@
                 </p>
             </div>
             <div class="info-box">
-                <h3>💼 Informations Professionnelles</h3>
+                <h3> Informations Professionnelles</h3>
                 <p><strong>Département:</strong> <span th:text="${employee.department}"></span></p>
                 <p><strong>Poste:</strong> <span th:text="${employee.designation}"></span></p>
                 <p><strong>Date Embauche:</strong> 
@@ -63,7 +63,7 @@
                 </p>
             </div>
             
-            <h3>💰 Historique des Salaires</h3>
+            <h3> Historique des Salaires</h3>
             <div th:if="${salaryHistory != null and !salaryHistory.isEmpty()}">
                 <table>
                     <thead>
@@ -103,7 +103,7 @@
             
             <!-- Résumé des statistiques -->
             <div class="info-box" style="margin-top: 2rem;">
-                <h3>📊 Résumé Statistiques</h3>
+                <h3> Résumé Statistiques</h3>
                 <div th:if="${salaryHistory != null and !salaryHistory.isEmpty()}">
                     <p><strong>Nombre de fiches de paie:</strong> <span th:text="${#lists.size(salaryHistory)}"></span></p>
                     <p><strong>Structure salariale:</strong> <span th:text="${salaryHistory[0].salaryStructure}"></span></p>

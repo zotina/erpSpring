@@ -10,7 +10,7 @@
     <div th:replace="~{fragments/side-bar}"></div>
     <div class="header">
         <div class="container">
-            <h1>👥 Liste des Employés</h1>
+            <h1> Liste des Employés</h1>
         </div>
     </div>
     <div class="container">
@@ -21,10 +21,10 @@
                     <input type="hidden" name="page" th:value="${currentPage}"/>
                     <input type="hidden" name="size" th:value="${pageSize}"/>
                     
-                    <label>🔍 Recherche:</label>
+                    <label> Recherche:</label>
                     <input type="text" name="search" th:value="${search}" placeholder="Rechercher un employé..."/>
-                    <button type="submit">🔎 Rechercher</button>
-                    <button type="button" onclick="window.location.href='/api/hrms/employees'">🔄 Réinitialiser</button>
+                    <button type="submit"> Rechercher</button>
+                    <button type="button" onclick="window.location.href='/api/hrms/employees'">Réinitialiser</button>
                 </form>
             </div>
             
@@ -168,7 +168,6 @@
             
             <div class="footer">
                 <span th:text="'Total: ' + ${totalRecords} + ' employé(s) trouvé(s)'"></span><br/>
-                <span>🟢 Actif | 🟡 Congé/Autre | 🔴 Inactif</span>
             </div>
         </div>
         

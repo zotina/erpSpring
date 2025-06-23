@@ -10,21 +10,21 @@
     <div th:replace="~{fragments/side-bar}"></div>
     <div class="header">
         <div class="container">
-            <h1>📄 Fiche de Paie</h1>
+            <h1> Fiche de Paie</h1>
         </div>
     </div>
     <div class="container">
         <div class="card">
             <form th:action="@{/api/hrms/employee/{id}/payroll/generate(id=${employee.employeeId})}" method="post">
-                <p><strong>👤 Employé:</strong> <span th:text="${employee.fullName} + ' (' + ${employee.employeeId} + ')'"></span></p>
-                <label>📅 Période:</label>
+                <p><strong> Employé:</strong> <span th:text="${employee.fullName} + ' (' + ${employee.employeeId} + ')'"></span></p>
+                <label> Période:</label>
                 
                 <input type="month" 
                        name="monthYear" 
                        th:value="${monthYear != null ? monthYear : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
                        required>
                 
-                <button type="submit">🔄 Voir</button>
+                <button type="submit"> Voir</button>
             </form>
 
            
@@ -39,7 +39,7 @@
 
                 <!-- Informations salarié -->
                 <div class="info-box">
-                    <p><strong>👤 SALARIÉ</strong></p>
+                    <p><strong> SALARIÉ</strong></p>
                     <p><strong>Nom:</strong> <span th:text="${payrollSlip.employeeName != null ? payrollSlip.employeeName : (employee != null and employee.fullName != null ? employee.fullName : 'N/A')}"></span></p>
                     <p><strong>Matricule:</strong> <span th:text="${payrollSlip.employee != null ? payrollSlip.employee : (employee != null and employee.employeeId != null ? employee.employeeId : 'N/A')}"></span></p>
                     <p><strong>Poste:</strong> <span th:text="${payrollSlip.designation != null ? payrollSlip.designation : (employee != null and employee.position != null ? employee.position : 'N/A')}"></span></p>
@@ -128,7 +128,7 @@
                                 </td>
                                 <td>
                                     <span th:if="${deduction.statisticalComponent != null and deduction.statisticalComponent}" class="statistical"> Statistique</span>
-                                    <span th:if="${deduction.doNotIncludeInTotal != null and deduction.doNotIncludeInTotal and (deduction.statisticalComponent == null or !deduction.statisticalComponent)}" class="no-total">⚪ Hors Total</span>
+                                    <span th:if="${deduction.doNotIncludeInTotal != null and deduction.doNotIncludeInTotal and (deduction.statisticalComponent == null or !deduction.statisticalComponent)}" class="no-total">Hors Total</span>
                                     <span th:if="${deduction.exemptFromPayrollTax != null and deduction.exemptFromPayrollTax}"> Exonéré Taxe</span>
                                     <span th:if="${deduction.dependsOnPaymentDays != null and deduction.dependsOnPaymentDays}"> Dépend Jours</span>
                                 </td>
@@ -149,7 +149,7 @@
 
                 <!-- Résumé Final -->
                 <div class="summary-section">
-                    <h3>📋 RÉSUMÉ</h3>
+                    <h3> RÉSUMÉ</h3>
                     <table class="summary-table">
                         <tr>
                             <td><strong> Total Brut:</strong></td>
@@ -185,22 +185,22 @@
                 <!-- Actions -->
                 <div class="actions">
                     <a th:href="@{/api/hrms/employee/{id}/payroll/export(id=${employee != null ? employee.employeeId : ''}, monthYear=${monthYear})}" 
-                    class="export-btn">📄 Exporter PDF</a>
+                    class="export-btn"> Exporter PDF</a>
                 </div>
 
                 <!-- Informations légales et signature -->
                 <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; font-size: 0.9rem; color: #6b7280;">
-                    <p><strong>📅 Date d'édition:</strong> 
+                    <p><strong> Date d'édition:</strong> 
                         <span th:text="${payrollSlip.postingDate != null ? #dates.format(payrollSlip.postingDate, 'dd/MM/yyyy') : #dates.format(#dates.createNow(), 'dd/MM/yyyy')}"></span>
                     </p>
-                    <p><strong>ℹ️ Note:</strong> Ce bulletin de paie est généré automatiquement par le système HRMS.</p>
+                    <p><strong>ℹ Note:</strong> Ce bulletin de paie est généré automatiquement par le système HRMS.</p>
                 </div>
             </div>
 
             <!-- Message quand aucune fiche de paie n'est trouvée -->
             <div th:if="${payrollSlip == null and error == null}">
                 <div class="info-box" style="text-align: center; background-color: #f0f9ff; border-color: #0ea5e9;">
-                    <p><strong>ℹ️ Aucune fiche de paie trouvée</strong></p>
+                    <p><strong>ℹ Aucune fiche de paie trouvée</strong></p>
                     <p>Aucune fiche de paie n'a été trouvée pour la période sélectionnée.</p>
                     <p style="color: #6b7280; font-size: 0.9rem;">Veuillez vérifier que les données de paie ont été saisies pour cette période.</p>
                 </div>

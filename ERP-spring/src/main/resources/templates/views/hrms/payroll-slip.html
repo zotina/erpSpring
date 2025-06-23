@@ -11,7 +11,7 @@
     <div class="header">
         <div class="container">
             <!-- ✅ Correction : Vérification de nullité et format de date correct -->
-            <h1 th:text="'📄 Bulletin de Paie - ' + ${payrollSlip?.startDate != null ? #dates.format(payrollSlip.startDate, 'MMMM yyyy', #locale) : 'N/A'}"></h1>
+            <h1 th:text="' Bulletin de Paie - ' + ${payrollSlip?.startDate != null ? #dates.format(payrollSlip.startDate, 'MMMM yyyy', #locale) : 'N/A'}"></h1>
         </div>
     </div>
     <div class="container">
@@ -76,7 +76,7 @@
                             </td>
                             <td>
                                 <span th:if="${earning.statisticalComponent}" class="statistical">Statistique</span>
-                                <span th:if="${earning.doNotIncludeInTotal && !earning.statisticalComponent}" class="no-total">🚫 Hors Total</span>
+                                <span th:if="${earning.doNotIncludeInTotal && !earning.statisticalComponent}" class="no-total">Hors Total</span>
                                 <span th:if="${earning.exemptFromPayrollTax}"> Exonéré Taxe</span>
                                 <span th:if="${earning.dependsOnPaymentDays}"> Dépend Jours</span>
                             </td>
@@ -96,7 +96,7 @@
             </div>
 
             <!-- Section Deductions -->
-            <h3>💸 Déductions</h3>
+            <h3> Déductions</h3>
             <div th:if="${payrollSlip != null && payrollSlip.deductions != null && !payrollSlip.deductions.isEmpty()}">
                 <table>
                     <thead>
@@ -124,7 +124,7 @@
                             </td>
                             <td>
                                 <span th:if="${deduction.statisticalComponent}" class="statistical"> Statistique</span>
-                                <span th:if="${deduction.doNotIncludeInTotal && !deduction.statisticalComponent}" class="no-total">🚫 Hors Total</span>
+                                <span th:if="${deduction.doNotIncludeInTotal && !deduction.statisticalComponent}" class="no-total">Hors Total</span>
                                 <span th:if="${deduction.exemptFromPayrollTax}"> Exonéré Taxe</span>
                                 <span th:if="${deduction.dependsOnPaymentDays}"> Dépend Jours</span>
                             </td>

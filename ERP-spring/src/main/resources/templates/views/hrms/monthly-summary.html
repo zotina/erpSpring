@@ -10,7 +10,7 @@
     <div th:replace="~{fragments/side-bar}"></div>
     <div class="header">
         <div class="container">
-            <h1>📊 Tableau Récapitulatif Mensuel</h1>
+            <h1> Tableau Récapitulatif Mensuel</h1>
         </div>
     </div>
     <div class="container">
@@ -22,12 +22,12 @@
                         <input type="hidden" name="page" value="1"/> <!-- Reset à la page 1 lors du changement de période -->
                         <input type="hidden" name="size" th:value="${pageSize}"/>
                         
-                        <label>📅 Période:</label>
+                        <label> Période:</label>
                         <input type="month" 
                                name="monthYear" 
                                th:value="${monthYear != null ? monthYear : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
                                required>
-                        <button type="submit">🔄 Actualiser</button>
+                        <button type="submit"> Actualiser</button>
                     </form>
                 </div>
                 
@@ -51,7 +51,7 @@
 
              <!-- Résumé des totaux (toujours affiché même avec pagination) -->
             <div class="footer" th:if="${totalRecords > 0}" style="background-color: #f8fafc; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
-                <h4 style="margin: 0 0 0.5rem 0; color: #2E86AB;">📈 Résumé Global de la Période</h4>
+                <h4 style="margin: 0 0 0.5rem 0; color: #2E86AB;">Résumé Global de la Période</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div>
                         <strong>Total Ligne:</strong> <span th:text="${totalEmployees}"></span>

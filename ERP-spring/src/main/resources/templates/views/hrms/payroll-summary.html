@@ -10,7 +10,7 @@
     <div th:replace="~{fragments/side-bar}"></div>
     <div class="header">
         <div class="container">
-            <h1>📊 Tableau Mensuel des Salaires - <span th:text="${year}"></span></h1>
+            <h1> Tableau Mensuel des Salaires - <span th:text="${year}"></span></h1>
         </div>
     </div>
     <div class="container">
@@ -21,7 +21,7 @@
                     <select name="year" th:value="${year}">
                         <option th:each="y : ${#numbers.sequence(2019, 2030)}" th:value="${y}" th:text="${y}"></option>
                     </select>
-                    <button type="submit">🔄 Actualiser</button>
+                    <button type="submit">Actualiser</button>
                 </form>
             </div>
             <table>
