@@ -5,159 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des Employés - HRMS</title>
     <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9fafb;
-            color: #1e293b;
-            margin: 0;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #2E86AB;
-        }
-        .card {
-            background-color: #ffffff;
-            border: 1px solid #444444;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .search-bar, .filters {
-            margin-bottom: 1rem;
-        }
-        .search-bar input, .filters select, .filters input {
-            padding: 0.5rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            margin-right: 0.5rem;
-        }
-        .search-bar button, .filters button {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            background-color: #2E86AB;
-            color: #ffffff;
-            cursor: pointer;
-            margin-right: 0.5rem;
-        }
-        .search-bar button:hover, .filters button:hover {
-            background-color: #2563eb;
-        }
-        .filters label {
-            margin-right: 0.5rem;
-            font-weight: 500;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-            border: 1px solid #444444;
-        }
-        th {
-            background-color: #F5F5F5;
-            font-weight: 600;
-        }
-        .status-green::before { content: "🟢"; }
-        .status-yellow::before { content: "🟡"; }
-        .status-red::before { content: "🔴"; }
-        .actions a {
-            margin-right: 1rem;
-            color: #2E86AB;
-            text-decoration: none;
-        }
-        .actions a:hover {
-            text-decoration: underline;
-        }
-        .footer {
-            margin-top: 2rem;
-            font-size: 0.9rem;
-            color: #475569;
-        }
-        .filter-row {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-        }
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        /* Styles de pagination */
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 2rem;
-            padding: 1rem 0;
-        }
-        .pagination-info {
-            color: #64748b;
-            font-size: 0.9rem;
-        }
-        .pagination {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .pagination a, .pagination span {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #475569;
-            font-size: 0.9rem;
-        }
-        .pagination a:hover {
-            background-color: #f1f5f9;
-            color: #2E86AB;
-        }
-        .pagination .current {
-            background-color: #2E86AB;
-            color: white;
-            border-color: #2E86AB;
-        }
-        .pagination .disabled {
-            color: #cbd5e1;
-            cursor: not-allowed;
-        }
-        .pagination .disabled:hover {
-            background-color: transparent;
-            color: #cbd5e1;
-        }
-        .page-size-selector {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-left: 1rem;
-        }
-        .page-size-selector select {
-            padding: 0.25rem 0.5rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-    </style>
 </head>
 <body>
     <div th:replace="~{fragments/side-bar}"></div>
@@ -187,10 +34,6 @@
                     <input type="hidden" name="search" th:value="${search}"/>
                     <input type="hidden" name="page" value="1"/> <!-- Reset à la page 1 lors du filtrage -->
                     <input type="hidden" name="size" th:value="${pageSize}"/>
-                    
-                    <label>🏷️ Filtres:</label>
-                    
-                    <div class="filter-row">
                         <div class="filter-group">
                             <label>Département:</label>
                             <select name="department">
@@ -201,9 +44,6 @@
                                         th:selected="${dept == selectedDepartment}">
                                 </option>
                             </select>
-                        </div>
-                        
-                        <div class="filter-group">
                             <label>Poste:</label>
                             <select name="designation">
                                 <option value="">Tous</option>
@@ -213,17 +53,11 @@
                                         th:selected="${desig == selectedDesignation}">
                                 </option>
                             </select>
-                        </div>
-                    </div>
-                    
-                    <div class="filter-row">
-                        <div class="filter-group">
                             <label>Date d'embauche:</label>
                             <input type="date" name="startDate" th:value="${startDate}" placeholder="Du"/>
                             <input type="date" name="endDate" th:value="${endDate}" placeholder="Au"/>
+                            <button type="submit">Appliquer</button>
                         </div>
-                        <button type="submit">Appliquer</button>
-                    </div>
                 </form>
             </div>
             

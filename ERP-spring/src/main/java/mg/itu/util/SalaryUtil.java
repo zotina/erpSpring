@@ -106,8 +106,8 @@ public class SalaryUtil {
         if (summaryList == null || summaryList.isEmpty()) {
             return new SalarySummaryCalculation(0.0, 0.0, 0.0, 0.0, 0.0, 0, "EUR");
         }
-        
-        
+             
+            
         @SuppressWarnings("unchecked")
         List<Object> objectList = (List<Object>) summaryList;
         
@@ -120,7 +120,7 @@ public class SalaryUtil {
                     return 0.0;
                 }
             }
-            
+               
             @Override
             public double getNetPay(Object item) {
                 try {
@@ -132,13 +132,13 @@ public class SalaryUtil {
             
             @Override
             public double getTotalDeduction(Object item) {
-                try {
+                try { 
                     return (Double) item.getClass().getMethod("getTotal_deduction").invoke(item);
                 } catch (Exception e) {
                     return 0.0;
                 }
-            }
-            
+            } 
+              
             @Override
             public String getCurrency(Object item) {
                 try {
@@ -155,7 +155,7 @@ public class SalaryUtil {
         if (values == null || values.isEmpty()) {
             return 0.0;
         }
-        
+         
         List<Double> sortedValues = new ArrayList<>(values);
         Collections.sort(sortedValues);
         

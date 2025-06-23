@@ -14,7 +14,7 @@ public class SeniorityUtil {
         }
         
         try {
-            
+             
             LocalDate joinDate = dateOfJoining.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
