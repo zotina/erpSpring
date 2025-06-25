@@ -96,8 +96,8 @@
                 <div class="form-group">
                     <label for="moyen">📊 Utiliser le salaire moyen:</label>
                     <select id="moyen" name="moyen" required>
-                        <option value="1" th:selected="${moyen != null && moyen == 1}">Oui</option>
-                        <option value="0" th:selected="${moyen == null || moyen == 0}">Non</option>
+                        <option value="0" th:selected="${moyen != null && moyen == 0}">Oui</option>
+                        <option value="1" th:selected="${moyen == null || moyen == 1}">Non</option>
                     </select>
                 </div>
 
