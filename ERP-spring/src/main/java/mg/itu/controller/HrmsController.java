@@ -101,6 +101,8 @@ public class HrmsController {
             @RequestParam("monthYearEnd") String monthFin,
             @RequestParam("emp") String empId,
             @RequestParam(value = "montant", defaultValue = "0") Double montant,
+            @RequestParam("ecraser") int ecraser,
+            @RequestParam("moyen") int moyen,
             Model model,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
@@ -120,6 +122,8 @@ public class HrmsController {
                 redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
                 redirectAttributes.addFlashAttribute("montant", montant);
                 redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                redirectAttributes.addFlashAttribute("ecraser", ecraser);
+                redirectAttributes.addFlashAttribute("moyen", moyen);
                 return "redirect:/api/hrms/insert";
             }
 
@@ -133,6 +137,8 @@ public class HrmsController {
                     redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
                     redirectAttributes.addFlashAttribute("montant", montant);
                     redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                    redirectAttributes.addFlashAttribute("ecraser", ecraser);
+                  redirectAttributes.addFlashAttribute("moyen", moyen);
                     return "redirect:/api/hrms/insert";
                 }
             } catch (DateTimeParseException e) {
@@ -141,6 +147,8 @@ public class HrmsController {
                 redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
                 redirectAttributes.addFlashAttribute("montant", montant);
                 redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                redirectAttributes.addFlashAttribute("ecraser", ecraser);
+                redirectAttributes.addFlashAttribute("moyen", moyen);
                 return "redirect:/api/hrms/insert";
             }
 
@@ -152,14 +160,16 @@ public class HrmsController {
                 redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
                 redirectAttributes.addFlashAttribute("montant", montant);
                 redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                redirectAttributes.addFlashAttribute("ecraser", ecraser);
+redirectAttributes.addFlashAttribute("moyen", moyen);
                 return "redirect:/api/hrms/insert";
-            }
+            } 
 
-            
-            ApiResponse<PayrollDTO> insertResponse = hrmsService.insertSalarySlip(empId, monthDebut, monthFin, montant, session);
+             
+            ApiResponse<PayrollDTO> insertResponse = hrmsService.insertSalarySlip(empId, monthDebut, monthFin, montant,ecraser,moyen, session);
 
-            
-            if ("success".equals(insertResponse.getStatus())) {
+             
+            if ("success".equals(insertResponse.getStatus())) { 
                 redirectAttributes.addFlashAttribute("success", insertResponse.getMessage());
                 redirectAttributes.addFlashAttribute("salarySlips", insertResponse.getData());
                 redirectAttributes.addFlashAttribute("employee", empResponse.getData().get(0));
@@ -174,6 +184,8 @@ public class HrmsController {
             redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
             redirectAttributes.addFlashAttribute("montant", montant);
             redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+            redirectAttributes.addFlashAttribute("ecraser", ecraser);
+redirectAttributes.addFlashAttribute("moyen", moyen);
 
             
             return "redirect:/api/hrms/insert";
@@ -189,6 +201,8 @@ public class HrmsController {
             redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
             redirectAttributes.addFlashAttribute("montant", montant);
             redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+            redirectAttributes.addFlashAttribute("ecraser", ecraser);
+redirectAttributes.addFlashAttribute("moyen", moyen);
             return "redirect:/api/hrms/insert";
         } 
     }
