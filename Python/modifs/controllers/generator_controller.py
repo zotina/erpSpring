@@ -4,9 +4,10 @@ import frappe
 from frappe import _
 from hrms.services.payroll_generator_service import PayrollGeneratorService
 from hrms.services.salary_adjuster_service import SalaryAdjusterService
+from hrms.models.salary_moyen import SalaryMoyen
 
 @frappe.whitelist(allow_guest=False)
-def insert_slip_period(emp, monthDebut, monthFin, montant,ecraser):
+def insert_slip_period(emp, monthDebut, monthFin, montant,ecraser,moyen):
     """
     API endpoint pour insérer des fiches de paie pour une période donnée.
     
@@ -21,6 +22,12 @@ def insert_slip_period(emp, monthDebut, monthFin, montant,ecraser):
     """
     try:
         service = PayrollGeneratorService()
+        moyen = int(moyen)
+        salary_moyen = SalaryMoyen()
+        
+        if moyen == 1 :
+            montant = float(salary_moyen.get_moyen()['moyen'])
+            
         return service.generate_payroll_period(emp, monthDebut, monthFin, float(montant or 0),int(ecraser)),
     except Exception as e:
         frappe.log_error(f"Erreur dans insert_slip_period: {str(e)}", "API Error")
@@ -37,7 +44,7 @@ def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux
     
     Args:
         salary_component (str): Composant de salaire à filtrer
-        montant (float): Montant de référence pour le filtre
+        montant (float): Montant de référence pour le filtreint
         infOrSup (int): 0 pour inférieur, 1 pour supérieur
         minusOrPlus (int): 0 pour augmenter, 1 pour diminuer
         taux (str/float): Pourcentage de modification
