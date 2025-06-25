@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Récapitulatif Mensuel - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>Recherche salaire</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="filter-container">
+                <div class="filters">
+                <form th:action="@{/api/hrms/search-filter}" method="get" class="filter-form">
+                        <div class="form-group">
+                          <label for="salaryComponent"> Composant de salaire:</label>
+                          <select id="salaryComponent" name="salaryComponent" required>
+                              <option value="">-- Choisir un composant --</option>
+                              <option th:each="component : ${salaryComponents}" 
+                                      th:value="${component.name}" 
+                                      th:text="${component.salaryComponent}"
+                                      th:selected="${selectedSalaryComponent != null && selectedSalaryComponent == component.name}">
+                              </option>
+                          </select>
+                      </div>
+
+
+                      <div class="form-group">
+                          <label for="montant"> Montant:</label>
+                          <input type="number" 
+                                id="montant"
+                                name="montant" 
+                                step="0.01"
+                                min="0"
+                                th:value="${montant != null ? montant : 0}" 
+                                placeholder="0.00"
+                                required>
+                      </div>
+
+
+                      <div class="form-group">
+                        <label for="infOrSup"> Inférieur ou Supérieur:</label>
+                        <select id="infOrSup" name="infOrSup" required>
+                            <option value="0" th:selected="${infOrSup == 0}">Inférieur</option>
+                            <option value="1" th:selected="${infOrSup == 1}">Supérieur</option>
+                            <option value="2" th:selected="${infOrSup == 2}">Supérieur ou egale</option>
+                            <option value="3" th:selected="${infOrSup == 3}">Inférieur ou egale</option>
+                        </select>
+                    </div>
+                        <button type="submit"> Filtrer</button>
+                    </form>
+                </div>
+                
+                <!-- Sélecteur de taille de page -->
+                <div class="page-size-selector">
+                    <label>Afficher:</label>
+                    <form th:action="@{/api/hrms/summary}" method="get" style="display: inline;">
+                        <input type="hidden" name="monthYear" th:value="${monthYear}"/>
+                        <input type="hidden" name="page" value="1"/>
+                        
+                        <select name="size" onchange="this.form.submit()">
+                            <option value="5" th:selected="${pageSize == 5}">5</option>
+                            <option value="10" th:selected="${pageSize == 10}">10</option>
+                            <option value="20" th:selected="${pageSize == 20}">20</option>
+                            <option value="50" th:selected="${pageSize == 50}">50</option>
+                            <option value="100" th:selected="${pageSize == 100}">100</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            
+            <!-- Info de pagination -->
+            <div class="pagination-info" th:if="${totalRecords > 0}">
+                <span th:text="'Affichage de ' + ${(currentPage - 1) * pageSize + 1} + ' à ' + ${T(java.lang.Math).min(currentPage * pageSize, totalRecords)} + ' sur ' + ${totalRecords} + ' lignes'"></span>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom Employé</th>
+                        <th>Dept.</th>
+                        <th>Date de publication</th>
+                        <th>Total Deduction</th>
+                        <th>Total Brut</th>
+                        <th>Net Payé</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${summary}">
+                        <td th:text="${item.employeeId}"></td>
+                        <td th:text="${item.employeeName}"></td>
+                        <td th:text="${item.department}"></td>
+                        <td th:text="${item.postingDate}"></td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(item.total_deduction, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(item.totalGross, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(item.netPay, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td>
+                            <a th:href="@{/api/hrms/payroll-components(monthYear=${item.monthYear}, employeeId=${item.employeeId}, empname=${item.employeeName})}">voir élément</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(summary)}">
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">
+                            Aucune donnée trouvée pour la période sélectionnée.
+                        </td>
+                    </tr>
+                    <tr class="total" th:if="${!#lists.isEmpty(summary)}">
+                        <td colspan="4">TOTAUX (<span th:text="${totalEmployees}"></span>  lignes)</td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(totalDeduction, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(totalGross, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td class="text-right">
+                            <span class="currency-symbol" th:text="${currency}"></span>
+                            <span th:text="${#numbers.formatDecimal(totalNet, 0, 'COMMA', 0, 'POINT')}"></span>
+                        </td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <!-- Navigation de pagination -->
+            <div class="pagination-container" th:if="${totalPages > 0}">
+                <div class="pagination-info">
+                    <span th:text="'Page ' + ${currentPage} + ' sur ' + ${totalPages}"></span>
+                </div>
+                <div class="pagination">
+                    <!-- Bouton Précédent -->
+                    <a th:if="${hasPrevious}" 
+                       th:href="@{/api/hrms/summary(monthYear=${monthYear}, page=${currentPage - 1}, size=${pageSize})}"
+                       title="Page précédente">
+                        ← Précédent
+                    </a>
+                    <span th:unless="${hasPrevious}" class="disabled">← Précédent</span>
+                    
+                    <!-- Pages numérotées -->
+                    <span th:if="${startPage > 1}">
+                        <a th:href="@{/api/hrms/summary(monthYear=${monthYear}, page=1, size=${pageSize})}">1</a>
+                        <span th:if="${startPage > 2}">...</span>
+                    </span>
+                    
+                    <span th:each="pageNum : ${#numbers.sequence(startPage, endPage)}">
+                        <span th:if="${pageNum == currentPage}" class="current" th:text="${pageNum}"></span>
+                        <a th:unless="${pageNum == currentPage}" 
+                           th:href="@{/api/hrms/summary(monthYear=${monthYear}, page=${pageNum}, size=${pageSize})}"
+                           th:text="${pageNum}"></a>
+                    </span>
+                    
+                    <span th:if="${endPage < totalPages}">
+                        <span th:if="${endPage < totalPages - 1}">...</span>
+                        <a th:href="@{/api/hrms/summary(monthYear=${monthYear}, page=${totalPages}, size=${pageSize})}"
+                           th:text="${totalPages}"></a>
+                    </span>
+                    
+                    <!-- Bouton Suivant -->
+                    <a th:if="${hasNext}" 
+                       th:href="@{/api/hrms/summary(monthYear=${monthYear}, page=${currentPage + 1}, size=${pageSize})}"
+                       title="Page suivante">
+                        Suivant →
+                    </a>
+                    <span th:unless="${hasNext}" class="disabled">Suivant →</span>
+                </div>
+            </div>
+        </div>
+        
+        <div th:if="${error}" class="message error-message" th:text="${error}"></div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

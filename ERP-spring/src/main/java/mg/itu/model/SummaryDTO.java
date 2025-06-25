@@ -7,6 +7,11 @@ import mg.itu.util.DateUtil;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SummaryDTO {
+
+    @JsonProperty("name")
+    private String name;
+
+
     @JsonProperty("employee")
     private String employeeId;
 
@@ -104,6 +109,14 @@ public class SummaryDTO {
     public void setMonthYear(String monthYear) {
         
         this.monthYear = DateUtil.parseToyyyyMM(monthYear);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
     
 }
