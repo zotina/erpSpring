@@ -7,28 +7,31 @@ from hrms.services.salary_adjuster_service import SalaryAdjusterService
 from hrms.models.salary_moyen import SalaryMoyen
 
 @frappe.whitelist(allow_guest=False)
-def insert_slip_period(emp, monthDebut, monthFin, montant,ecraser,moyen):
+def insert_slip_period(emp, monthDebut, monthFin, montant, ecraser, moyen):
     """
     API endpoint pour insérer des fiches de paie pour une période donnée.
-    
     Args:
         emp (str): ID de l'employé
         monthDebut (str): Mois de début (format: YYYY-MM)
         monthFin (str): Mois de fin (format: YYYY-MM)
         montant (float): Montant du salaire de base (0 pour utiliser le dernier salaire)
-    
+        ecraser (int): 0 pour écraser, 1 pour ne pas écraser
+        moyen (int): 0 pour utiliser le montant saisi, 1 pour utiliser la moyenne
     Returns:
         dict: Résultat de l'opération avec status, message et data
     """
     try:
         service = PayrollGeneratorService()
         moyen = int(moyen)
-        salary_moyen = SalaryMoyen()
         
-        if moyen == 1 :
+        if moyen == 0:
+            salary_moyen = SalaryMoyen()
             montant = float(salary_moyen.get_moyen()['moyen'])
-            
-        return service.generate_payroll_period(emp, monthDebut, monthFin, float(montant or 0),int(ecraser)),
+        else:
+            montant = float(montant or 0)
+        
+        return service.generate_payroll_period(emp, monthDebut, monthFin, montant, int(ecraser))
+        
     except Exception as e:
         frappe.log_error(f"Erreur dans insert_slip_period: {str(e)}", "API Error")
         return {
