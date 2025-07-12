@@ -1,5 +1,5 @@
 (() => {
-  // frappe-html:/home/zotina/Documents/etude/S6/evaluation/python/frappe-bench/apps/hrms/hrms/public/js/templates/interview_feedback.html
+  // frappe-html:/home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/erpSpring/ERP-Next/erp_next/apps/hrms/hrms/public/js/templates/interview_feedback.html
   frappe.templates["interview_feedback"] = `<div class="feedback-section col-xs-12">
 	{% if feedbacks.length %}
 	<h4 class="my-4 mx-5" style="font-size: 18px">
@@ -31,7 +31,7 @@
 </div>
 `;
 
-  // frappe-html:/home/zotina/Documents/etude/S6/evaluation/python/frappe-bench/apps/hrms/hrms/public/js/templates/circular_progress_bar.html
+  // frappe-html:/home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/erpSpring/ERP-Next/erp_next/apps/hrms/hrms/public/js/templates/circular_progress_bar.html
   frappe.templates["circular_progress_bar"] = `<div class="circular-progress mx-auto mb-3">
 	{% degree = Math.floor(rating*360/5) %}
 	{% deg_right = degree > 180 ? 180 : degree %}
@@ -47,4 +47,4 @@
 <h5 class="text-center">{{ skill }}</h5>
 `;
 })();
-//# sourceMappingURL=interview.bundle.5ZWO3JNO.js.map
+//# sourceMappingURL=interview.bundle.LVO6EYAQ.js.map

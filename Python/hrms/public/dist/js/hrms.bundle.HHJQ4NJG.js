@@ -1,5 +1,5 @@
 (() => {
-  // frappe-html:/home/zotina/Documents/etude/S6/evaluation/python/frappe-bench/apps/hrms/hrms/public/js/templates/employees_with_unmarked_attendance.html
+  // frappe-html:/home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/erpSpring/ERP-Next/erp_next/apps/hrms/hrms/public/js/templates/employees_with_unmarked_attendance.html
   frappe.templates["employees_with_unmarked_attendance"] = `{% if data.length %}
 
 <div class="form-message yellow">
@@ -40,7 +40,7 @@
 
 {% } %}`;
 
-  // frappe-html:/home/zotina/Documents/etude/S6/evaluation/python/frappe-bench/apps/hrms/hrms/public/js/templates/feedback_summary.html
+  // frappe-html:/home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/erpSpring/ERP-Next/erp_next/apps/hrms/hrms/public/js/templates/feedback_summary.html
   frappe.templates["feedback_summary"] = `<div class="feedback-summary-section my-4 d-flex">
 	<!-- Ratings Summary -->
 	<div class="rating-summary-numbers col-3">
@@ -92,7 +92,7 @@
 </div>
 `;
 
-  // frappe-html:/home/zotina/Documents/etude/S6/evaluation/python/frappe-bench/apps/hrms/hrms/public/js/templates/feedback_history.html
+  // frappe-html:/home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/erpSpring/ERP-Next/erp_next/apps/hrms/hrms/public/js/templates/feedback_history.html
   frappe.templates["feedback_history"] = `<div class="feedback-history mb-3">
 	{% if (feedback_history.length) { %}
 		{% for (let i=0, l=feedback_history.length; i<l; i++) { %}
@@ -152,7 +152,7 @@
 	{% } %}
 </div>`;
 
-  // frappe-html:/home/zotina/Documents/etude/S6/evaluation/python/frappe-bench/apps/hrms/hrms/public/js/templates/rating.html
+  // frappe-html:/home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/erpSpring/ERP-Next/erp_next/apps/hrms/hrms/public/js/templates/rating.html
   frappe.templates["rating"] = `<div class="d-flex flex-col">
 	<div class="rating {{ for_summary ? 'ratings-pill' : ''}}">
 		{% for (let i = 1; i <= number_of_stars; i++) { %}
@@ -552,4 +552,4 @@
     }
   };
 })();
-//# sourceMappingURL=hrms.bundle.ROFTGM44.js.map
+//# sourceMappingURL=hrms.bundle.HHJQ4NJG.js.map
