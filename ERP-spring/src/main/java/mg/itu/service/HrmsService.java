@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,16 +16,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpSession;
 import mg.itu.model.ApiResponse;
+import mg.itu.model.BaseSalaryModif;
 import mg.itu.model.PaginatedResponse;
 import mg.itu.model.PayrollDTO;
 import mg.itu.model.SalaryComponentDTO;
 import mg.itu.model.SalaryDetailDTO;
 import mg.itu.model.SummaryDTO;
 import mg.itu.model.UpdateBaseAssignmentDTO;
+import mg.itu.repository.BaseSalaryModifRepository;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -42,6 +46,12 @@ public class HrmsService {
     private String apiMethod;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private BaseSalaryModifRepository baseSalaryModifRepository;
+
+    @Autowired
+    private BaseSalaryModifService baseSalaryModifService;
 
     
     public ApiResponse<SalaryDetailDTO> getSalaryHistory(String id, HttpSession session) {
@@ -542,45 +552,110 @@ public class HrmsService {
         }
     }
 
-    // Add these methods to your existing HrmsService class
 
-public PaginatedResponse<SummaryDTO> getMonthlySummaryWithFilter(String salaryComponent, Double montant, 
-                                                                 Integer infOrSup, int page, int size, 
-                                                                 HttpSession session) {
-    String accessToken = (String) session.getAttribute("access_token");
-    String sid = (String) session.getAttribute("sid");
-    if (accessToken == null || sid == null) {
-        throw new IllegalStateException("User is not authenticated");
-    }
-    
-    try {
-        // First get all salary slips to count total
-        String countUrl = baseApiUrl + "/Salary Slip?fields=[\"name\"]&limit_page_length=0";
+    public PaginatedResponse<SummaryDTO> getMonthlySummaryWithFilter(String salaryComponent, Double montant, 
+                                                                    Integer infOrSup, int page, int size, 
+                                                                    HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
         
-        WebClient countClient = webClientBuilder.baseUrl(countUrl).build();
-        ResponseEntity<String> countResponse = countClient.get()
-                .header("Authorization", "Bearer " + accessToken)
-                .cookie("sid", sid)
-                .retrieve()
-                .toEntity(String.class)
-                .block();
-        
-        List<SummaryDTO> allData = new ArrayList<>();
-        if (countResponse != null && countResponse.getStatusCode().is2xxSuccessful() && countResponse.getBody() != null) {
-            // Get all data for filtering
-            String dataUrl = baseApiUrl + "/Salary Slip?fields=[\"*\"]&limit_page_length=0";
+        try {
+            // First get all salary slips to count total
+            String countUrl = baseApiUrl + "/Salary Slip?fields=[\"name\"]&limit_page_length=0";
             
-            WebClient dataClient = webClientBuilder.baseUrl(dataUrl).build();
-            ResponseEntity<String> dataResponse = dataClient.get()
+            WebClient countClient = webClientBuilder.baseUrl(countUrl).build();
+            ResponseEntity<String> countResponse = countClient.get()
                     .header("Authorization", "Bearer " + accessToken)
                     .cookie("sid", sid)
                     .retrieve()
                     .toEntity(String.class)
                     .block();
+            
+            List<SummaryDTO> allData = new ArrayList<>();
+            if (countResponse != null && countResponse.getStatusCode().is2xxSuccessful() && countResponse.getBody() != null) {
+                // Get all data for filtering
+                String dataUrl = baseApiUrl + "/Salary Slip?fields=[\"*\"]&limit_page_length=0";
+                
+                WebClient dataClient = webClientBuilder.baseUrl(dataUrl).build();
+                ResponseEntity<String> dataResponse = dataClient.get()
+                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie("sid", sid)
+                        .retrieve()
+                        .toEntity(String.class)
+                        .block();
 
-            if (dataResponse != null && dataResponse.getStatusCode().is2xxSuccessful() && dataResponse.getBody() != null) {
+                if (dataResponse != null && dataResponse.getStatusCode().is2xxSuccessful() && dataResponse.getBody() != null) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> responseMap = objectMapper.readValue(dataResponse.getBody(), Map.class);
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                    
+                    if (data != null) {
+                        for (Map<String, Object> item : data) {
+                            SummaryDTO itemSummary = objectMapper.convertValue(item, SummaryDTO.class);
+                            itemSummary.setMonthYear(itemSummary.getPostingDate());
+                            allData.add(itemSummary);
+                        }
+                    }
+                }
+            }
+            
+            // Filter the data based on salary component and amount criteria
+            List<SummaryDTO> filteredData = filterBySalaryComponent(allData, salaryComponent, montant, infOrSup, session);
+            
+            // Apply pagination to filtered results
+            int totalCount = filteredData.size();
+            int startIndex = (page - 1) * size;
+            int endIndex = Math.min(startIndex + size, totalCount);
+            
+            List<SummaryDTO> paginatedData = new ArrayList<>();
+            if (startIndex < totalCount) {
+                paginatedData = filteredData.subList(startIndex, endIndex);
+            }
+            
+            int totalPages = totalCount > 0 ? (int) Math.ceil((double) totalCount / size) : 0;
+            
+            logger.info("=== FILTER SEARCH DEBUG ===");
+            logger.info("Total filtered records: {}", totalCount);
+            logger.info("Page size: {}, Current page: {}", size, page);
+            logger.info("Start index: {}, End index: {}", startIndex, endIndex);
+            logger.info("Paginated data size: {}", paginatedData.size());
+            
+            return new PaginatedResponse<>(paginatedData, page, totalPages, totalCount, size);
+            
+        } catch (Exception e) {
+            logger.error("Error fetching filtered monthly summary", e);
+            throw new RuntimeException("Error fetching filtered monthly summary: " + e.getMessage());
+        }
+    }
+
+    public ApiResponse<SummaryDTO> getAllMonthlySummaryWithFilter(String salaryComponent, Double montant, 
+                                                                Integer infOrSup, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+        
+        try {
+            // Get all salary slips
+            String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]&limit_page_length=0";
+            
+            WebClient client = webClientBuilder.baseUrl(url).build();
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            
+            List<SummaryDTO> allData = new ArrayList<>();
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 @SuppressWarnings("unchecked")
-                Map<String, Object> responseMap = objectMapper.readValue(dataResponse.getBody(), Map.class);
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
                 @SuppressWarnings("unchecked")
                 List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
                 
@@ -592,176 +667,265 @@ public PaginatedResponse<SummaryDTO> getMonthlySummaryWithFilter(String salaryCo
                     }
                 }
             }
-        }
-        
-        // Filter the data based on salary component and amount criteria
-        List<SummaryDTO> filteredData = filterBySalaryComponent(allData, salaryComponent, montant, infOrSup, session);
-        
-        // Apply pagination to filtered results
-        int totalCount = filteredData.size();
-        int startIndex = (page - 1) * size;
-        int endIndex = Math.min(startIndex + size, totalCount);
-        
-        List<SummaryDTO> paginatedData = new ArrayList<>();
-        if (startIndex < totalCount) {
-            paginatedData = filteredData.subList(startIndex, endIndex);
-        }
-        
-        int totalPages = totalCount > 0 ? (int) Math.ceil((double) totalCount / size) : 0;
-        
-        logger.info("=== FILTER SEARCH DEBUG ===");
-        logger.info("Total filtered records: {}", totalCount);
-        logger.info("Page size: {}, Current page: {}", size, page);
-        logger.info("Start index: {}, End index: {}", startIndex, endIndex);
-        logger.info("Paginated data size: {}", paginatedData.size());
-        
-        return new PaginatedResponse<>(paginatedData, page, totalPages, totalCount, size);
-        
-    } catch (Exception e) {
-        logger.error("Error fetching filtered monthly summary", e);
-        throw new RuntimeException("Error fetching filtered monthly summary: " + e.getMessage());
-    }
-}
-
-public ApiResponse<SummaryDTO> getAllMonthlySummaryWithFilter(String salaryComponent, Double montant, 
-                                                             Integer infOrSup, HttpSession session) {
-    String accessToken = (String) session.getAttribute("access_token");
-    String sid = (String) session.getAttribute("sid");
-    if (accessToken == null || sid == null) {
-        throw new IllegalStateException("User is not authenticated");
-    }
-    
-    try {
-        // Get all salary slips
-        String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]&limit_page_length=0";
-        
-        WebClient client = webClientBuilder.baseUrl(url).build();
-        ResponseEntity<String> response = client.get()
-                .header("Authorization", "Bearer " + accessToken)
-                .cookie("sid", sid)
-                .retrieve()
-                .toEntity(String.class)
-                .block();
-        
-        List<SummaryDTO> allData = new ArrayList<>();
-        if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
             
-            if (data != null) {
-                for (Map<String, Object> item : data) {
-                    SummaryDTO itemSummary = objectMapper.convertValue(item, SummaryDTO.class);
-                    itemSummary.setMonthYear(itemSummary.getPostingDate());
-                    allData.add(itemSummary);
+            // Filter the data
+            List<SummaryDTO> filteredData = filterBySalaryComponent(allData, salaryComponent, montant, infOrSup, session);
+            
+            ApiResponse<SummaryDTO> apiResponse = new ApiResponse<>();
+            apiResponse.setStatus("success");
+            apiResponse.setMessage("Filtered monthly summary fetched successfully");
+            apiResponse.setData(filteredData);
+            return apiResponse;
+            
+        } catch (Exception e) {
+            logger.error("Error fetching all filtered monthly summary", e);
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching filtered monthly summary: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    private List<SummaryDTO> filterBySalaryComponent(List<SummaryDTO> allData, String salaryComponent, 
+                                                    Double montant, Integer infOrSup, HttpSession session) {
+        List<SummaryDTO> filteredResults = new ArrayList<>();
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        
+        if (accessToken == null || sid == null) {
+            return filteredResults;
+        }
+        
+        try {
+            for (SummaryDTO salary : allData) {
+                // Get salary slip details for each employee to check salary components
+                String detailUrl = baseApiUrl + "/Salary Slip/" + salary.getName() + "?fields=[\"*\"]";
+                
+                WebClient detailClient = webClientBuilder.baseUrl(detailUrl).build();
+                ResponseEntity<String> detailResponse = detailClient.get()
+                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie("sid", sid)
+                        .retrieve()
+                        .toEntity(String.class)
+                        .block();
+                
+                if (detailResponse != null && detailResponse.getStatusCode().is2xxSuccessful() && 
+                    detailResponse.getBody() != null) {
+                    
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> detailMap = objectMapper.readValue(detailResponse.getBody(), Map.class);
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> data = (Map<String, Object>) detailMap.get("data");
+                    
+                    if (data != null) {
+                        // Check earnings
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> earnings = (List<Map<String, Object>>) data.get("earnings");
+                        if (earnings != null && checkSalaryComponentMatch(earnings, salaryComponent, montant, infOrSup)) {
+                            filteredResults.add(salary);
+                            continue;
+                        }
+                        
+                        // Check deductions
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> deductions = (List<Map<String, Object>>) data.get("deductions");
+                        if (deductions != null && checkSalaryComponentMatch(deductions, salaryComponent, montant, infOrSup)) {
+                            filteredResults.add(salary);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error filtering by salary component", e);
+        }
+        
+        return filteredResults;
+    }
+
+    private boolean checkSalaryComponentMatch(List<Map<String, Object>> components, String targetComponent, 
+                                            Double targetAmount, Integer comparison) {
+        for (Map<String, Object> component : components) {
+            String componentName = (String) component.get("salary_component");
+            Object amountObj = component.get("amount");
+            
+            if (componentName != null && componentName.equals(targetComponent) && amountObj != null) {
+                Double componentAmount = 0.0;
+                if (amountObj instanceof Number) {
+                    componentAmount = ((Number) amountObj).doubleValue();
+                }
+                
+                // Apply comparison logic
+                switch (comparison) {
+                    case 0: // Inférieur (<)
+                        return componentAmount < targetAmount;
+                    case 1: // Supérieur (>)
+                        return componentAmount > targetAmount;
+                    case 2: // Supérieur ou égal (>=)
+                        return componentAmount >= targetAmount;
+                    case 3: // Inférieur ou égal (<=)
+                        return componentAmount <= targetAmount;
+                    case 4: // Égal (=)
+                        return componentAmount.equals(targetAmount);
+                    default:
+                        return false;
                 }
             }
         }
-        
-        // Filter the data
-        List<SummaryDTO> filteredData = filterBySalaryComponent(allData, salaryComponent, montant, infOrSup, session);
-        
-        ApiResponse<SummaryDTO> apiResponse = new ApiResponse<>();
-        apiResponse.setStatus("success");
-        apiResponse.setMessage("Filtered monthly summary fetched successfully");
-        apiResponse.setData(filteredData);
-        return apiResponse;
-        
-    } catch (Exception e) {
-        logger.error("Error fetching all filtered monthly summary", e);
-        ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
-        errorResponse.setStatus("error");
-        errorResponse.setMessage("Error fetching filtered monthly summary: " + e.getMessage());
-        return errorResponse;
+        return false;
     }
-}
 
-private List<SummaryDTO> filterBySalaryComponent(List<SummaryDTO> allData, String salaryComponent, 
-                                                Double montant, Integer infOrSup, HttpSession session) {
-    List<SummaryDTO> filteredResults = new ArrayList<>();
-    String accessToken = (String) session.getAttribute("access_token");
-    String sid = (String) session.getAttribute("sid");
-    
-    if (accessToken == null || sid == null) {
-        return filteredResults;
-    }
-    
-    try {
-        for (SummaryDTO salary : allData) {
-            // Get salary slip details for each employee to check salary components
-            String detailUrl = baseApiUrl + "/Salary Slip/" + salary.getName() + "?fields=[\"*\"]";
-            
-            WebClient detailClient = webClientBuilder.baseUrl(detailUrl).build();
-            ResponseEntity<String> detailResponse = detailClient.get()
+    public ApiResponse<Map<String, Object>> applyBaseSalaryModification(String monthYear, Double percentageValue, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        // 1. Call ERPNext API
+        String url = apiMethod + "/hrms.controllers.generator_controller.adjust_base_salary_for_month";
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("month_year", monthYear);
+        payload.put("percentage_value", percentageValue);
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.post()
                     .header("Authorization", "Bearer " + accessToken)
                     .cookie("sid", sid)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(payload)
                     .retrieve()
                     .toEntity(String.class)
                     .block();
-            
-            if (detailResponse != null && detailResponse.getStatusCode().is2xxSuccessful() && 
-                detailResponse.getBody() != null) {
-                
-                @SuppressWarnings("unchecked")
-                Map<String, Object> detailMap = objectMapper.readValue(detailResponse.getBody(), Map.class);
-                @SuppressWarnings("unchecked")
-                Map<String, Object> data = (Map<String, Object>) detailMap.get("data");
-                
-                if (data != null) {
-                    // Check earnings
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> earnings = (List<Map<String, Object>>) data.get("earnings");
-                    if (earnings != null && checkSalaryComponentMatch(earnings, salaryComponent, montant, infOrSup)) {
-                        filteredResults.add(salary);
-                        continue;
-                    }
-                    
-                    // Check deductions
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> deductions = (List<Map<String, Object>>) data.get("deductions");
-                    if (deductions != null && checkSalaryComponentMatch(deductions, salaryComponent, montant, infOrSup)) {
-                        filteredResults.add(salary);
-                    }
-                }
-            }
-        }
-    } catch (Exception e) {
-        logger.error("Error filtering by salary component", e);
-    }
-    
-    return filteredResults;
-}
 
-private boolean checkSalaryComponentMatch(List<Map<String, Object>> components, String targetComponent, 
-                                        Double targetAmount, Integer comparison) {
-    for (Map<String, Object> component : components) {
-        String componentName = (String) component.get("salary_component");
-        Object amountObj = component.get("amount");
-        
-        if (componentName != null && componentName.equals(targetComponent) && amountObj != null) {
-            Double componentAmount = 0.0;
-            if (amountObj instanceof Number) {
-                componentAmount = ((Number) amountObj).doubleValue();
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                
+                @SuppressWarnings("unchecked")
+                Map<String, Object> messageMap = (Map<String, Object>) responseMap.get("message");
+                
+                String status = (String) messageMap.get("status");
+                String message = (String) messageMap.get("message");
+
+                ApiResponse<Map<String, Object>> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus(status);
+                apiResponse.setMessage(message);
+                apiResponse.setData(List.of(messageMap)); // Wrap the result map in a list
+
+                // 2. Save to local DB on success/partial_success
+                if ("success".equals(status) || "partial_success".equals(status)) {
+                    BaseSalaryModif modif = new BaseSalaryModif();
+                    modif.setMonthYear(monthYear);
+                    modif.setPercentageValue(percentageValue);
+                    baseSalaryModifRepository.save(modif);
+                }
+                
+                return apiResponse;
             }
-            
-            // Apply comparison logic
-            switch (comparison) {
-                case 0: // Inférieur (<)
-                    return componentAmount < targetAmount;
-                case 1: // Supérieur (>)
-                    return componentAmount > targetAmount;
-                case 2: // Supérieur ou égal (>=)
-                    return componentAmount >= targetAmount;
-                case 3: // Inférieur ou égal (<=)
-                    return componentAmount <= targetAmount;
-                case 4: // Égal (=)
-                    return componentAmount.equals(targetAmount);
-                default:
-                    return false;
-            }
+
+            ApiResponse<Map<String, Object>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to call adjustment API. No response from server.");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error applying base salary modification", e);
+            ApiResponse<Map<String, Object>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error during API call: " + e.getMessage());
+            return errorResponse;
         }
     }
-    return false;
-}
+
+    public ApiResponse<Map<String, Object>> reapplyHistoricalAdjustments(String startMonth, String endMonth, String adjustmentType, HttpSession session) throws JsonProcessingException {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        // 1. Get historical modifications - THIS PART IS CORRECT
+        List<BaseSalaryModif> modsToApply;
+        if ("reduction".equalsIgnoreCase(adjustmentType)) {
+            modsToApply = baseSalaryModifService.findReductionsInPeriod(startMonth, endMonth);
+        } else {
+            modsToApply = baseSalaryModifService.findIncreasesInPeriod(startMonth, endMonth);
+        }
+
+        if (modsToApply.isEmpty()) {
+            ApiResponse<Map<String, Object>> response = new ApiResponse<>();
+            response.setStatus("warning");
+            response.setMessage("No historical " + adjustmentType + "s found in the selected period to re-apply.");
+            return response;
+        }
+
+        // 2. Prepare payload - THIS PART IS CORRECT
+        List<Map<String, Object>> adjustmentsPayload = modsToApply.stream()
+                .map(mod -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("month_year", mod.getMonthYear());
+                    map.put("percentage", mod.getPercentageValue());
+                    return map;
+                })
+                .collect(Collectors.toList());
+
+        String payloadAsJson = objectMapper.writeValueAsString(adjustmentsPayload);
+
+        // 3. Call the ERPNext API - THIS PART IS CORRECT
+        String url = apiMethod + "/hrms.controllers.generator_controller.reapply_historical_adjustments";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.post()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(Map.of("adjustments", payloadAsJson))
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+
+              
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+
+                // Frappe wraps the actual response in a "message" key. We must extract it.
+                @SuppressWarnings("unchecked")
+                Map<String, Object> actualResponse = (Map<String, Object>) responseMap.get("message");
+
+                // Add a check for safety
+                if (actualResponse == null) {
+                    throw new IllegalStateException("Invalid response format from ERPNext: 'message' object is missing.");
+                }
+
+                // Now, use the 'actualResponse' map to get the values.
+                ApiResponse<Map<String, Object>> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus((String) actualResponse.get("status"));
+                apiResponse.setMessage((String) actualResponse.get("message"));
+
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) actualResponse.get("data");
+                apiResponse.setData(data);
+
+                return apiResponse;
+            }
+
+            ApiResponse<Map<String, Object>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to call historical adjustment API. No response from server.");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error during historical adjustment API call", e);
+            ApiResponse<Map<String, Object>> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error during API call: " + e.getMessage());
+            return errorResponse;
+        }
+    }
 }

@@ -1,0 +1,1619 @@
+Given this file, i want you to understand it and take it as context for the next functionnality that you are going to implement. Don't tell anything, just tell me if you have understand the code and got the context ... 
+
+/* ================================================================================ */
+/* ================================================================================ */
+/* ================================================================================ */
+
+
+salary_form.html:
+
+
+
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche de Paie - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1> Fiche de Paie</h1>
+        </div>
+    </div>
+    <div class="container">
+        
+        <div th:if="${error}" class="error-message">
+            <span th:text="${error}"></span>
+        </div>
+        
+        
+        <div th:if="${success}" class="summary-section">
+            <h3> Succès</h3>
+            <span th:text="${success}"></span>
+            <div th:if="${employee}">
+                <div class="employee-info">
+                    <p><strong>Employé sélectionné:</strong> <span th:text="${employee.fullName}"></span></p>
+                    <p><strong>Période:</strong> 
+                        <span th:text="${monthYearStart}"></span> 
+                        <span th:if="${monthYearStart != monthYearEnd}"> au <span th:text="${monthYearEnd}"></span></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div th:if="${warning}" class="summary-section warning-section">
+            <h3> Avertissement</h3>
+            <span th:text="${warning}"></span>
+        </div>
+
+        
+        <div class="card">
+            <h3>Création de fiches de paie</h3>
+            <form th:action="@{/api/hrms/insert}" method="post">
+                <div class="form-group">
+                    <label for="emp">👤 Sélectionner un employé:</label>
+                    <select id="emp" name="emp" required>
+                        <option value="">-- Choisir un employé --</option>
+                        <option th:each="employee : ${employees}" 
+                                th:value="${employee.employeeId}" 
+                                th:text="${employee.fullName + ' (' + employee.employeeId + ')'}"
+                                th:selected="${selectedEmployeeId != null && selectedEmployeeId == employee.employeeId}">
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="monthYearStart"> Mois de début:</label>
+                    <input type="month" 
+                           id="monthYearStart"
+                           name="monthYearStart" 
+                           th:value="${monthYearStart != null ? monthYearStart : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="monthYearEnd">Mois de fin:</label>
+                    <input type="month" 
+                           id="monthYearEnd"
+                           name="monthYearEnd" 
+                           th:value="${monthYearEnd != null ? monthYearEnd : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="montant"> Montant:</label>
+                    <input type="number" 
+                           id="montant"
+                           name="montant" 
+                           step="0.01"
+                           min="0"
+                           th:value="${montant != null ? montant : 0}" 
+                           placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                    <label for="ecraser">🔄 Écraser les fiches existantes:</label>
+                    <select id="ecraser" name="ecraser" required>
+                        <option value="1" th:selected="${ecraser != null && ecraser == 1}">Oui</option>
+                        <option value="0" th:selected="${ecraser == null || ecraser == 0}">Non</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="moyen">📊 Utiliser le salaire moyen:</label>
+                    <select id="moyen" name="moyen" required>
+                        <option value="0" th:selected="${moyen != null && moyen == 0}">Oui</option>
+                        <option value="1" th:selected="${moyen == null || moyen == 1}">Non</option>
+                    </select>
+                </div>
+
+                <button type="submit"> Créer les fiches de paie</button>
+            </form>
+        </div>
+
+        
+        <div th:if="${salarySlips}" class="card">
+            <h3>📋 Fiche de paie créée</h3>
+            <div th:if="${!salarySlips.empty}" class="salary-slip-item">
+                <div class="salary-slip-header">
+                    <h4>Fiche de paie</h4>
+                    <span class="total" th:text="'Salaire: ' + ${salarySlips[0].salaire} + ' Ar'"></span>
+                </div>
+                <p><strong>Référence employé:</strong> <span th:text="${salarySlips[0].refEmploye}"></span></p>
+                <p><strong>Salaire de base:</strong> <span th:text="${salarySlips[0].salaireBase} + ' Ar'"></span></p>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
+
+
+/* ================================================================================ */
+/* ================================================================================ */
+/* ================================================================================ */
+
+HrmsController.java: 
+
+
+package mg.itu.controller;
+
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.EmployeeDTO;
+import mg.itu.model.PayrollDTO;
+import mg.itu.model.SalaryComponentDTO;
+import mg.itu.model.UpdateBaseAssignmentDTO;
+import mg.itu.service.EmployeeService;
+import mg.itu.service.HrmsService;
+
+  
+@Controller
+@RequestMapping("/api/hrms")
+public class HrmsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsController.class);
+
+    @Autowired
+    private HrmsService hrmsService;
+
+    @Autowired
+    private EmployeeService employeeService;
+    
+    @GetMapping("/insert")
+    public String insertSlipForm(Model model, HttpSession session, @ModelAttribute("selectedEmployeeId") String selectedEmployeeId) {
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            model.addAttribute("error", "Please log in to access the dashboard");
+            return "views/auth/login";
+        }
+
+        try {
+            
+            ApiResponse<EmployeeDTO> employeesResponse = employeeService.getAllEmployees(session);
+            if ("success".equals(employeesResponse.getStatus())) {
+                model.addAttribute("employees", employeesResponse.getData());
+            } else {
+                model.addAttribute("error", "Erreur lors du chargement des employés: " + employeesResponse.getMessage());
+                model.addAttribute("employees", new ArrayList<>());
+            }
+
+            
+            String empId = selectedEmployeeId != null && !selectedEmployeeId.isEmpty() ? selectedEmployeeId : (String) session.getAttribute("employeID");
+            if (empId != null && !empId.isEmpty()) {
+                try {
+                    ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(empId, session);
+                    if ("success".equals(empResponse.getStatus())) {
+                        model.addAttribute("selectedEmployee", empResponse.getData().get(0));
+                        model.addAttribute("selectedEmployeeId", empId);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Employee from session or redirect not found: {}", empId);
+                }
+            }
+
+            
+            if (!model.containsAttribute("monthYearStart")) {
+                model.addAttribute("monthYearStart", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            }
+            if (!model.containsAttribute("monthYearEnd")) {
+                model.addAttribute("monthYearEnd", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            }
+            if (!model.containsAttribute("montant")) {
+                model.addAttribute("montant", 0.0);
+            }
+
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching payroll form", e);
+            model.addAttribute("error", "Erreur lors du chargement du formulaire: " + e.getMessage());
+            model.addAttribute("employees", new ArrayList<>());
+        }
+
+        return "views/hrms/salary_form";
+    }
+    
+    @PostMapping("/insert")
+    public String insertSlipFormSubmit(
+            @RequestParam("monthYearStart") String monthDebut,
+            @RequestParam("monthYearEnd") String monthFin,
+            @RequestParam("emp") String empId,
+            @RequestParam(value = "montant", defaultValue = "0") Double montant,
+            @RequestParam("ecraser") int ecraser,
+            @RequestParam("moyen") int moyen,
+            Model model,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        String accessToken = (String) session.getAttribute("sid");
+
+        if (accessToken == null) {
+            redirectAttributes.addFlashAttribute("error", "Please log in to access the dashboard");
+            return "redirect:/api/auth/login";
+        }
+
+        try {
+            
+            if (monthDebut == null || monthFin == null || monthDebut.isEmpty() || monthFin.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Les dates de début et de fin sont obligatoires");
+                redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+                redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                redirectAttributes.addFlashAttribute("ecraser", ecraser);
+                redirectAttributes.addFlashAttribute("moyen", moyen);
+                return "redirect:/api/hrms/insert";
+            }
+
+            
+            try {
+                YearMonth startMonth = YearMonth.parse(monthDebut);
+                YearMonth endMonth = YearMonth.parse(monthFin);
+                if (startMonth.isAfter(endMonth)) {
+                    redirectAttributes.addFlashAttribute("error", "La date de début ne peut pas être postérieure à la date de fin");
+                    redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+                    redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+                    redirectAttributes.addFlashAttribute("montant", montant);
+                    redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                    redirectAttributes.addFlashAttribute("ecraser", ecraser);
+                  redirectAttributes.addFlashAttribute("moyen", moyen);
+                    return "redirect:/api/hrms/insert";
+                }
+            } catch (DateTimeParseException e) {
+                redirectAttributes.addFlashAttribute("error", "Format de date invalide");
+                redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+                redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                redirectAttributes.addFlashAttribute("ecraser", ecraser);
+                redirectAttributes.addFlashAttribute("moyen", moyen);
+                return "redirect:/api/hrms/insert";
+            }
+
+            
+            ApiResponse<EmployeeDTO> empResponse = employeeService.getEmployeeDetails(empId, session);
+            if (!"success".equals(empResponse.getStatus())) {
+                redirectAttributes.addFlashAttribute("error", empResponse.getMessage());
+                redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+                redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+                redirectAttributes.addFlashAttribute("ecraser", ecraser);
+                redirectAttributes.addFlashAttribute("moyen", moyen);
+                return "redirect:/api/hrms/insert";
+            } 
+
+             
+            ApiResponse<PayrollDTO> insertResponse = hrmsService.insertSalarySlip(empId, monthDebut, monthFin, montant,ecraser,moyen, session);
+
+             
+            if ("success".equals(insertResponse.getStatus())) { 
+                redirectAttributes.addFlashAttribute("success", insertResponse.getMessage());
+                redirectAttributes.addFlashAttribute("salarySlips", insertResponse.getData());
+                redirectAttributes.addFlashAttribute("employee", empResponse.getData().get(0));
+            } else if ("warning".equals(insertResponse.getStatus())) {
+                redirectAttributes.addFlashAttribute("warning", insertResponse.getMessage());
+            } else {
+                redirectAttributes.addFlashAttribute("error", insertResponse.getMessage());
+            }
+
+            
+            redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+            redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+            redirectAttributes.addFlashAttribute("montant", montant);
+            redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+            redirectAttributes.addFlashAttribute("ecraser", ecraser);
+redirectAttributes.addFlashAttribute("moyen", moyen);
+
+            
+            return "redirect:/api/hrms/insert";
+
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Authentication error: " + e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error creating salary slip", e);
+            redirectAttributes.addFlashAttribute("error", "Erreur lors de la création des fiches de paie: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("monthYearStart", monthDebut);
+            redirectAttributes.addFlashAttribute("monthYearEnd", monthFin);
+            redirectAttributes.addFlashAttribute("montant", montant);
+            redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
+            redirectAttributes.addFlashAttribute("ecraser", ecraser);
+redirectAttributes.addFlashAttribute("moyen", moyen);
+            return "redirect:/api/hrms/insert";
+        } 
+    }
+    
+    @GetMapping("/update-base-assignment")
+    public String updateBaseAssignmentForm(Model model, HttpSession session, 
+            @ModelAttribute("selectedSalaryComponent") String selectedSalaryComponent) {
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            model.addAttribute("error", "Please log in to access the dashboard");
+            return "views/auth/login";
+        }
+ 
+        try {
+            
+            ApiResponse<SalaryComponentDTO> componentsResponse = hrmsService.getAllSalaryComponents(session);
+            if ("success".equals(componentsResponse.getStatus())) {
+                model.addAttribute("salaryComponents", componentsResponse.getData());
+            } else {
+                model.addAttribute("error", "Erreur lors du chargement des composants de salaire: " + componentsResponse.getMessage());
+                model.addAttribute("salaryComponents", new ArrayList<>());
+            }
+
+            
+            if (!model.containsAttribute("montant")) {
+                model.addAttribute("montant", 0.0);
+            }
+            if (!model.containsAttribute("taux")) {
+                model.addAttribute("taux", 0.0);
+            }
+            if (!model.containsAttribute("infOrSup")) {
+                model.addAttribute("infOrSup", 0);
+            }
+            if (!model.containsAttribute("minusOrPlus")) {
+                model.addAttribute("minusOrPlus", 0);
+            }
+
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error fetching update base assignment form", e);
+            model.addAttribute("error", "Erreur lors du chargement du formulaire: " + e.getMessage());
+            model.addAttribute("salaryComponents", new ArrayList<>());
+        }
+
+        return "views/hrms/update_base_assignment_form";
+    }
+
+    @PostMapping("/update-base-assignment")
+    public String updateBaseAssignmentSubmit(
+            @RequestParam("salaryComponent") String salaryComponent,
+            @RequestParam("montant") Double montant,
+            @RequestParam("infOrSup") Integer infOrSup,
+            @RequestParam("minusOrPlus") Integer minusOrPlus,
+            @RequestParam("taux") Double taux,
+            Model model,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            redirectAttributes.addFlashAttribute("error", "Please log in to access the dashboard");
+            return "redirect:/api/auth/login";
+        }
+
+        try { 
+            
+            if (salaryComponent == null || salaryComponent.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Le composant de salaire est obligatoire");
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("infOrSup", infOrSup);
+                redirectAttributes.addFlashAttribute("minusOrPlus", minusOrPlus);
+                redirectAttributes.addFlashAttribute("taux", taux);
+                redirectAttributes.addFlashAttribute("selectedSalaryComponent", salaryComponent);
+                return "redirect:/api/hrms/update-base-assignment";
+            }
+
+            if (taux < 0) {
+                redirectAttributes.addFlashAttribute("error", "Le taux ne peut pas être négatif");
+                redirectAttributes.addFlashAttribute("montant", montant);
+                redirectAttributes.addFlashAttribute("infOrSup", infOrSup);
+                redirectAttributes.addFlashAttribute("minusOrPlus", minusOrPlus);
+                redirectAttributes.addFlashAttribute("taux", taux);
+                redirectAttributes.addFlashAttribute("selectedSalaryComponent", salaryComponent);
+                return "redirect:/api/hrms/update-base-assignment";
+            }
+
+            
+            ApiResponse<UpdateBaseAssignmentDTO> response = hrmsService.updateBaseAssignment(salaryComponent, montant, infOrSup, minusOrPlus, taux, session);
+
+            if ("success".equals(response.getStatus())) {
+                redirectAttributes.addFlashAttribute("success", response.getMessage());
+                redirectAttributes.addFlashAttribute("updatedSlips", response.getData());
+            } else {
+                redirectAttributes.addFlashAttribute("error", response.getMessage());
+            }
+
+            
+            redirectAttributes.addFlashAttribute("montant", montant);
+            redirectAttributes.addFlashAttribute("infOrSup", infOrSup);
+            redirectAttributes.addFlashAttribute("minusOrPlus", minusOrPlus);
+            redirectAttributes.addFlashAttribute("taux", taux);
+            redirectAttributes.addFlashAttribute("selectedSalaryComponent", salaryComponent);
+
+            return "redirect:/api/hrms/update-base-assignment";
+
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Authentication error: " + e.getMessage());
+            return "redirect:/api/auth/";
+        } catch (Exception e) {
+            logger.error("Error updating base assignment", e);
+            redirectAttributes.addFlashAttribute("error", "Erreur lors de la mise à jour: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("montant", montant);
+            redirectAttributes.addFlashAttribute("infOrSup", infOrSup);
+            redirectAttributes.addFlashAttribute("minusOrPlus", minusOrPlus);
+            redirectAttributes.addFlashAttribute("taux", taux);
+            redirectAttributes.addFlashAttribute("selectedSalaryComponent", salaryComponent);
+            return "redirect:/api/hrms/update-base-assignment";
+        }
+    }
+}
+
+
+/* ================================================================================ */
+/* ================================================================================ */
+/* ================================================================================ */
+
+HrmsService.java: 
+
+package mg.itu.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.ApiResponse;
+import mg.itu.model.PaginatedResponse;
+import mg.itu.model.PayrollDTO;
+import mg.itu.model.SalaryComponentDTO;
+import mg.itu.model.SalaryDetailDTO;
+import mg.itu.model.SummaryDTO;
+import mg.itu.model.UpdateBaseAssignmentDTO;
+import reactor.core.publisher.Mono;
+
+@Service
+public class HrmsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(HrmsService.class);
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Value("${api.base-url-hr}")
+    private String baseApiUrl;
+
+    @Value("${api.method}")
+    private String apiMethod;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    
+    public ApiResponse<SalaryDetailDTO> getSalaryHistory(String id, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]&filters=[[\"employee\",\"=\",\"" + id + "\"]]"+ "&limit_page_length=500";
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        System.out.println("url salary "+ url );
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SalaryDetailDTO> salaries = new ArrayList<>();
+                for (Map<String, Object> item : data) {
+                    SalaryDetailDTO salary = objectMapper.convertValue(item, SalaryDetailDTO.class);
+                    salaries.add(salary);
+                }
+                ApiResponse<SalaryDetailDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Salary history fetched successfully");
+                apiResponse.setData(salaries);
+                return apiResponse;
+            }
+
+            ApiResponse<SalaryDetailDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch salary history");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching salary history", e);
+            ApiResponse<SalaryDetailDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching salary history: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    
+    public ApiResponse<SummaryDTO> getMonthlySummary(String start, String end, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+        String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]"; 
+
+        if(start != null && start != "" && end != null && end != ""){
+            url+="&filters=[[\"posting_date\",\">=\",\"" + start + "\"],[\"posting_date\",\"<=\",\"" + end + "\"]]";
+        }
+        url+= "&limit_page_length=500";
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+        System.out.println("summary url "+ url);
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SummaryDTO> summary = new ArrayList<>();
+                for (Map<String, Object> item : data) {
+                    SummaryDTO itemSummary = objectMapper.convertValue(item, SummaryDTO.class);
+                    System.out.println("posting date " + itemSummary.getPostingDate());
+                    System.out.println("month year" + itemSummary.getMonthYear());
+                    itemSummary.setMonthYear(itemSummary.getPostingDate());
+                    summary.add(itemSummary);
+                }
+                ApiResponse<SummaryDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Monthly summary fetched successfully");
+                apiResponse.setData(summary);
+                return apiResponse;
+            }
+
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch monthly summary");
+            return errorResponse;
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching monthly summary: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+    
+    public String fetchSalaryEvolutionData(String year,HttpSession session) {
+        try {
+
+            String sid = (String) session.getAttribute("sid");
+ 
+            
+            String url = apiMethod + "/hrms.controllers.payroll_controller.get_salary_evolution_data?year=" + year;
+            WebClient client = webClientBuilder.baseUrl(url).build();
+
+            ResponseEntity<String> response = client.get()
+                .cookie("sid", sid)
+                .retrieve()
+                .toEntity(String.class)
+                .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful()) {
+                logger.info("Successfully fetched salary evolution data");
+                return response.getBody();
+            } else {
+                logger.error("Failed to fetch data. Status: {}", response != null ? response.getStatusCode() : "null");
+                throw new RuntimeException("Failed to fetch salary evolution data from ERPNext");
+            }
+
+        } catch (WebClientResponseException e) {
+            logger.error("WebClient error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("Error calling ERPNext API: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error: ", e);
+            throw new RuntimeException("Unexpected error: " + e.getMessage());
+        }
+    }
+    
+    public PaginatedResponse<SummaryDTO> getMonthlySummaryPaginated(String start, String end, int page, int size, 
+                                                                    HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+        
+        
+        String filters = "";
+        if (start != null && !start.trim().isEmpty() && end != null && !end.trim().isEmpty()) {
+            filters = "&filters=[[\"posting_date\",\">=\",\"" + start + "\"],[\"posting_date\",\"<=\",\"" + end + "\"]]";
+        }
+        
+        try {
+            
+            String countUrl = baseApiUrl + "/Salary Slip?fields=[\"name\"]" + filters;
+            countUrl += "&limit_page_length=0"; 
+            
+            WebClient countClient = webClientBuilder.baseUrl(countUrl).build();
+            ResponseEntity<String> countResponse = countClient.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            
+            int totalCount = 0;
+            if (countResponse != null && countResponse.getStatusCode().is2xxSuccessful() && countResponse.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> countResponseMap = objectMapper.readValue(countResponse.getBody(), Map.class);
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> countData = (List<Map<String, Object>>) countResponseMap.get("data");
+                totalCount = countData != null ? countData.size() : 0;
+            }
+            
+            
+            int offset = (page - 1) * size;
+            String dataUrl = baseApiUrl + "/Salary Slip?fields=[\"*\"]" + filters + 
+                            "&limit_page_length=" + size + "&limit_start=" + offset;
+            
+            WebClient dataClient = webClientBuilder.baseUrl(dataUrl).build();
+            System.out.println("summary url " + dataUrl);
+            
+            ResponseEntity<String> dataResponse = dataClient.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            List<SummaryDTO> summary = new ArrayList<>();
+            if (dataResponse != null && dataResponse.getStatusCode().is2xxSuccessful() && dataResponse.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(dataResponse.getBody(), Map.class);
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                
+                if (data != null) {
+                    for (Map<String, Object> item : data) {
+                        SummaryDTO itemSummary = objectMapper.convertValue(item, SummaryDTO.class);
+                        itemSummary.setMonthYear(itemSummary.getPostingDate());
+                        summary.add(itemSummary);
+                    }
+                }
+            }
+            
+            
+            int totalPages = totalCount > 0 ? (int) Math.ceil((double) totalCount / size) : 0;
+            
+            logger.info("=== SUMMARY PAGINATION CORRECTED DEBUG ===");
+            logger.info("Total Count (from count query): {}", totalCount);
+            logger.info("Data Size (from paginated query): {}", summary.size());
+            logger.info("Total Pages: {}", totalPages);
+            logger.info("Current Page: {}", page);
+            logger.info("Page Size: {}", size);
+            
+            return new PaginatedResponse<>(summary, page, totalPages, totalCount, size);
+            
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            throw new RuntimeException("Error fetching monthly summary: " + e.getMessage());
+        }
+    }
+
+      
+    public ApiResponse<SummaryDTO> getAllMonthlySummary(String start, String end, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+        
+        String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]"; 
+
+        if (start != null && !start.trim().isEmpty() && end != null && !end.trim().isEmpty()) {
+            url += "&filters=[[\"posting_date\",\">=\",\"" + start + "\"],[\"posting_date\",\"<=\",\"" + end + "\"]]";
+        }
+        
+        
+        url += "&limit_page_length=0"; 
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SummaryDTO> summary = new ArrayList<>();
+                
+                if (data != null) {
+                    for (Map<String, Object> item : data) {
+                        SummaryDTO itemSummary = objectMapper.convertValue(item, SummaryDTO.class);
+                        itemSummary.setMonthYear(itemSummary.getPostingDate());
+                        summary.add(itemSummary);
+                    }
+                }
+                
+                ApiResponse<SummaryDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Monthly summary fetched successfully");
+                apiResponse.setData(summary);
+                return apiResponse;
+            }
+
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch monthly summary");
+            return errorResponse;
+            
+        } catch (Exception e) {
+            logger.error("Error fetching monthly summary", e);
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching monthly summary: " + e.getMessage());
+            return errorResponse;
+        }
+    }   
+
+    public ApiResponse<PayrollDTO> insertSalarySlip(String employeeId, String monthDebut, String monthFin, Double montant,int ecraser, int moyen, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = apiMethod + "/hrms.controllers.generator_controller.insert_slip_period";
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("emp", employeeId);
+        payload.put("monthDebut", monthDebut);
+        payload.put("monthFin", monthFin);
+        payload.put("montant", montant != null ? montant : 0.0);
+        payload.put("ecraser",ecraser);
+        payload.put("moyen", moyen);
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            ResponseEntity<String> response = client.post()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(payload)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                
+                @SuppressWarnings("unchecked")
+                Map<String, Object> messageMap = (Map<String, Object>) responseMap.get("message");
+
+                if (messageMap == null) {
+                    ApiResponse<PayrollDTO> errorResponse = new ApiResponse<>();
+                    errorResponse.setStatus("error");
+                    errorResponse.setMessage("Invalid response format: 'message' object missing");
+                    return errorResponse;
+                }
+
+                String status = (String) messageMap.get("status");
+                String message = (String) messageMap.get("message");
+
+                if ("success".equals(status)) {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> dataList = (List<Map<String, Object>>) messageMap.get("data");
+                    List<PayrollDTO> payrollList = new ArrayList<>();
+
+                    for (Map<String, Object> data : dataList) {
+                        PayrollDTO payroll = objectMapper.convertValue(data, PayrollDTO.class);
+                        payrollList.add(payroll);
+                    }
+
+                    ApiResponse<PayrollDTO> apiResponse = new ApiResponse<>();
+                    apiResponse.setStatus("success");
+                    apiResponse.setMessage(message);
+                    apiResponse.setData(payrollList);
+                    return apiResponse;
+                } else {
+                    ApiResponse<PayrollDTO> errorResponse = new ApiResponse<>();
+                    errorResponse.setStatus(status);
+                    errorResponse.setMessage(message);
+                    return errorResponse;
+                }
+            }
+
+            ApiResponse<PayrollDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to create salary slip");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error creating salary slip", e);
+            ApiResponse<PayrollDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error creating salary slip: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<SalaryComponentDTO> getAllSalaryComponents(HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = baseApiUrl + "/Salary Component?fields=[\"name\",\"salary_component\"]&limit_page_length=0";
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            Mono<String> responseMono = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .bodyToMono(String.class);
+            
+            String response = responseMono.block();
+            System.out.println("response " + response);
+            if (response != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                List<SalaryComponentDTO> components = new ArrayList<>();
+
+                for (Map<String, Object> item : data) {
+                    SalaryComponentDTO component = objectMapper.convertValue(item, SalaryComponentDTO.class);
+                    components.add(component);
+                }
+
+                ApiResponse<SalaryComponentDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus("success");
+                apiResponse.setMessage("Salary components fetched successfully");
+                apiResponse.setData(components);
+                return apiResponse;
+            }
+
+            ApiResponse<SalaryComponentDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to fetch salary components");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error fetching salary components", e);
+            ApiResponse<SalaryComponentDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching salary components: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public ApiResponse<UpdateBaseAssignmentDTO> updateBaseAssignment(
+        String salaryComponent, Double montant, Integer infOrSup, Integer minusOrPlus, Double taux, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        String url = apiMethod + "/hrms.controllers.generator_controller.updateBaseAssignement";
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("salary_component", salaryComponent);
+        payload.put("montant", montant != null ? montant : 0.0);
+        payload.put("infOrSup", infOrSup);
+        payload.put("minusOrPlus", minusOrPlus);
+        payload.put("taux", taux != null ? taux : 0.0);
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+
+        try {
+            Mono<String> responseMono = client.post()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(payload)
+                    .retrieve()
+                    .bodyToMono(String.class);
+
+            String response = responseMono.block();
+            if (response != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(response, Map.class);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> messageMap = (Map<String, Object>) responseMap.get("message");
+
+                if (messageMap == null) {
+                    ApiResponse<UpdateBaseAssignmentDTO> errorResponse = new ApiResponse<>();
+                    errorResponse.setStatus("error");
+                    errorResponse.setMessage("Invalid response format: 'message' object missing");
+                    return errorResponse;
+                }
+
+                String status = (String) messageMap.get("status");
+                String message = (String) messageMap.get("message");
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> updatedSlipsData = (List<Map<String, Object>>) messageMap.get("updated_slips");
+
+                List<UpdateBaseAssignmentDTO> updatedSlips = new ArrayList<>();
+                for (Map<String, Object> slipData : updatedSlipsData) {
+                    UpdateBaseAssignmentDTO slip = objectMapper.convertValue(slipData, UpdateBaseAssignmentDTO.class);
+                    updatedSlips.add(slip);
+                }
+
+                ApiResponse<UpdateBaseAssignmentDTO> apiResponse = new ApiResponse<>();
+                apiResponse.setStatus(status);
+                apiResponse.setMessage(message);
+                apiResponse.setData(updatedSlips);
+                return apiResponse;
+            }
+
+            ApiResponse<UpdateBaseAssignmentDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Failed to update base assignment");
+            return errorResponse;
+
+        } catch (Exception e) {
+            logger.error("Error updating base assignment", e);
+            ApiResponse<UpdateBaseAssignmentDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error updating base assignment: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+
+    public PaginatedResponse<SummaryDTO> getMonthlySummaryWithFilter(String salaryComponent, Double montant, 
+                                                                    Integer infOrSup, int page, int size, 
+                                                                    HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+        
+        try {
+            // First get all salary slips to count total
+            String countUrl = baseApiUrl + "/Salary Slip?fields=[\"name\"]&limit_page_length=0";
+            
+            WebClient countClient = webClientBuilder.baseUrl(countUrl).build();
+            ResponseEntity<String> countResponse = countClient.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            
+            List<SummaryDTO> allData = new ArrayList<>();
+            if (countResponse != null && countResponse.getStatusCode().is2xxSuccessful() && countResponse.getBody() != null) {
+                // Get all data for filtering
+                String dataUrl = baseApiUrl + "/Salary Slip?fields=[\"*\"]&limit_page_length=0";
+                
+                WebClient dataClient = webClientBuilder.baseUrl(dataUrl).build();
+                ResponseEntity<String> dataResponse = dataClient.get()
+                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie("sid", sid)
+                        .retrieve()
+                        .toEntity(String.class)
+                        .block();
+
+                if (dataResponse != null && dataResponse.getStatusCode().is2xxSuccessful() && dataResponse.getBody() != null) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> responseMap = objectMapper.readValue(dataResponse.getBody(), Map.class);
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                    
+                    if (data != null) {
+                        for (Map<String, Object> item : data) {
+                            SummaryDTO itemSummary = objectMapper.convertValue(item, SummaryDTO.class);
+                            itemSummary.setMonthYear(itemSummary.getPostingDate());
+                            allData.add(itemSummary);
+                        }
+                    }
+                }
+            }
+            
+            // Filter the data based on salary component and amount criteria
+            List<SummaryDTO> filteredData = filterBySalaryComponent(allData, salaryComponent, montant, infOrSup, session);
+            
+            // Apply pagination to filtered results
+            int totalCount = filteredData.size();
+            int startIndex = (page - 1) * size;
+            int endIndex = Math.min(startIndex + size, totalCount);
+            
+            List<SummaryDTO> paginatedData = new ArrayList<>();
+            if (startIndex < totalCount) {
+                paginatedData = filteredData.subList(startIndex, endIndex);
+            }
+            
+            int totalPages = totalCount > 0 ? (int) Math.ceil((double) totalCount / size) : 0;
+            
+            logger.info("=== FILTER SEARCH DEBUG ===");
+            logger.info("Total filtered records: {}", totalCount);
+            logger.info("Page size: {}, Current page: {}", size, page);
+            logger.info("Start index: {}, End index: {}", startIndex, endIndex);
+            logger.info("Paginated data size: {}", paginatedData.size());
+            
+            return new PaginatedResponse<>(paginatedData, page, totalPages, totalCount, size);
+            
+        } catch (Exception e) {
+            logger.error("Error fetching filtered monthly summary", e);
+            throw new RuntimeException("Error fetching filtered monthly summary: " + e.getMessage());
+        }
+    }
+
+    public ApiResponse<SummaryDTO> getAllMonthlySummaryWithFilter(String salaryComponent, Double montant, 
+                                                                Integer infOrSup, HttpSession session) {
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        if (accessToken == null || sid == null) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+        
+        try {
+            // Get all salary slips
+            String url = baseApiUrl + "/Salary Slip?fields=[\"*\"]&limit_page_length=0";
+            
+            WebClient client = webClientBuilder.baseUrl(url).build();
+            ResponseEntity<String> response = client.get()
+                    .header("Authorization", "Bearer " + accessToken)
+                    .cookie("sid", sid)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+            
+            List<SummaryDTO> allData = new ArrayList<>();
+            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), Map.class);
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");
+                
+                if (data != null) {
+                    for (Map<String, Object> item : data) {
+                        SummaryDTO itemSummary = objectMapper.convertValue(item, SummaryDTO.class);
+                        itemSummary.setMonthYear(itemSummary.getPostingDate());
+                        allData.add(itemSummary);
+                    }
+                }
+            }
+            
+            // Filter the data
+            List<SummaryDTO> filteredData = filterBySalaryComponent(allData, salaryComponent, montant, infOrSup, session);
+            
+            ApiResponse<SummaryDTO> apiResponse = new ApiResponse<>();
+            apiResponse.setStatus("success");
+            apiResponse.setMessage("Filtered monthly summary fetched successfully");
+            apiResponse.setData(filteredData);
+            return apiResponse;
+            
+        } catch (Exception e) {
+            logger.error("Error fetching all filtered monthly summary", e);
+            ApiResponse<SummaryDTO> errorResponse = new ApiResponse<>();
+            errorResponse.setStatus("error");
+            errorResponse.setMessage("Error fetching filtered monthly summary: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    private List<SummaryDTO> filterBySalaryComponent(List<SummaryDTO> allData, String salaryComponent, 
+                                                    Double montant, Integer infOrSup, HttpSession session) {
+        List<SummaryDTO> filteredResults = new ArrayList<>();
+        String accessToken = (String) session.getAttribute("access_token");
+        String sid = (String) session.getAttribute("sid");
+        
+        if (accessToken == null || sid == null) {
+            return filteredResults;
+        }
+        
+        try {
+            for (SummaryDTO salary : allData) {
+                // Get salary slip details for each employee to check salary components
+                String detailUrl = baseApiUrl + "/Salary Slip/" + salary.getName() + "?fields=[\"*\"]";
+                
+                WebClient detailClient = webClientBuilder.baseUrl(detailUrl).build();
+                ResponseEntity<String> detailResponse = detailClient.get()
+                        .header("Authorization", "Bearer " + accessToken)
+                        .cookie("sid", sid)
+                        .retrieve()
+                        .toEntity(String.class)
+                        .block();
+                
+                if (detailResponse != null && detailResponse.getStatusCode().is2xxSuccessful() && 
+                    detailResponse.getBody() != null) {
+                    
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> detailMap = objectMapper.readValue(detailResponse.getBody(), Map.class);
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> data = (Map<String, Object>) detailMap.get("data");
+                    
+                    if (data != null) {
+                        // Check earnings
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> earnings = (List<Map<String, Object>>) data.get("earnings");
+                        if (earnings != null && checkSalaryComponentMatch(earnings, salaryComponent, montant, infOrSup)) {
+                            filteredResults.add(salary);
+                            continue;
+                        }
+                        
+                        // Check deductions
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> deductions = (List<Map<String, Object>>) data.get("deductions");
+                        if (deductions != null && checkSalaryComponentMatch(deductions, salaryComponent, montant, infOrSup)) {
+                            filteredResults.add(salary);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error filtering by salary component", e);
+        }
+        
+        return filteredResults;
+    }
+
+    private boolean checkSalaryComponentMatch(List<Map<String, Object>> components, String targetComponent, 
+                                            Double targetAmount, Integer comparison) {
+        for (Map<String, Object> component : components) {
+            String componentName = (String) component.get("salary_component");
+            Object amountObj = component.get("amount");
+            
+            if (componentName != null && componentName.equals(targetComponent) && amountObj != null) {
+                Double componentAmount = 0.0;
+                if (amountObj instanceof Number) {
+                    componentAmount = ((Number) amountObj).doubleValue();
+                }
+                
+                // Apply comparison logic
+                switch (comparison) {
+                    case 0: // Inférieur (<)
+                        return componentAmount < targetAmount;
+                    case 1: // Supérieur (>)
+                        return componentAmount > targetAmount;
+                    case 2: // Supérieur ou égal (>=)
+                        return componentAmount >= targetAmount;
+                    case 3: // Inférieur ou égal (<=)
+                        return componentAmount <= targetAmount;
+                    case 4: // Égal (=)
+                        return componentAmount.equals(targetAmount);
+                    default:
+                        return false;
+                }
+            }
+        }
+        return false;
+    }
+}
+
+
+
+
+/* ================================================================================ */
+/* ================================================================================ */
+/* ================================================================================ */
+
+
+generator_controller.py:
+
+# hrms/controllers/generator_controller.py
+
+import frappe
+from frappe import _
+from hrms.services.payroll_generator_service import PayrollGeneratorService
+from hrms.services.salary_adjuster_service import SalaryAdjusterService
+from hrms.models.salary_moyen import SalaryMoyen
+
+@frappe.whitelist(allow_guest=False)
+def insert_slip_period(emp, monthDebut, monthFin, montant, ecraser, moyen):
+    """
+    API endpoint pour insérer des fiches de paie pour une période donnée.
+    Args:
+        emp (str): ID de l'employé
+        monthDebut (str): Mois de début (format: YYYY-MM)
+        monthFin (str): Mois de fin (format: YYYY-MM)
+        montant (float): Montant du salaire de base (0 pour utiliser le dernier salaire)
+        ecraser (int): 0 pour écraser, 1 pour ne pas écraser
+        moyen (int): 0 pour utiliser le montant saisi, 1 pour utiliser la moyenne
+    Returns:
+        dict: Résultat de l'opération avec status, message et data
+    """
+    try:
+        service = PayrollGeneratorService()
+        moyen = int(moyen)
+        
+        if moyen == 0:
+            salary_moyen = SalaryMoyen()
+            montant = float(salary_moyen.get_moyen()['moyen'])
+        else:
+            montant = float(montant or 0)
+        
+        return service.generate_payroll_period(emp, monthDebut, monthFin, montant, int(ecraser))
+        
+    except Exception as e:
+        frappe.log_error(f"Erreur dans insert_slip_period: {str(e)}", "API Error")
+        return {
+            "status": "error",
+            "message": str(e),
+            "data": None
+        }
+
+@frappe.whitelist(allow_guest=False)
+def updateBaseAssignement(salary_component, montant, infOrSup, minusOrPlus, taux):
+    """
+    API endpoint pour mettre à jour le salaire de base des fiches de paie selon des critères.
+    
+    Args:
+        salary_component (str): Composant de salaire à filtrer
+        montant (float): Montant de référence pour le filtreint
+        infOrSup (int): 0 pour inférieur, 1 pour supérieur
+        minusOrPlus (int): 0 pour augmenter, 1 pour diminuer
+        taux (str/float): Pourcentage de modification
+    
+    Returns:
+        dict: Résultat de l'opération avec détails des modifications
+    """
+    try:
+        service = SalaryAdjusterService()
+        return service.adjust_salary_slips(
+            salary_component=salary_component,
+            reference_amount=float(montant),
+            comparison_type=int(infOrSup),
+            adjustment_type=int(minusOrPlus),
+            adjustment_rate=float(taux)
+        )
+    except Exception as e:
+        frappe.log_error(f"Erreur dans updateBaseAssignement: {str(e)}", "API Error")
+        return {
+            "status": "error",
+            "updated_slips": [],
+            "errors": [f"Erreur générale: {str(e)}"],
+            "total_processed": 0,
+            "message": "Échec du traitement - rollback effectué"
+        }
+
+
+
+/* ================================================================================ */
+/* ================================================================================ */
+/* ================================================================================ */
+
+salary_adjuster_service.py:
+
+# hrms/services/salary_adjuster_service.py
+
+import frappe
+import copy
+from hrms.models.salary_slip_filter import SalarySlipFilter
+from hrms.models.salary_structure import SalaryStructureModel
+
+class SalaryAdjusterService:
+    """Service pour ajuster les salaires de base des fiches de paie."""
+    
+    def __init__(self):
+        self.filter_model = SalarySlipFilter()
+        self.structure_model = SalaryStructureModel()
+    
+    def adjust_salary_slips(self, salary_component, reference_amount, comparison_type, adjustment_type, adjustment_rate):
+        """
+        Ajuste les salaires de base selon les critères spécifiés.
+        
+        Args:
+            salary_component (str): Composant de salaire à filtrer
+            reference_amount (float): Montant de référence
+            comparison_type (int): 0 pour inférieur, 1 pour supérieur
+            adjustment_type (int): 0 pour augmenter, 1 pour diminuer
+            adjustment_rate (float): Pourcentage d'ajustement
+        
+        Returns:
+            dict: Résultat de l'opération
+        """
+        self._validate_parameters(adjustment_rate, reference_amount, adjustment_type)
+        
+        updated_slips = []
+        errors = []
+        
+        try:
+            # Récupérer les fiches de paie à traiter
+            salary_slips = self.filter_model.get_filtered_salary_slips(
+                salary_component, reference_amount, comparison_type
+            )
+            
+            if not salary_slips:
+                return self._format_empty_response()
+            
+            # Traiter chaque fiche individuellement
+            for slip_data in salary_slips:
+                result = self._process_single_slip(slip_data, adjustment_type, adjustment_rate)
+                
+                if result['success']:
+                    updated_slips.append(result['data'])
+                else:
+                    errors.append(result['error'])
+            
+            frappe.db.commit()
+            
+            return self._format_final_response(updated_slips, errors, len(salary_slips))
+            
+        except Exception as e:
+            frappe.db.rollback()
+            frappe.log_error(f"Erreur générale lors de l'ajustement : {str(e)}", "Salary Adjustment Error")
+            return self._format_error_response(str(e))
+    
+    def _validate_parameters(self, adjustment_rate, reference_amount, adjustment_type):
+        """Valide les paramètres d'entrée."""
+        if adjustment_rate < 0:
+            raise ValueError("Le taux ne peut pas être négatif")
+        
+        if reference_amount < 0:
+            raise ValueError("Le montant de référence ne peut pas être négatif")
+        
+        if adjustment_type not in [0, 1]:
+            raise ValueError("Le type d'ajustement doit être 0 (augmenter) ou 1 (diminuer)")
+    
+    def _process_single_slip(self, slip_data, adjustment_type, adjustment_rate):
+        """
+        Traite une seule fiche de paie.
+        
+        Returns:
+            dict: Résultat du traitement avec 'success', 'data' ou 'error'
+        """
+        try:
+            slip_name = slip_data['parent']
+            current_base = float(slip_data['amount'])
+            structure_name = slip_data['salary_structure']
+            
+            # Sauvegarder les informations avant suppression
+            slip_info = self._extract_slip_info(slip_name)
+            
+            # Supprimer l'ancienne fiche
+            self._cancel_and_delete_slip(slip_name)
+            
+            # Calculer le nouveau salaire
+            new_base = self._calculate_new_base_salary(current_base, adjustment_type, adjustment_rate)
+            
+            # Traiter la structure de salaire
+            original_structure = self._backup_and_modify_structure(structure_name, new_base)
+            
+            # Créer la nouvelle fiche
+            new_slip_name = self._create_new_salary_slip(slip_info, structure_name)
+            
+            # Restaurer la structure originale
+            self._restore_structure(structure_name, original_structure)
+            
+            return {
+                'success': True,
+                'data': self._format_slip_result(slip_info, new_slip_name, structure_name, 
+                                               current_base, new_base, adjustment_rate, adjustment_type)
+            }
+            
+        except Exception as e:
+            error_msg = f"Erreur lors du traitement du slip {slip_data.get('parent', 'inconnu')}: {str(e)}"
+            frappe.log_error(error_msg, "Single Slip Processing Error")
+            return {
+                'success': False,
+                'error': error_msg
+            }
+    
+    def _extract_slip_info(self, slip_name):
+        """Extrait les informations d'une fiche de paie."""
+        salary_slip = frappe.get_doc("Salary Slip", slip_name)
+        return {
+            'name': slip_name,
+            'employee': salary_slip.employee,
+            'employee_name': salary_slip.employee_name,
+            'start_date': salary_slip.start_date,
+            'end_date': salary_slip.end_date,
+            'posting_date': salary_slip.posting_date,
+            'company': salary_slip.company
+        }
+    
+    def _cancel_and_delete_slip(self, slip_name):
+        """Annule et supprime une fiche de paie."""
+        salary_slip = frappe.get_doc("Salary Slip", slip_name)
+        if salary_slip.docstatus == 1:
+            salary_slip.cancel()
+        frappe.delete_doc("Salary Slip", slip_name, ignore_permissions=False)
+        print(f"Cancelled and deleted salary slip {slip_name}")
+    
+    def _calculate_new_base_salary(self, current_base, adjustment_type, adjustment_rate):
+        """Calcule le nouveau salaire de base."""
+        if adjustment_type == 0:  # Augmenter
+            return current_base + (current_base * (adjustment_rate / 100))
+        else:  # Diminuer
+            return current_base - (current_base * (adjustment_rate / 100))
+    
+    def _backup_and_modify_structure(self, structure_name, new_base):
+        """Sauvegarde et modifie la structure de salaire."""
+        salary_structure = frappe.get_doc("Salary Structure", structure_name)
+        
+        # Sauvegarder l'état original
+        original_structure = {
+            'earnings': copy.deepcopy(salary_structure.earnings),
+            'deductions': copy.deepcopy(salary_structure.deductions)
+        }
+        
+        # Modifier le composant Salaire Base
+        base_updated = False
+        for earning in salary_structure.earnings:
+            if earning.salary_component == "Salaire Base" or earning.abbr in ["SB", "sb"]:
+                earning.formula = str(new_base)
+                base_updated = True
+                print(f"Updated base salary to {new_base} for {earning.salary_component}")
+                break
+        
+        if not base_updated:
+            raise Exception(f"Composant Salaire Base non trouvé dans la structure {structure_name}")
+        
+        # Sauvegarder et soumettre
+        salary_structure.save()
+        salary_structure.submit()
+        
+        return original_structure
+    
+    def _create_new_salary_slip(self, slip_info, structure_name):
+        """Crée une nouvelle fiche de paie."""
+        salary_slip_data = {
+            "doctype": "Salary Slip",
+            "employee": slip_info['employee'],
+            "employee_name": slip_info['employee_name'],
+            "salary_structure": structure_name,
+            "start_date": slip_info['start_date'],
+            "end_date": slip_info['end_date'],
+            "posting_date": slip_info['posting_date'],
+            "company": slip_info['company']
+        }
+        
+        slip_doc = frappe.get_doc(salary_slip_data)
+        slip_doc.insert()
+        
+        # Vérifier et ajouter le composant Salaire Base si nécessaire
+        self._ensure_base_salary_component(slip_doc)
+        
+        slip_doc.submit()
+        print(f"Created new salary slip {slip_doc.name}")
+        
+        return slip_doc.name
+    
+    def _ensure_base_salary_component(self, slip_doc):
+        """Assure que le composant Salaire Base existe dans la fiche."""
+        salary_detail_exists = frappe.db.exists({
+            "doctype": "Salary Detail",
+            "parenttype": "Salary Slip",
+            "parent": slip_doc.name,
+            "salary_component": "Salaire Base"
+        })
+        
+        if not salary_detail_exists:
+            # Récupérer le montant depuis la structure
+            structure = frappe.get_doc("Salary Structure", slip_doc.salary_structure)
+            base_amount = None
+            
+            for earning in structure.earnings:
+                if earning.salary_component == "Salaire Base":
+                    base_amount = float(earning.formula) if earning.formula.isdigit() else 0
+                    break
+            
+            if base_amount:
+                slip_doc.append("earnings", {
+                    "salary_component": "Salaire Base",
+                    "amount": base_amount,
+                    "abbr": "SB"
+                })
+                slip_doc.save()
+                print(f"Manually added Salaire Base to Salary Slip {slip_doc.name}")
+    
+    def _restore_structure(self, structure_name, original_structure):
+        """Restaure la structure de salaire à son état original."""
+        try:
+            salary_structure = frappe.get_doc("Salary Structure", structure_name)
+            salary_structure.earnings = original_structure['earnings']
+            salary_structure.deductions = original_structure['deductions']
+            salary_structure.save()
+            salary_structure.submit()
+            print(f"Restored original salary structure {structure_name}")
+        except Exception as e:
+            frappe.log_error(f"Erreur lors de la restauration de la structure {structure_name}: {str(e)}", 
+                           "Structure Restore Error")
+    
+    def _format_slip_result(self, slip_info, new_slip_name, structure_name, old_base, new_base, rate, adj_type):
+        """Formate le résultat pour un slip traité."""
+        return {
+            "old_slip": slip_info['name'],
+            "new_slip": new_slip_name,
+            "employee": slip_info['employee_name'],
+            "period": f"{slip_info['start_date']} - {slip_info['end_date']}",
+            "structure_name": structure_name,
+            "old_base": old_base,
+            "new_base": new_base,
+            "adjustment_percentage": rate,
+            "adjustment_type": "increase" if adj_type == 0 else "decrease"
+        }
+    
+    def _format_empty_response(self):
+        """Formate la réponse quand aucun slip n'est trouvé."""
+        return {
+            "status": "success",
+            "updated_slips": [],
+            "errors": [],
+            "total_processed": 0,
+            "message": "Aucun salary slip trouvé pour les critères donnés."
+        }
+    
+    def _format_final_response(self, updated_slips, errors, total_processed):
+        """Formate la réponse finale."""
+        return {
+            "status": "success" if not errors else "partial_success",
+            "updated_slips": updated_slips,
+            "errors": errors,
+            "total_processed": total_processed,
+            "message": f"Traitement terminé. {len(updated_slips)} slip(s) modifié(s) avec nouveau salaire de base."
+        }
+    
+    def _format_error_response(self, error_message):
+        """Formate la réponse d'erreur."""
+        return {
+            "status": "error",
+            "updated_slips": [],
+            "errors": [f"Erreur générale: {error_message}"],
+            "total_processed": 0,
+            "message": "Échec du traitement - rollback effectué"
+        }

@@ -10,7 +10,7 @@
     <div th:replace="~{fragments/side-bar}"></div>
     <div class="header">
         <div class="container">
-            <h1>Recherche salaire</h1>
+            <h1>Recherche de salaire</h1>
         </div>
     </div>
     <div class="container">
@@ -19,7 +19,7 @@
                 <div class="filters">
                 <form th:action="@{/api/hrms/search-filter}" method="get" class="filter-form">
                         <div class="form-group">
-                          <label for="salaryComponent"> Composant de salaire:</label>
+                          <label for="salaryComponent">Composant de salaire:</label>
                           <select id="salaryComponent" name="salaryComponent" required>
                               <option value="">-- Choisir un composant --</option>
                               <option th:each="component : ${salaryComponents}" 

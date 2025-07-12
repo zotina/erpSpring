@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ré-application des Ajustements - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>Ré-application des Ajustements Historiques</h1>
+        </div>
+    </div>
+    <div class="container">
+
+        <!-- Display Messages -->
+        <div th:if="${error}" class="error-message">
+            <h3>Erreur</h3>
+            <span th:text="${error}"></span>
+        </div>
+        <div th:if="${success}" class="summary-section">
+            <h3>Succès</h3>
+            <span th:text="${success}"></span>
+        </div>
+        <div th:if="${warning}" class="summary-section warning-section">
+            <h3>Avertissement</h3>
+            <span th:text="${warning}"></span>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card">
+            <h3>Relancer les ajustements de salaire de base</h3>
+            <p>Cet outil retrouvera tous les ajustements sauvegardés (Alea_1) dans la période et les ré-appliquera aux fiches de paie correspondantes.</p>
+            <form th:action="@{/api/hrms/reapply-adjustments}" method="post">
+                <div class="form-group">
+                    <label for="adjustmentType">🔄 Type d'ajustement à appliquer:</label>
+                    <select id="adjustmentType" name="adjustmentType" required>
+                        <option value="increase" th:selected="${form.adjustmentType == 'increase'}">Augmentation (Valeurs positives)</option>
+                        <option value="reduction" th:selected="${form.adjustmentType == 'reduction'}">Réduction (Valeurs négatives)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="monthYearMin">🗓️ Période de début:</label>
+                    <input type="month" id="monthYearMin" name="monthYearMin" th:value="${form.monthYearMin}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="monthYearMax">🗓️ Période de fin:</label>
+                    <input type="month" id="monthYearMax" name="monthYearMax" th:value="${form.monthYearMax}" required>
+                </div>
+                
+                <button type="submit">Lancer la Ré-application</button>
+            </form>
+        </div>
+
+        <!-- Result Display -->
+        <div th:if="${resultData}" class="card">
+            <h3>📋 Résultats du Traitement</h3>
+            <div th:if="${#lists.isEmpty(resultData)}">
+                <p>Aucune modification n'a été effectuée.</p>
+            </div>
+            
+            <div th:each="monthData : ${resultData}" class="monthly-result">
+                <h4>Mois: <span th:text="${monthData.month}"></span> | Pourcentage Appliqué: <span th:text="${monthData.percentage_applied}"></span>%</h4>
+                <ul>
+                    <li th:each="slip : ${monthData.slips_updated}">
+                        Employé: <strong th:text="${slip.employee}"></strong> |
+                        Ancien Salaire: <span th:text="${#numbers.formatDecimal(slip.old_base_salary, 1, 'WHITESPACE', 2, 'COMMA')}"></span> ->
+                        Nouveau Salaire: <span th:text="${#numbers.formatDecimal(slip.new_base_salary, 1, 'WHITESPACE', 2, 'COMMA')}"></span>
+                        (Ancienne Fiche: <span th:text="${slip.old_slip}"></span>, Nouvelle Fiche: <span th:text="${slip.new_slip}"></span>)
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

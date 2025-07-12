@@ -5,6 +5,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +162,7 @@ public class HrmsController {
                 redirectAttributes.addFlashAttribute("montant", montant);
                 redirectAttributes.addFlashAttribute("selectedEmployeeId", empId);
                 redirectAttributes.addFlashAttribute("ecraser", ecraser);
-redirectAttributes.addFlashAttribute("moyen", moyen);
+                redirectAttributes.addFlashAttribute("moyen", moyen);
                 return "redirect:/api/hrms/insert";
             } 
 
@@ -325,4 +326,115 @@ redirectAttributes.addFlashAttribute("moyen", moyen);
             return "redirect:/api/hrms/update-base-assignment";
         }
     }
+
+    @GetMapping("/base-salary-modification")
+    public String showBaseSalaryModificationForm(Model model, HttpSession session) {
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            return "redirect:/api/auth/login";
+        }
+        
+        // Set default month-year to the current month for the form
+        if (!model.containsAttribute("monthYear")) {
+            model.addAttribute("monthYear", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM")));
+        }
+        
+        return "views/hrms/base_salary_modification_form";
+    }
+
+    @PostMapping("/base-salary-modification")
+    public String handleBaseSalaryModification(
+            @RequestParam("percentageValue") Double percentageValue,
+            @RequestParam("monthYear") String monthYear,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            redirectAttributes.addFlashAttribute("error", "Your session has expired. Please log in again.");
+            return "redirect:/api/auth/login";
+        }
+        
+        try {
+            // Basic validation
+            if (percentageValue == null || monthYear == null || monthYear.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Percentage value and month-year are required.");
+                redirectAttributes.addFlashAttribute("percentageValue", percentageValue);
+                redirectAttributes.addFlashAttribute("monthYear", monthYear);
+                return "redirect:/api/hrms/base-salary-modification";
+            }
+
+            ApiResponse<Map<String, Object>> response = hrmsService.applyBaseSalaryModification(monthYear, percentageValue, session);
+
+            if ("success".equals(response.getStatus()) || "partial_success".equals(response.getStatus())) {
+                redirectAttributes.addFlashAttribute("success", response.getMessage());
+                // Optionally pass the detailed result to the view
+                redirectAttributes.addFlashAttribute("resultData", response.getData().get(0));
+            } else {
+                redirectAttributes.addFlashAttribute("error", response.getMessage());
+            }
+
+        } catch (Exception e) {
+            logger.error("Error handling base salary modification", e);
+            redirectAttributes.addFlashAttribute("error", "An unexpected error occurred: " + e.getMessage());
+        }
+
+        // Retain form values on redirect
+        redirectAttributes.addFlashAttribute("percentageValue", percentageValue);
+        redirectAttributes.addFlashAttribute("monthYear", monthYear);
+        
+        return "redirect:/api/hrms/base-salary-modification";
+    }
+
+     @GetMapping("/reapply-adjustments")
+    public String showReapplyAdjustmentsForm(Model model) {
+        if (!model.containsAttribute("form")) {
+            // Set default values for the form
+            model.addAttribute("form", Map.of(
+                "monthYearMin", LocalDate.now().minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                "monthYearMax", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                "adjustmentType", "increase"
+            ));
+        }
+        return "views/hrms/reapply_adjustments_form";
+    }
+
+    @PostMapping("/reapply-adjustments")
+    public String handleReapplyAdjustments(
+            @RequestParam("monthYearMin") String monthYearMin,
+            @RequestParam("monthYearMax") String monthYearMax,
+            @RequestParam("adjustmentType") String adjustmentType,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            if (YearMonth.parse(monthYearMin).isAfter(YearMonth.parse(monthYearMax))) {
+                redirectAttributes.addFlashAttribute("error", "The start period cannot be after the end period.");
+                redirectAttributes.addFlashAttribute("form", Map.of("monthYearMin", monthYearMin, "monthYearMax", monthYearMax, "adjustmentType", adjustmentType));
+                return "redirect:/api/hrms/reapply-adjustments";
+            }
+
+            ApiResponse<Map<String, Object>> response = hrmsService.reapplyHistoricalAdjustments(monthYearMin, monthYearMax, adjustmentType, session);
+            
+            if ("success".equals(response.getStatus())) {
+                redirectAttributes.addFlashAttribute("success", response.getMessage());
+            } else if ("warning".equals(response.getStatus())) {
+                redirectAttributes.addFlashAttribute("warning", response.getMessage());
+            } else {
+                redirectAttributes.addFlashAttribute("error", response.getMessage());
+            }
+            
+            // Pass the detailed response data to the view for display
+            redirectAttributes.addFlashAttribute("resultData", response.getData());
+
+        } catch (Exception e) {
+            logger.error("Error handling historical adjustment re-application", e);
+            redirectAttributes.addFlashAttribute("error", "An unexpected error occurred: " + e.getMessage());
+        }
+
+        // Retain user input on redirect
+        redirectAttributes.addFlashAttribute("form", Map.of("monthYearMin", monthYearMin, "monthYearMax", monthYearMax, "adjustmentType", adjustmentType));
+        return "redirect:/api/hrms/reapply-adjustments";
+    }
+
 }

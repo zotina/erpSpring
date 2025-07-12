@@ -1,0 +1,57 @@
+1 - Creation/Ecraser Salary Slip
+
+Thymeleaf
+    - /src/main/resources/templates/views/hrms/salary_form.html
+HrmsController
+    - insertSlipFormSubmit
+HrmsService
+    - insertSalarySlip
+Python
+    - /hrms/controllers/generator_controller.py
+    - /hrms/services/salary_adjuster_service.py
+
+
+/* ============================================================================== */
+/* ============================================================================== */
+/* ============================================================================== */
+
+Table:
+"base_salary_modif"
+    + id
+    + percentage_value
+    + month-year
+
+2 - Alea_1
+    - Affichage:
+        + form
+            . Percentage_value (can be negative)
+            . Month-Year
+    
+    - Result:
+        + Increase or decrease of the base_salary of all salary slip concerned with the Month-Year
+            + Call and use API from ERP-Next code, don't modify existing method, create new one if required 
+        + Save in Database the Percentage_value and the Month-Year 
+            + Using Spring Boot Repository instead of calling ERP-Next API
+
+3 - Alea_2 
+    - Affichage:
+        + form
+            . Dropdown (reduction or increase)
+            . Month-Year Min
+            . Month-Year Max 
+
+    - Result:
+        + Get All "base_salary_modif"
+            + if Dropdown is reduction
+                + get "base_salary_modif" with negative percentage_value within the range period
+            + else if Dropdown is increase
+                + get "base_salary_modif" with positive percentage_value within the range period
+        + Find all salary slip concerned with Month-Year range period (min and max)
+            + if Dropdown is reduction
+                + reduce the base_salary with the percentage_value of "base_salary_modif" 
+                    + ex: base_salary = 100.000$, percentage_value = -10
+                        + new_base_salary = 100.000$ - 10%
+            + else if Dropdown is increase
+                + increase the base_salary with the percentage_value of "base_salary_modif" 
+                    + ex: base_salary = 100.000$, percentage_value = 10
+                        + new_base_salary = 100.000$ + 10%

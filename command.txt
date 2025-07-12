@@ -56,7 +56,7 @@ in /home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/er
 /* ========================================================================= */
 
 in /home/ny-haritina/Documents/Studies/ITU/S6/_Evaluation/19-06-2025_ERP_NEXT/erpSpring/ERP-Next/erp_next/apps/hrms/hrms/services/hrms_insertion.py
-
+salary_structure
 
 change ref_company = "ITU", line 48 into your company name
 
@@ -69,4 +69,4 @@ DocTypes dans ERP_Next:
 - Employee
     -> fields : add row 'ref'
 - Salary Structure
-    -> fields: add row 'salary_structure'
+    -> fields: add row 'structure_name'

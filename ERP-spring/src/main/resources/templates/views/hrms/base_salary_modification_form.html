@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajustement Global des Salaires - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>Ajustement Global du Salaire de Base</h1>
+        </div>
+    </div>
+    <div class="container">
+
+        <!-- Display Messages -->
+        <div th:if="${error}" class="error-message">
+            <h3>Erreur</h3>
+            <span th:text="${error}"></span>
+        </div>
+        
+        <div th:if="${success}" class="summary-section">
+            <h3>Succès</h3>
+            <span th:text="${success}"></span>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card">
+            <h3>Appliquer un ajustement en pourcentage</h3>
+            <p>Cet outil modifiera le "Salaire de Base" de toutes les fiches de paie validées pour le mois spécifié.</p>
+            <form th:action="@{/api/hrms/base-salary-modification}" method="post">
+                <div class="form-group">
+                    <label for="percentageValue">📈 Pourcentage d'ajustement (%):</label>
+                    <input type="number" 
+                           id="percentageValue"
+                           name="percentageValue"
+                           step="0.01"
+                           th:value="${percentageValue != null ? percentageValue : 0}"
+                           placeholder="Ex: 5 pour augmenter de 5%, -2.5 pour diminuer de 2.5%"
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="monthYear">🗓️ Mois et Année d'application:</label>
+                    <input type="month" 
+                           id="monthYear"
+                           name="monthYear" 
+                           th:value="${monthYear != null ? monthYear : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
+                           required>
+                </div>
+                
+                <button type="submit">Appliquer l'ajustement</button>
+            </form>
+        </div>
+
+        <!-- Result Display -->
+        <div th:if="${resultData}" class="card">
+            <h3>📋 Résultats du Traitement</h3>
+            <p><strong>Total traité:</strong> <span th:text="${resultData.total_processed}"></span></p>
+            
+            <div th:if="${resultData.data != null and !resultData.data.isEmpty()}">
+                <h4>Fiches modifiées avec succès:</h4>
+                <ul>
+                    <li th:each="slip : ${resultData.data}">
+                        Employé: <strong th:text="${slip.employee}"></strong> |
+                        Ancien Salaire: <span th:text="${slip.old_base_salary}"></span> ->
+                        Nouveau Salaire: <span th:text="${slip.new_base_salary}"></span>
+                        (Ancienne Fiche: <span th:text="${slip.old_slip}"></span>, Nouvelle Fiche: <span th:text="${slip.new_slip}"></span>)
+                    </li>
+                </ul>
+            </div>
+
+            <div th:if="${resultData.errors != null and !resultData.errors.isEmpty()}">
+                <h4 style="color: red;">Erreurs rencontrées:</h4>
+                <ul>
+                    <li th:each="err : ${resultData.errors}" th:text="${err}"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>
