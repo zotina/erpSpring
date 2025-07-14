@@ -19,12 +19,13 @@ public class SalaryGenController {
 
     @GetMapping("/insertSalary")
     public String insertSalary(Model model){
-        return "views/hrms/salary-gen";
+        return "views/hrms/salary-gen"; 
     }   
 
     @PostMapping("/insertSalary")
     public String insertSalary(@RequestParam(value = "monthYearStart") String monthYear,@RequestParam(value = "montant") double valeur,Model model){
-        SalaryGen salarygen = salaryService.save(new SalaryGen(monthYear,valeur));
+        String uniqueName = "SALARY_" + monthYear + "_" + System.currentTimeMillis();
+        SalaryGen salarygen = salaryService.save(new SalaryGen(uniqueName, monthYear, valeur));
         if(salarygen != null){
             model.addAttribute("response","salary inserted sucessfully");
         }

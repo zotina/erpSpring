@@ -43,6 +43,15 @@ public class SalaryGen {
         this.month = month;
         this.valeur = valeur;
     }
+
+    public SalaryGen(String name, String month, double valeur) {
+        this.name = name;
+        this.month = month;
+        this.valeur = valeur;
+    }
+
+    public SalaryGen() {
+    }
     
     
 }
