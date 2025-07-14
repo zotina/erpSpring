@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche de Paie - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1> Fiche de Paie</h1>
+        </div>
+    </div>
+    <div class="container">
+        
+        <div th:if="${error}" class="error-message">
+            <span th:text="${error}"></span>
+        </div>
+        
+        <div class="card">
+            <h3>Création de fiches de paie</h3>
+            <form th:action="@{/api/hrms/insert}" method="post">
+                
+                <div class="form-group">
+                    <label for="monthYearStart"> Mois:</label>
+                    <input type="month" 
+                           id="monthYearStart"
+                           name="monthYearStart" 
+                           th:value="${monthYearStart != null ? monthYearStart : #temporals.format(#temporals.createNow(), 'yyyy-MM')}" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="montant"> Valeur:</label>
+                    <input type="number" 
+                           id="montant"
+                           name="montant" 
+                           step="0.01"
+                           min="0"
+                           th:value="${montant != null ? montant : 0}" 
+                           placeholder="0.00">
+                </div>
+
+                <button type="submit"> Créer les fiches de paie</button>
+            </form>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

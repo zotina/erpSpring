@@ -1,0 +1,258 @@
+# Tests Postman pour Service CRUD Frappe/ERPNext
+
+## Configuration générale
+
+### Headers requis pour toutes les requêtes :
+```
+Content-Type: application/json
+Accept: application/json
+```
+
+### Authentification :
+- **Basic Auth** : Utilisez votre username/password ERPNext
+- **Cookie** : Ou utilisez les cookies de session après connexion
+
+---
+
+## 1. 🆕 INSERT DOCUMENT
+
+### URL :
+```
+POST http://erpnext.localhost:8000/api/method/hrms.services.frappe_document_service.api_insert_document
+```
+
+### Body (JSON) - Exemple Employee :
+```json
+{
+    "doctype": "Employee",
+    "field_values": {
+        "first_name": "Jean",
+        "last_name": "Rakoto",
+        "employee_name": "Jean Rakoto",
+        "company": "noufre society",
+        "date_of_joining": "2024-01-15",
+        "date_of_birth":"2005-01-15",
+        "personal_email": "jean.rakoto@example.com",
+        "cell_number": "+261 32 12 345 67",
+        "gender": "Male",
+        "status": "Active"
+    },
+    "submit_after_insert": true
+}
+```
+
+### Body (JSON) - Exemple Customer :
+```json
+{
+    "doctype": "Customer",
+    "field_values": {
+        "customer_name": "ACME Corporation",
+        "customer_type": "Company",
+        "customer_group": "Commercial",
+        "territory": "Madagascar",
+        "email_id": "contact@acme.com",
+        "mobile_no": "+261 32 11 222 33"
+    },
+    "submit_after_insert": false
+}
+```
+
+---
+
+## 2. 📖 EXTRACT INFO
+
+### URL :
+```
+GET http://erpnext.localhost:8000/api/method/hrms.services.frappe_document_service.api_extract_info
+```
+
+### Paramètres URL - Champs spécifiques :
+```
+?doctype=Employee&name=HR-EMP-00001&fields=first_name,last_name,department,designation,company
+```
+
+### Paramètres URL - Tous les champs :
+```
+?doctype=Employee&name=HR-EMP-00001
+```
+
+### Exemple avec Customer :
+```
+?doctype=Customer&name=CUST-00001&fields=customer_name,customer_type,territory,email_id
+```
+
+---
+
+## 3. ✏️ UPDATE DOCUMENT
+
+### URL :
+```
+POST http://erpnext.localhost:8000/api/method/hrms.services.frappe_document_service.api_update_document
+```
+
+### Body (JSON) - Mise à jour Employee :
+```json
+{
+    "doctype": "Employee",
+    "name": "HR-EMP-00001",
+    "field_values": {
+        "cell_number": "+261 32 99 888 77",
+        "personal_email": "nouveau.email@example.com",
+        "designation": "Senior Developer"
+    },
+    "submit_after_update": false
+}
+```
+
+### Body (JSON) - Mise à jour Customer :
+```json
+{
+    "doctype": "Customer",
+    "name": "CUST-00001",
+    "field_values": {
+        "mobile_no": "+261 32 55 666 77",
+        "email_id": "newemail@customer.com",
+        "customer_group": "Individual"
+    },
+    "submit_after_update": false
+}
+```
+
+---
+
+## 4. 🗑️ DELETE DOCUMENT
+
+### URL :
+```
+POST http://erpnext.localhost:8000/api/method/hrms.services.frappe_document_service.api_cancel_and_delete
+```
+
+### Body (JSON) :
+```json
+{
+    "doctype": "Employee",
+    "name": "HR-EMP-00001",
+    "ignore_permissions": false
+}
+```
+
+### Body (JSON) - Exemple Customer :
+```json
+{
+    "doctype": "Customer", 
+    "name": "CUST-00001",
+    "ignore_permissions": false
+}
+```
+
+---
+
+## 📋 Collection Postman complète
+
+### Test 1 : Créer un Employee
+```
+POST http://erpnext.localhost:8000/api/method/hrms.services.frappe_document_service.api_insert_document
+
+Headers:
+- Content-Type: application/json
+
+Body:
+{
+    "doctype": "Employee",
+    "field_values": {
+        "first_name": "Test",
+        "last_name": "User",
+        "employee_name": "Test User",
+        "company": "Votre Société"
+    }
+}
+```
+
+### Test 2 : Lire les infos
+```
+GET http://erpnext.localhost:8000/api/method/hrms.services.frappe_document_service.api_extract_info?doctype=Employee&name=HR-EMP-XXXXX&fields=first_name,last_name,company
+```
+
+### Test 3 : Mettre à jour
+```
+POST http://erpnext.localhost:8000/api/method/hrms.services.frappe_document_service.api_update_document
+
+Body:
+{
+    "doctype": "Employee",
+    "name": "HR-EMP-XXXXX",
+    "field_values": {
+        "cell_number": "+261 32 12 345 67"
+    }
+}
+```
+
+### Test 4 : Supprimer
+```
+POST http://erpnext.localhost:8000/api/method/hrms.services.frappe_document_service.api_cancel_and_delete
+
+Body:
+{
+    "doctype": "Employee",
+    "name": "HR-EMP-XXXXX"
+}
+```
+
+---
+
+## 🔧 Autres exemples de doctypes
+
+### Item (Produit) :
+```json
+{
+    "doctype": "Item",
+    "field_values": {
+        "item_code": "PROD-001",
+        "item_name": "Mon Produit",
+        "item_group": "Products",
+        "stock_uom": "Nos",
+        "is_stock_item": 1
+    }
+}
+```
+
+### Supplier (Fournisseur) :
+```json
+{
+    "doctype": "Supplier",
+    "field_values": {
+        "supplier_name": "Fournisseur Test",
+        "supplier_group": "Local",
+        "supplier_type": "Company"
+    }
+}
+```
+
+---
+
+## 🚨 Réponses attendues
+
+### Succès :
+```json
+{
+    "message": "HR-EMP-00002"  // Pour insert (retourne l'ID créé)
+}
+```
+
+### Erreur :
+```json
+{
+    "exc_type": "ValidationError",
+    "exception": "Document Employee HR-EMP-00001 does not exist"
+}
+```
+
+---
+
+## 💡 Conseils de test
+
+1. **Testez d'abord INSERT** pour créer un document
+2. **Notez l'ID retourné** pour les tests suivants
+3. **Utilisez cet ID** dans les tests EXTRACT, UPDATE et DELETE
+4. **Vérifiez les permissions** de votre utilisateur ERPNext
+5. **Testez avec différents doctypes** pour valider la généricité
