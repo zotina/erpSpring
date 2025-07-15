@@ -107,118 +107,38 @@ def import_csvs_from_json():
         salary_structure_dtos = all_parsed_data.get(SalaryStructureDTO.__name__, [])
         payroll_dtos = all_parsed_data.get(PayrollDTO.__name__, [])
         
+        employee_ref_to_name = {}
+        for emp in employee_dtos:
+            employee_ref_to_name[emp.ref] = f"{emp.nom} {emp.prenom}"
+
+        employe_detail = {}
+        for payroll in payroll_dtos:
+            ref_employe = payroll.ref_employe
+            nom_complet = employee_ref_to_name.get(ref_employe, f"Employé inconnu ({ref_employe})")
+            
+            if nom_complet in employe_detail:
+                employe_detail[nom_complet] += 1
+            else:
+                employe_detail[nom_complet] = 1
+
         details = {
-            "fichier 1" : len(employee_dtos),
-            "fichier 2" : len(salary_structure_dtos) ,
-            "fichier 3": len(payroll_dtos) ,
+            "fichier 1": len(employee_dtos),
+            "fichier 2": len(salary_structure_dtos),
+            "fichier 3": len(payroll_dtos),
+            "employe_detail": employe_detail
         }
+
         print("valider")
         print(valider) 
         print("detail")
         print(details)
-        
+
         if valider == 0:
             frappe.local.response["status"] = "success"
             frappe.local.response["message"] = "wait for validation"
             frappe.local.response["details"] = details
             return
         
-        # Skip payroll if employees fail 
-        if not employee_dtos and any(e["file"] == "payrollCsv" for e in all_errors):
-            frappe.local.response["status"] = "error"
-            frappe.local.response["message"] = "Échec de la validation des employés. Le traitement du payroll a été ignoré."
-            frappe.local.response["validation_errors"] = all_errors
-            frappe.local.response["inserted_records"] = all_inserted_records
-            return
-
-        # PHASE 2: Pre-transaction setup
-        setup_errors = setup_hrms_data(employee_dtos, salary_structure_dtos)
-        if setup_errors:
-            all_errors.extend(setup_errors)
-            frappe.local.response["status"] = "error"
-            frappe.local.response["message"] = "Échec de la configuration initiale."
-            frappe.local.response["validation_errors"] = all_errors
-            frappe.local.response["inserted_records"] = all_inserted_records
-            return
-            
-        if valider == 1:
-            # PHASE 3: Process CSVs in transaction
-            try:
-                # Essayer de démarrer une transaction
-                try:
-                    frappe.db.begin()
-                    print("Transaction started", "CSV Transaction")
-                except Exception as tx_error:
-                    print(f"Could not start transaction: {str(tx_error)}", "CSV Transaction")
-                    # Continuer sans transaction explicite
-
-                # Process Employees
-                if employee_dtos:
-                    result = insert_employees_optimized(employee_dtos)
-                    all_inserted_records["employeesCsv"] = result["created"]
-                    all_errors.extend([dict(err, file="employeesCsv") for err in result["errors"]])
-                    print(f"Employee insertion: Created={len(result['created'])}, Errors={len(result['errors'])}", "Employee Insertion")
-
-                # Process Salary Structures
-                if salary_structure_dtos:
-                    result = insert_salary_components(salary_structure_dtos)
-                    all_inserted_records["salaryStructureCsv"] = result["created"]
-                    all_errors.extend([dict(err, file="salaryStructureCsv") for err in result["errors"]])
-
-                    result = insert_salary_structures(salary_structure_dtos, payroll_dtos)
-                    all_inserted_records["salaryStructureCsv"].extend(result["created"])
-                    all_errors.extend([dict(err, file="salaryStructureCsv") for err in result["errors"]])
-
-                # Process Payroll
-                if payroll_dtos:
-                    result = insert_salary_assignments(payroll_dtos)
-                    all_inserted_records["payrollCsv"] = result["created"]
-                    all_errors.extend([dict(err, file="payrollCsv") for err in result["errors"]])
-
-                    result = insert_salary_slips(payroll_dtos)
-                    all_inserted_records["payrollCsv"].extend(result["created"])
-                    all_errors.extend([dict(err, file="payrollCsv") for err in result["errors"]])
-
-                # PHASE 4: Commit or rollback
-                if all_errors:
-                    try:
-                        frappe.db.rollback()
-                        print("Transaction rolled back due to errors", "CSV Transaction")
-                    except Exception as rb_error:
-                        print(f"Could not rollback transaction: {str(rb_error)}", "CSV Transaction")
-                    frappe.local.response["status"] = "error"
-                    frappe.local.response["message"] = "Certaines insertions ont échoué. Toutes les modifications ont été annulées."
-                    frappe.local.response["validation_errors"] = all_errors
-                    frappe.local.response["inserted_records"] = all_inserted_records
-                else:
-                    try:
-                        frappe.db.commit()
-                        print("Transaction committed successfully", "CSV Transaction")
-                            
-                    except Exception as commit_error:
-                        print(f"Could not commit transaction: {str(commit_error)}", "CSV Transaction")
-                    frappe.local.response["status"] = "success"
-                    frappe.local.response["message"] = "Tous les CSV ont été importés avec succès."
-                    frappe.local.response["validation_errors"] = []
-                    frappe.local.response["inserted_records"] = all_inserted_records
-
-            except Exception as e:
-                try:
-                    frappe.db.rollback()
-                    print(f"Transaction rolled back due to exception: {str(e)}", "CSV Transaction")
-                except Exception as rb_error:
-                    print(f"Could not rollback after exception: {str(rb_error)}", "CSV Transaction")
-                
-                frappe.local.response["status"] = "error"
-                frappe.local.response["message"] = f"Erreur lors de l'insertion: {str(e)}"
-                frappe.local.response["validation_errors"] = all_errors + [{
-                    "line": 0,
-                    "error_message": f"Erreur lors de l'insertion: {str(e)}",
-                    "data": {},
-                    "file": "global"
-                }]
-                frappe.local.response["inserted_records"] = all_inserted_records
-                print(f"Insertion error: {str(e)}", "CSV Insertion")
 
     except Exception as e:
         frappe.local.response["status"] = "error"
