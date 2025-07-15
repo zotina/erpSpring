@@ -30,16 +30,15 @@ public class HrmsCsvImportService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public HrmsCsvImportResponse importCsvFiles(MultipartFile employeesCsv, MultipartFile salaryStructureCsv, 
-                                               MultipartFile payrollCsv, HttpSession session) throws Exception {
+    public HrmsCsvImportResponse importCsvFiles(MultipartFile employeesCsv, MultipartFile salaryStructureCsv,
+        MultipartFile payrollCsv, HttpSession session, int validate) throws Exception {
+    
         String accessToken = (String) session.getAttribute("access_token");
         String sid = (String) session.getAttribute("sid");
-
         if (accessToken == null || sid == null) {
             throw new IllegalStateException("User is not authenticated");
         }
 
-        
         HrmsCsvImportRequest request = new HrmsCsvImportRequest();
         if (employeesCsv != null && !employeesCsv.isEmpty()) {
             request.setEmployeesCsv(Base64.getEncoder().encodeToString(employeesCsv.getBytes()));
@@ -47,41 +46,46 @@ public class HrmsCsvImportService {
         }
         if (salaryStructureCsv != null && !salaryStructureCsv.isEmpty()) {
             request.setSalaryStructureCsv(Base64.getEncoder().encodeToString(salaryStructureCsv.getBytes()));
-            System.out.println("salaryStructureCsv encoded, size: "+ salaryStructureCsv.getSize());
+            System.out.println("salaryStructureCsv encoded, size: " + salaryStructureCsv.getSize());
         }
         if (payrollCsv != null && !payrollCsv.isEmpty()) {
             request.setPayrollCsv(Base64.getEncoder().encodeToString(payrollCsv.getBytes()));
-            System.out.println("payrollCsv encoded, size: "+ payrollCsv.getSize());
+            System.out.println("payrollCsv encoded, size: " + payrollCsv.getSize());
         }
-
-        String url = baseApiUrl + "/hrms.controllers.hrms_controller.import_csvs_from_json";
+        String url ="";
+        if ( validate == 1 ) 
+             url = baseApiUrl + "/hrms.controllers.hrms_controller.import_csvs_from_json_valide";
+        else 
+             url = baseApiUrl + "/hrms.controllers.hrms_controller.import_csvs_from_json";
+             
         WebClient client = webClientBuilder.baseUrl(url).build();
-
+        
         try {
             String requestBody = objectMapper.writeValueAsString(request);
-            System.out.println("Sending request to {} with body: "+ requestBody);
-    
+            System.out.println("Sending request to " + url + " with body: " + requestBody);
+            
             ResponseEntity<String> response = client.post()
-                    .header("Authorization", "Bearer " + accessToken)
-                    .cookie("sid", sid)
-                    .header("Content-Type", "application/json")
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .toEntity(String.class)
-                    .block();
+                .uri(uriBuilder -> uriBuilder.queryParam("valider", validate).build()) 
+                .header("Authorization", "Bearer " + accessToken)
+                .cookie("sid", sid)
+                .header("Content-Type", "application/json")
+                .bodyValue(requestBody)
+                .retrieve()
+                .toEntity(String.class)
+                .block();
 
             if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 System.out.println("Received response: " + response.getBody());
                 HrmsCsvImportResponse hrmsResponse = objectMapper.readValue(response.getBody(), HrmsCsvImportResponse.class);
                 return hrmsResponse;
             }
-
-            System.out.println("Received null or unsuccessful response:"+ response);
+            
+            System.out.println("Received null or unsuccessful response:" + response);
             HrmsCsvImportResponse errorResponse = new HrmsCsvImportResponse();
             errorResponse.setSuccess(false);
             errorResponse.setMessage("Failed to import CSV files");
             return errorResponse;
-
+            
         } catch (Exception e) {
             logger.error("Error importing CSV files", e);
             HrmsCsvImportResponse errorResponse = new HrmsCsvImportResponse();
@@ -129,4 +133,4 @@ public class HrmsCsvImportService {
             return errorResponse;
         }
     }
-} 
+}

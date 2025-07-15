@@ -57,33 +57,9 @@
                     <label for="payrollCsv">Payroll CSV</label>
                     <input type="file" id="payrollCsv" name="payrollCsv" accept=".csv"/>
                 </div>
-                <input type="hidden" name="validate" value="0">
                 <center>
                     <div class="button-group">
-                        <button type="submit" class="submit-btn">Voir details</button>
-                    </div>
-                </center>
-            </form>
-        </div>
-
-        <div class="card upload-container">
-            <form th:action="@{/api/hrms-csv-import/import}" method="post" enctype="multipart/form-data">
-                <div>
-                    <label for="employeesCsv2">Employees CSV</label>
-                    <input type="file" id="employeesCsv2" name="employeesCsv" accept=".csv"/>
-                </div>
-                <div>
-                    <label for="salaryStructureCsv2">Salary Structure CSV</label>
-                    <input type="file" id="salaryStructureCsv2" name="salaryStructureCsv" accept=".csv"/>
-                </div>
-                <div>
-                    <label for="payrollCsv2">Payroll CSV</label>
-                    <input type="file" id="payrollCsv2" name="payrollCsv" accept=".csv"/>
-                </div>
-                <input type="hidden" name="validate" value="1">
-                <center>
-                    <div class="button-group">
-                        <button type="submit" class="submit-btn">Importer</button>
+                        <button type="submit" class="submit-btn">Import CSVs</button>
                     </div>
                 </center>
             </form>
@@ -98,22 +74,12 @@
                     </div>
                 </form>
             </center>
+            
         </div>
 
-        <!-- Response Display for Details (valider = 0) -->
-        <div class="response-container" th:if="${details}">
-            <h3>Détails des fichiers CSV</h3>
-            <div class="card success">
-                <div th:each="entry : ${details}">
-                    <strong th:text="${entry.key}"></strong>: <span th:text="${entry.value}"></span> enregistrement(s)
-                    <br/>
-                </div>
-            </div>
-        </div>
-
-        <!-- Response Display for Import (valider = 1) -->
+        <!-- Response Display for Import -->
         <div class="response-container" th:if="${insertedRecords}">
-            <h3>Enregistrements insérés</h3>
+            <h3>Inserted Records</h3>
             <div th:each="entry : ${insertedRecords}" class="card success">
                 <strong th:text="${entry.key}"></strong>
                 <ul>
@@ -124,7 +90,7 @@
 
         <!-- Response Display for Reset -->
         <div class="response-container" th:if="${deletedRecords}">
-            <h3>Enregistrements supprimés</h3>
+            <h3>Deleted Records</h3>
             <div th:each="entry : ${deletedRecords}" class="card success">
                 <strong th:text="${entry.key}"></strong>
                 <ul>

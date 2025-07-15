@@ -12,6 +12,7 @@ public class HrmsCsvImportResponse {
     private String message;
     private List<Map<String, Object>> validation_errors;
     private Map<String, List<Object>> inserted_records;
+    private Map<String, Object> details;
     private String status;
 
     
@@ -27,6 +28,17 @@ public class HrmsCsvImportResponse {
             this.message = (String) nestedMessage;
         }
     }
+
+    
+    public Map<String, Object> getDetails() {
+        return details;
+    }
+
+
+    public void setDetails(Map<String, Object> details) {
+        this.details = details;
+    }
+
 
     public boolean isSuccess() {
         return success;

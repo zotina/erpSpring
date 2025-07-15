@@ -24,6 +24,8 @@ import mg.itu.model.EmployeeDTO;
 import mg.itu.model.PayrollDTO;
 import mg.itu.model.SalaryComponentDTO;
 import mg.itu.model.UpdateBaseAssignmentDTO;
+import mg.itu.model.UpdateBaseAssignmentHistory;
+import mg.itu.repository.UpdateBaseAssignmentHistoryRepository;
 import mg.itu.service.EmployeeService;
 import mg.itu.service.HrmsService;
 
@@ -39,6 +41,9 @@ public class HrmsController {
 
     @Autowired
     private EmployeeService employeeService;
+    
+    @Autowired
+    private UpdateBaseAssignmentHistoryRepository historyRepository;
     
     @GetMapping("/insert")
     public String insertSlipForm(Model model, HttpSession session, @ModelAttribute("selectedEmployeeId") String selectedEmployeeId) {
@@ -270,7 +275,6 @@ redirectAttributes.addFlashAttribute("moyen", moyen);
         }
 
         try { 
-            
             if (salaryComponent == null || salaryComponent.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Le composant de salaire est obligatoire");
                 redirectAttributes.addFlashAttribute("montant", montant);
@@ -291,17 +295,30 @@ redirectAttributes.addFlashAttribute("moyen", moyen);
                 return "redirect:/api/hrms/update-base-assignment";
             }
 
-            
             ApiResponse<UpdateBaseAssignmentDTO> response = hrmsService.updateBaseAssignment(salaryComponent, montant, infOrSup, minusOrPlus, taux, session);
 
             if ("success".equals(response.getStatus())) {
                 redirectAttributes.addFlashAttribute("success", response.getMessage());
                 redirectAttributes.addFlashAttribute("updatedSlips", response.getData());
+
+                
+                for (UpdateBaseAssignmentDTO slip : response.getData()) {
+                    UpdateBaseAssignmentHistory history = new UpdateBaseAssignmentHistory(
+                        salaryComponent,
+                        slip.getOldBase(),
+                        slip.getNewBase(),
+                        slip.getEmployee(),
+                        slip.getPeriod(),
+                        slip.getStructureName(),
+                        slip.getAdjustmentType(),
+                        slip.getAdjustmentPercentage()
+                    );
+                    historyRepository.save(history);
+                }
             } else {
                 redirectAttributes.addFlashAttribute("error", response.getMessage());
             }
 
-            
             redirectAttributes.addFlashAttribute("montant", montant);
             redirectAttributes.addFlashAttribute("infOrSup", infOrSup);
             redirectAttributes.addFlashAttribute("minusOrPlus", minusOrPlus);
