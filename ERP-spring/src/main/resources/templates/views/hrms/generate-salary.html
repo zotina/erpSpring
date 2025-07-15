@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Génération de Salaire - HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        input[type="number"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .employee-info {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .employee-info h3 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+        .employee-info p {
+            margin: 0;
+            color: #6b7280;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .alert-success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .alert-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+        .alert-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    
+    <div class="header">
+        <div class="container">
+            <h1>Génération de Salaire</h1>
+        </div>
+    </div>
+    
+    <div class="container">
+        <a href="javascript:history.back()" class="back-link">← Retour à la liste</a>
+        
+        <!-- Messages d'alerte -->
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${warning}" class="alert alert-warning" th:text="${warning}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        
+        <div class="card">
+            <div class="employee-info">
+                <h3>Employé: <span th:text="${employeeName}"></span></h3>
+                <p>Date de publication: <span th:text="${postingDate}"></span></p>
+            </div>
+            
+            <form th:action="@{/api/hrms/process-salary-generation}" method="post">
+                <input type="hidden" name="employeeId" th:value="${employeeId}">
+                <input type="hidden" name="employeeName" th:value="${employeeName}">
+                <input type="hidden" name="postingDate" th:value="${postingDate}">
+                
+                <div class="form-group">
+                    <label for="employeeDisplay">Nom de l'employé:</label>
+                    <input type="text" id="employeeDisplay" th:value="${employeeName}" readonly 
+                           style="background-color: #f9fafb; cursor: not-allowed;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="postingDateDisplay">Date de publication:</label>
+                    <input type="text" id="postingDateDisplay" th:value="${postingDate}" readonly 
+                           style="background-color: #f9fafb; cursor: not-allowed;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="montant">Salaire de base:</label>
+                    <input type="number" id="montant" name="montant" step="0.01" min="0" 
+                           placeholder="0.00" required>
+                </div>
+                
+                <button type="submit" class="btn">Générer le salaire</button>
+            </form>
+        </div>
+        
+        <!-- Affichage des résultats si disponibles -->
+        <div th:if="${salarySlips}" class="card">
+            <h3>Résultats de la génération:</h3>
+            <div th:each="slip : ${salarySlips}">
+                <p><strong>Mois:</strong> <span th:text="${slip.mois}"></span></p>
+                <p><strong>Référence employé:</strong> <span th:text="${slip.ref_employe}"></span></p>
+                <p><strong>Salaire de base:</strong> <span th:text="${slip.salaire_base}"></span></p>
+                <p><strong>Salaire:</strong> <span th:text="${slip.salaire}"></span></p>
+                <hr>
+            </div>
+        </div>
+    </div>
+    
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

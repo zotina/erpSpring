@@ -342,4 +342,59 @@ redirectAttributes.addFlashAttribute("moyen", moyen);
             return "redirect:/api/hrms/update-base-assignment";
         }
     }
+
+    @GetMapping("/generate-salary")
+    public String showGenerateSalaryPage(
+            @RequestParam("employeeId") String employeeId,
+            @RequestParam("employeeName") String employeeName,
+            @RequestParam("postingDate") String postingDate,
+            Model model) {
+        
+        model.addAttribute("employeeId", employeeId);
+        model.addAttribute("employeeName", employeeName);
+        model.addAttribute("postingDate", postingDate);
+        
+        return "views/hrms/generate-salary"; 
+    }
+
+    @PostMapping("/process-salary-generation")
+    public String processSalaryGeneration(
+            @RequestParam("employeeId") String employeeId,
+            @RequestParam("employeeName") String employeeName,
+            @RequestParam("postingDate") String postingDate,
+            @RequestParam("montant") Double montant,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        
+        try {
+            
+            
+            String[] dateParts = postingDate.split("-");
+            String monthDebut = dateParts[0] + "-" + dateParts[1] + "-01"; 
+            String monthFin = postingDate; 
+            
+            
+            int ecraser = 1; 
+            int moyen = 1;   
+            
+            ApiResponse<PayrollDTO> insertResponse = hrmsService.insertSalarySlip(
+                employeeId, monthDebut, monthFin, montant, ecraser, moyen, session);
+            
+            if ("success".equals(insertResponse.getStatus())) {
+                redirectAttributes.addFlashAttribute("success", insertResponse.getMessage());
+                redirectAttributes.addFlashAttribute("salarySlips", insertResponse.getData());
+            } else if ("warning".equals(insertResponse.getStatus())) {
+                redirectAttributes.addFlashAttribute("warning", insertResponse.getMessage());
+            } else {
+                redirectAttributes.addFlashAttribute("error", insertResponse.getMessage());
+            }
+            
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Erreur lors de la génération du salaire: " + e.getMessage());
+        }
+        
+        
+        return "redirect:/api/hrms/generate-salary?employeeId=" + employeeId + 
+               "&employeeName=" + employeeName + "&postingDate=" + postingDate;
+    }
 }

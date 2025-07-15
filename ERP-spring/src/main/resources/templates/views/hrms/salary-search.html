@@ -114,6 +114,11 @@
                         </td>
                         <td>
                             <a th:href="@{/api/hrms/payroll-components(monthYear=${item.monthYear}, employeeId=${item.employeeId}, empname=${item.employeeName})}">voir élément</a>
+                            |
+                            <a th:href="@{/api/hrms/generate-salary(employeeId=${item.employeeId}, employeeName=${item.employeeName}, postingDate=${item.postingDate})}" 
+                               style="color: #007bff; text-decoration: none;">
+                                update salaire
+                            </a>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(summary)}">
