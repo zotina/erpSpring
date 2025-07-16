@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modifier Salaire de Base - HRMS</title>
+<link rel="stylesheet" th:href="@{/css/style.css}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/side-bar}"></div>
+      
+<div class="header">
+    <div class="container">
+        <h1>Employe</h1>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <form th:action="@{/api/hrms/update-base-salary}" method="post" class="form-container">
+            <input type="hidden" name="employeeId" th:value="${employeeId}" />
+            <input type="hidden" name="postingDate" th:value="${postingDate}" />
+            
+            <div class="form-group">
+                <label>Emp :</label>
+                <p class="form-static-text" th:text="${employeeName}">Alain Rakoto</p>
+            </div>
+
+            <div class="form-group">
+                <label>Date :</label>
+                <p class="form-static-text" th:text="${postingDate}">2025-04-01</p>
+            </div>
+
+            <div class="form-group">
+                <label for="newBaseSalary"> Salaire de Base :</label>
+                <input type="number" id="newBaseSalary" name="newBaseSalary" required step="0.01" min="0" placeholder="Entrez le nouveau montant"/>
+            </div>
+            
+            <div class="button-group-center" style="margin-top: 20px;">
+                <button type="submit" class="submit-btn">Mis a jour</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer}"></div>
+
+    

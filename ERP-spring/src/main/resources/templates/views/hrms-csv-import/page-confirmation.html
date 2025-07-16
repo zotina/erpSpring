@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation d'Importation - HRMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+
+    <div class="header">
+        <div class="container">
+            <h1>Confirmation d'Importation CSV</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div th:if="${error}" class="message error-message">
+            <strong th:text="${error}"></strong>
+        </div>
+
+        <div class="card">
+            <h3>Confirmation</h3>
+            
+            <table class="confirmation-table">
+                <thead>
+                    <tr>
+                        <th>Nom du Fichier</th>
+                        <th>Lignes Détectées</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="entry : ${lineCounts}">
+                        <td th:text="${entry.key}"></td>
+                        <td th:text="${entry.value}"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+
+            <div class="button-group-center">
+                <form th:action="@{/api/hrms-csv-import/confirm-import}" method="post" style="display: inline;">
+                    <button type="submit" class="submit-btn">Confirmer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

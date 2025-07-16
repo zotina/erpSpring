@@ -1,21 +1,25 @@
 package mg.itu.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpSession;
-import mg.itu.model.HrmsCsvImportRequest;
-import mg.itu.model.HrmsCsvImportResponse;
-import mg.itu.model.HrmsResetResponse;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.Base64;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.HttpSession;
+import mg.itu.model.HrmsCsvImportRequest;
+import mg.itu.model.HrmsCsvImportResponse;
+import mg.itu.model.HrmsResetResponse;
 
 @Service
 public class HrmsCsvImportService {
@@ -29,6 +33,29 @@ public class HrmsCsvImportService {
     private String baseApiUrl;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public HrmsCsvImportResponse importCsvData(Map<String, byte[]> fileData, HttpSession session) throws Exception {
+        String sid = (String) session.getAttribute("sid");
+
+        Map<String, String> payload = new HashMap<>();
+        for (Map.Entry<String, byte[]> entry : fileData.entrySet()) {
+            payload.put(entry.getKey(), Base64.getEncoder().encodeToString(entry.getValue()));
+        }
+
+        String url = baseApiUrl + "/hrms.controllers.hrms_controller.import_csvs_from_json";
+
+        WebClient client = webClientBuilder.baseUrl(url).build();
+        
+        String responseBody = client.post()
+                .cookie("sid", sid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block(); 
+
+        return objectMapper.readValue(responseBody, HrmsCsvImportResponse.class);
+    }
 
     public HrmsCsvImportResponse importCsvFiles(MultipartFile employeesCsv, MultipartFile salaryStructureCsv, 
                                                MultipartFile payrollCsv, HttpSession session) throws Exception {

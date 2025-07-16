@@ -5,6 +5,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import jakarta.servlet.http.HttpSession;
 import mg.itu.model.ApiResponse;
 import mg.itu.model.EmployeeDTO;
 import mg.itu.model.PayrollDTO;
+import mg.itu.model.SalaryChangeHistory;
 import mg.itu.model.SalaryComponentDTO;
 import mg.itu.model.UpdateBaseAssignmentDTO;
 import mg.itu.service.EmployeeService;
@@ -207,6 +209,25 @@ redirectAttributes.addFlashAttribute("moyen", moyen);
             return "redirect:/api/hrms/insert";
         } 
     }
+
+    @GetMapping("/salary-change-history")
+    public String showSalaryChangeHistory(Model model, HttpSession session) {
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            model.addAttribute("error", "Please log in to access this page");
+            return "views/auth/login";
+        }
+
+        try {
+            List<SalaryChangeHistory> historyList = hrmsService.getSalaryChangeHistory();
+            model.addAttribute("historyList", historyList);
+        } catch (Exception e) {
+            logger.error("Error fetching salary change history", e);
+            model.addAttribute("error", "Could not retrieve salary change history.");
+        }
+
+        return "views/hrms/salary_change_history";
+    }
     
     @GetMapping("/update-base-assignment")
     public String updateBaseAssignmentForm(Model model, HttpSession session, 
@@ -295,13 +316,13 @@ redirectAttributes.addFlashAttribute("moyen", moyen);
             
             ApiResponse<UpdateBaseAssignmentDTO> response = hrmsService.updateBaseAssignment(salaryComponent, montant, infOrSup, minusOrPlus, taux, session);
 
-            if ("success".equals(response.getStatus())) {
+            if ("success".equals(response.getStatus()) || "partial_success".equals(response.getStatus())) {
                 redirectAttributes.addFlashAttribute("success", response.getMessage());
                 redirectAttributes.addFlashAttribute("updatedSlips", response.getData());
+                redirectAttributes.addFlashAttribute("showHistoryLink", true);
             } else {
                 redirectAttributes.addFlashAttribute("error", response.getMessage());
             }
-
             
             redirectAttributes.addFlashAttribute("montant", montant);
             redirectAttributes.addFlashAttribute("infOrSup", infOrSup);

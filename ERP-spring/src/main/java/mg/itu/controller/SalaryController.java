@@ -1,5 +1,8 @@
 package mg.itu.controller;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,14 +11,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import mg.itu.model.ApiResponse;
 import mg.itu.model.PaginatedResponse;
+import mg.itu.model.PayrollDTO;
+import mg.itu.model.SalaryChangeHistory;
 import mg.itu.model.SalaryComponentDTO;
 import mg.itu.model.SummaryDTO;
+import mg.itu.repository.SalaryChangeHistoryRepository;
 import mg.itu.service.HrmsService;
 import mg.itu.util.DateUtil;
 import mg.itu.util.SalaryUtil;
@@ -23,6 +31,9 @@ import mg.itu.util.SalaryUtil;
 @Controller
 @RequestMapping("/api/hrms")
 public class SalaryController {
+
+    @Autowired
+    private SalaryChangeHistoryRepository salaryChangeHistoryRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(HrmsController.class);
 
@@ -333,5 +344,81 @@ public class SalaryController {
         String sid = (String) session.getAttribute("sid");
         model.addAttribute("sid", sid);
         return "views/hrms/salary-evolution";
+    }
+
+
+    @GetMapping("/edit-base-salary")
+    public String showEditBaseSalaryForm(
+            @RequestParam("employeeId") String employeeId,
+            @RequestParam("employeeName") String employeeName,
+            @RequestParam("postingDate") String postingDate,
+            Model model,
+            HttpSession session) {
+        
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            return "redirect:/api/auth/login";
+        }
+
+        model.addAttribute("employeeId", employeeId);
+        model.addAttribute("employeeName", employeeName);
+        model.addAttribute("postingDate", postingDate);
+
+        return "views/hrms/edit-base-salary";
+    }
+
+    @PostMapping("/update-base-salary")
+    public String updateBaseSalary(
+            @RequestParam("employeeId") String employeeId,
+            @RequestParam("postingDate") String postingDate,
+            @RequestParam("newBaseSalary") Double newBaseSalary,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        String accessToken = (String) session.getAttribute("sid");
+        if (accessToken == null) {
+            redirectAttributes.addFlashAttribute("error", "Votre session a expiré. Veuillez vous reconnecter.");
+            return "redirect:/api/auth/login";
+        }
+
+        try {   
+
+            SalaryChangeHistory history = new SalaryChangeHistory();
+            history.setEmployeeId(employeeId); 
+            history.setEmployeeName(employeeId);
+            history.setOldBaseSalary(BigDecimal.valueOf(0));
+            history.setNewBaseSalary(BigDecimal.valueOf(newBaseSalary));
+            history.setChangeTimestamp(LocalDateTime.now());
+            
+            salaryChangeHistoryRepository.save(history);
+
+            System.out.println("SALARYYYYY: " + newBaseSalary);
+            ApiResponse<PayrollDTO> response = hrmsService.insertSalarySlip(
+                employeeId, 
+                postingDate,   // monthDebut
+                postingDate,   // monthFin
+                newBaseSalary, // montant
+                1,             // ecraser (1 = true)
+                0,             // moyen (0 = false)
+                session
+            );
+
+            if ("success".equals(response.getStatus())) {
+                System.out.println("######TRUE");
+                redirectAttributes.addFlashAttribute("success", "Le salaire de base pour '" + employeeId + "' a été mis à jour avec succès pour la période de " + postingDate + ".");
+            } else {
+                System.out.println("######FALSE");
+                redirectAttributes.addFlashAttribute("error", "Échec de la mise à jour : " + response.getMessage());
+            }
+
+
+            System.out.println("RESPPP: " + response);
+
+        } catch (Exception e) {
+            logger.error("Error updating base salary for employee {}", employeeId, e);
+            redirectAttributes.addFlashAttribute("error", "Une erreur critique est survenue lors de la mise à jour : " + e.getMessage());
+        }
+
+        return "redirect:/api/hrms/salary-search";
     }
 }

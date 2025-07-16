@@ -55,3 +55,97 @@ Table:
                 + increase the base_salary with the percentage_value of "base_salary_modif" 
                     + ex: base_salary = 100.000$, percentage_value = 10
                         + new_base_salary = 100.000$ + 10%
+
+
+
+
+
+1 - Refa Import dia mandalo page ray misy nbr ligne par fichier 
+    - btn confirmer 
+        - zay vo mandeha ny import 
+
+
+2 - Page avec historique des changements 
+    - changement salaire 
+        - avant & apres 
+        - salaire de base
+
+
+
+Add this functionality : 
+
+- when generating salaire with the form to generate, create a page to display the historic of the salary changements
+- table column : 
+    - emp
+    - current amount 
+    - new amount
+
+you need to create a new table for that, create a Spring Boot Repository for the tables assuming my db is mysql 
+i dont know where is the best way to handle teh historic insertion (java or python), if you do it from the python, use raw INSERT query , dont use method from the ERP-NEXT or HRMS API
+
+
+
+
+CREATE TABLE salary_change_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id VARCHAR(255) NOT NULL,
+    employee_name VARCHAR(255),
+    period VARCHAR(255),
+    old_base_salary DECIMAL(15, 2) NOT NULL,
+    new_base_salary DECIMAL(15, 2) NOT NULL,
+    adjustment_percentage DOUBLE,
+    adjustment_type VARCHAR(50),
+    change_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    old_slip_id VARCHAR(255),
+    new_slip_id VARCHAR(255)
+);
+
+
+
+
+
+1 - import
+Nbr de salaire par emp from the CSV file number 3
+Ex: 
+    - Rasoa 1
+    - Rajao 2 
+
+
+2 - Recherche salaire element de salaire 
+
+Add a link to a page having the Emp and the Months and 
+- add a field salaire de base 
+- update his base salary on this Month for this Emp
+
+
+
+
+Given those file as context ... 
+Its an import functionality using a PYTHON API to insert the DB from the CSV into the table 
+
+here is what i want you to do : 
+
+in the import confirmation page display the number of salary for each Ref Employe : 
+for example 
+
+EMP A: 5
+EMP B: 2
+
+The Ref employe from the CSV number 3 has a correspondance in the CSV 1 (the columns Ref)
+
+Dont change any API part, make all the necessary modif in the Java Side (create a new methods but dont change any existing method) to make the parsing of the CSV, counting the number of salary for each employe using the REF
+
+
+
+
+
+here a new functionality that i want you to add : 
+
+
+add a link to the <table> "modifier salaire de base" 
+when i hit this link, i'm redirected to a page having : 
+- emp name
+- the variable "date_publication"
+- an input field type number 
+
+all the changes needs to be in teh Java Side 

@@ -42,9 +42,8 @@
             </div>
         </div>
 
-        <!-- CSV Upload Form -->
         <div class="card upload-container">
-            <form th:action="@{/api/hrms-csv-import/import}" method="post" enctype="multipart/form-data">
+            <form th:action="@{/api/hrms-csv-import/upload-for-preview}" method="post" enctype="multipart/form-data">
                 <div>
                     <label for="employeesCsv">Employees CSV</label>
                     <input type="file" id="employeesCsv" name="employeesCsv" accept=".csv"/>
@@ -59,7 +58,8 @@
                 </div>
                 <center>
                     <div class="button-group">
-                        <button type="submit" class="submit-btn">Import CSVs</button>
+                        <!-- Change button text for clarity -->
+                        <button type="submit" class="submit-btn">Aperçu de l'Importation</button>
                     </div>
                 </center>
             </form>

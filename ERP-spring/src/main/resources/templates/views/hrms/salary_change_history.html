@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Historique des Modifications de Salaire</title>
+</head>
+<body>
+    <div th:replace="~{fragments/side-bar}"></div>
+    <div class="header">
+        <div class="container">
+            <h1>Historique des Modifications de Salaire</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h3>Modifications Enregistrées</h3>
+            <div th:if="${error}" class="error-message">
+                <span th:text="${error}"></span>
+            </div>
+            <table th:if="${!historyList.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>Employé</th>
+                        <th>Ancien Montant de Base</th>
+                        <th>Nouveau Montant de Base</th>
+                        <th>Date de Modification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="history : ${historyList}">
+                        <td th:text="${history.employeeName}"></td>
+                        <td th:text="${#numbers.formatDecimal(history.oldBaseSalary, 1, 'WHITESPACE', 2, 'COMMA')} + ' Ar'"></td>
+                        <td th:text="${#numbers.formatDecimal(history.newBaseSalary, 1, 'WHITESPACE', 2, 'COMMA')} + ' Ar'"></td>
+                        <td th:text="${#temporals.format(history.changeTimestamp, 'dd-MM-yyyy HH:mm')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div th:if="${historyList.isEmpty()}">
+                <p>Aucun historique de modification de salaire n'a été trouvé.</p>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer}"></div>
+</body>
+</html>

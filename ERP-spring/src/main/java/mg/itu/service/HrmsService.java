@@ -1,5 +1,7 @@
 package mg.itu.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,17 +26,22 @@ import mg.itu.model.ApiResponse;
 import mg.itu.model.BaseSalaryModif;
 import mg.itu.model.PaginatedResponse;
 import mg.itu.model.PayrollDTO;
+import mg.itu.model.SalaryChangeHistory;
 import mg.itu.model.SalaryComponentDTO;
 import mg.itu.model.SalaryDetailDTO;
 import mg.itu.model.SummaryDTO;
 import mg.itu.model.UpdateBaseAssignmentDTO;
 import mg.itu.repository.BaseSalaryModifRepository;
+import mg.itu.repository.SalaryChangeHistoryRepository;
 import reactor.core.publisher.Mono;
 
 @Service
 public class HrmsService {
 
     private static final Logger logger = LoggerFactory.getLogger(HrmsService.class);
+
+    @Autowired
+    private SalaryChangeHistoryRepository salaryChangeHistoryRepository;
 
     @Autowired
     private WebClient.Builder webClientBuilder;
@@ -526,9 +533,25 @@ public class HrmsService {
                 List<Map<String, Object>> updatedSlipsData = (List<Map<String, Object>>) messageMap.get("updated_slips");
 
                 List<UpdateBaseAssignmentDTO> updatedSlips = new ArrayList<>();
+
+                System.out.println("Len: " + updatedSlipsData.size());
                 for (Map<String, Object> slipData : updatedSlipsData) {
                     UpdateBaseAssignmentDTO slip = objectMapper.convertValue(slipData, UpdateBaseAssignmentDTO.class);
                     updatedSlips.add(slip);
+
+                    SalaryChangeHistory history = new SalaryChangeHistory();
+                    history.setEmployeeId(slip.getEmployee()); 
+                    history.setEmployeeName(slip.getEmployee());
+                    history.setPeriod(slip.getPeriod());
+                    history.setOldBaseSalary(BigDecimal.valueOf(slip.getOldBase()));
+                    history.setNewBaseSalary(BigDecimal.valueOf(slip.getNewBase()));
+                    history.setAdjustmentPercentage(slip.getAdjustmentPercentage());
+                    history.setAdjustmentType(slip.getAdjustmentType());
+                    history.setOldSlipId(slip.getOldSlip());
+                    history.setNewSlipId(slip.getNewSlip());
+                    history.setChangeTimestamp(LocalDateTime.now());
+                    
+                    salaryChangeHistoryRepository.save(history);
                 }
 
                 ApiResponse<UpdateBaseAssignmentDTO> apiResponse = new ApiResponse<>();
@@ -550,6 +573,10 @@ public class HrmsService {
             errorResponse.setMessage("Error updating base assignment: " + e.getMessage());
             return errorResponse;
         }
+    }
+
+    public List<SalaryChangeHistory> getSalaryChangeHistory() {
+        return salaryChangeHistoryRepository.findAll();
     }
 
 
